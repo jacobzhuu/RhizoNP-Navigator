@@ -1,0 +1,76 @@
+# ── Python ──────────────────────────────────────────────
+*.pyc
+*.pyo
+*.pyd
+*.cpython-*.pyc
+__pycache__/
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ────────────────────────────────
+venv/
+env/
+ENV/
+.venv/
+
+# ── Environment and local secrets ───────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE / Editor ────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── System / Platform ──────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Jupyter ─────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Tool caches ─────────────────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── Local model files (large, never version-control) ───
+*.bin
+*.safetensors
+*.pt
+*.pth
+models/
+bge-*/
+
+# ── FAISS / vector DB indexes ──────────────────────────
+*.faiss
+*.index
+faiss_index/
+vector_db/
+data/faiss_all_acge/index.faiss
+data/faiss_all_acge/index.pkl
+
+# ── Raw / private data (keep fixtures & test data) ─────
+data/input.csv
+data/input.xlsx
+data/faiss_all_acge/files/input.csv
+data/private/
+data/raw/
+uploads/
+
+# ── Database files ──────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Docker volumes ──────────────────────────────────────
+docker-data/

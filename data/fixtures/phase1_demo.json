@@ -1,0 +1,156 @@
+{
+  "metadata": {
+    "fixture": true,
+    "description": "Synthetic Phase 1 fixture for schema and repository tests. Not real literature or experimental evidence."
+  },
+  "papers": [
+    {
+      "key": "paper_synthetic_streptomyces",
+      "title": "Synthetic fixture: genus-level Streptomyces natural-product evidence",
+      "abstract": "Synthetic placeholder record used only to exercise the RhizoNP domain schema.",
+      "year": 2026,
+      "journal": "fixture",
+      "license": "test-only",
+      "provenance": {
+        "fixture": true,
+        "not_real_literature": true
+      }
+    }
+  ],
+  "taxa": [
+    {
+      "key": "taxon_streptomyces_genus",
+      "canonical_name": "Streptomyces",
+      "rank": "genus",
+      "genus": "Streptomyces",
+      "external_ids": {
+        "fixture_taxon_id": "TAXON_FIXTURE_001"
+      },
+      "normalization_status": "resolved_exact"
+    }
+  ],
+  "compounds": [
+    {
+      "key": "compound_fixture_polyketide_a",
+      "canonical_name": "FixturePolyketide-A",
+      "compound_class": "polyketide",
+      "structure_status": "unknown",
+      "external_ids": {
+        "fixture_compound_id": "CMP_FIXTURE_001"
+      }
+    }
+  ],
+  "natural_product_records": [
+    {
+      "compound_ref": "compound_fixture_polyketide_a",
+      "producer_taxon_ref": "taxon_streptomyces_genus",
+      "source_database": "synthetic_fixture",
+      "external_record_id": "NP_FIXTURE_001",
+      "reference_paper_ref": "paper_synthetic_streptomyces",
+      "bioactivity_summary": "Synthetic placeholder bioactivity summary for schema testing only.",
+      "provenance": {
+        "fixture": true,
+        "not_real_database_record": true
+      }
+    }
+  ],
+  "datasets": [
+    {
+      "key": "dataset_root_injury_demo",
+      "name": "Synthetic root injury own-omics demo",
+      "description": "Synthetic 16S-metabolite association fixture.",
+      "owner": "fixture",
+      "data_type": "own_omics_association",
+      "provenance": {
+        "fixture": true,
+        "not_real_experiment": true
+      }
+    }
+  ],
+  "omics_observations": [
+    {
+      "dataset_ref": "dataset_root_injury_demo",
+      "entity_type": "taxon",
+      "entity_ref": "taxon_streptomyces_genus",
+      "raw_label": "Streptomyces",
+      "treatment": "RootInjury75",
+      "timepoint": "Day10",
+      "layer": "rhizosphere",
+      "effect_size": 0.72,
+      "adjusted_p": 0.003,
+      "method": "synthetic_16S_fixture",
+      "metadata": {
+        "rank": "genus"
+      }
+    },
+    {
+      "dataset_ref": "dataset_root_injury_demo",
+      "entity_type": "metabolite",
+      "raw_label": "Feature_M123",
+      "treatment": "RootInjury75",
+      "timepoint": "Day10",
+      "layer": "rhizosphere",
+      "method": "synthetic_lcms_fixture",
+      "metadata": {
+        "chemical_identification_tier": "C4_unknown_feature"
+      }
+    }
+  ],
+  "omics_associations": [
+    {
+      "dataset_ref": "dataset_root_injury_demo",
+      "source_entity_type": "taxon",
+      "source_entity_ref": "taxon_streptomyces_genus",
+      "source_raw_label": "Streptomyces",
+      "target_entity_type": "metabolite",
+      "target_raw_label": "Feature_M123",
+      "score": 0.72,
+      "adjusted_p": 0.003,
+      "method": "synthetic_sPLS_fixture",
+      "direction": "positive",
+      "treatment": "RootInjury75",
+      "timepoint": "Day10",
+      "metadata": {
+        "correlation_not_causation": true
+      }
+    }
+  ],
+  "evidence_items": [
+    {
+      "claim_type": "taxon_produces_compound",
+      "subject_entity_type": "taxon",
+      "subject_entity_ref": "taxon_streptomyces_genus",
+      "predicate": "PRODUCES",
+      "object_entity_type": "compound",
+      "object_entity_ref": "compound_fixture_polyketide_a",
+      "source_type": "paper",
+      "source_ref": "paper_synthetic_streptomyces",
+      "evidence_tier": "same_genus",
+      "directness": "indirect",
+      "extraction_method": "synthetic_fixture",
+      "confidence": 0.4,
+      "supporting_span": "Synthetic fixture span. Not real evidence.",
+      "provenance": {
+        "fixture": true,
+        "policy_note": "same genus only"
+      }
+    }
+  ],
+  "candidate_links": [
+    {
+      "source_entity_type": "taxon",
+      "source_entity_ref": "taxon_streptomyces_genus",
+      "relation": "PRODUCES",
+      "target_entity_type": "compound",
+      "target_entity_ref": "compound_fixture_polyketide_a",
+      "internal_evidence_score": 0.72,
+      "external_evidence_score": 0.4,
+      "taxonomy_distance": "same_genus",
+      "evidence_tier": "Tier C",
+      "status": "PARTIALLY_SUPPORTED",
+      "rationale": {
+        "limitation": "Synthetic fixture; genus-level signal only. Does not support strain-level production."
+      }
+    }
+  ]
+}
