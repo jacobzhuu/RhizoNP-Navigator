@@ -1,8 +1,9 @@
 # Phase 2 Closure Audit
 
 **Date:** 2026-07-05  
-**Scope:** Literature provenance baseline, local retrieval, bounded PubMed corpus, offline + real benchmark workflow  
-**Phase 3:** Not started
+**Scope:** Literature provenance baseline, local retrieval, bounded PubMed corpus, offline + real benchmark workflow
+
+> **Post-audit addendum (MVP release):** Phases 3–8 MVP engineering is complete. This document remains the authoritative Phase 2 closure record. **Phase 2 empirical human relevance evaluation is still pending** and was not reopened for this release.
 
 ---
 
@@ -24,7 +25,7 @@
 | Real PubMed benchmark format (PMID, graded 0/1/2) | **Met** | `phase2_real_pubmed_benchmark.json` |
 | Human annotation export/import workflow | **Met** | Pooled export, blind sheet + provenance sidecar, import validation |
 | Cross-platform + offline CI | **Met** | `make check`, 82 passed / 3 skipped |
-| Phase 3 not started | **Confirmed** | No taxonomy-aware grading code |
+| Phase 3 not started (at audit time) | **Superseded** | Phases 3–8 MVP completed after this audit; see `docs/PHASE_STATUS.md` |
 
 ---
 
@@ -119,19 +120,18 @@ No production retrieval quality claims are made without completed human labels.
 3. Model-backed embedding and BGE reranker require optional heavy dependencies.
 4. Live PubMed fetch requires network and NCBI policy compliance (`NCBI_EMAIL` recommended).
 5. PostgreSQL container migration not re-verified in this session (Docker daemon unavailable).
-6. Phase 3 taxonomy-aware evidence grading not started.
+6. Phase 3 taxonomy-aware evidence grading not started **at audit time** (now complete as MVP — see `docs/PHASE_STATUS.md`).
 
 ---
 
-## Remaining Blockers
+## Remaining Blockers (Phase 2 empirical only)
 
 1. **Complete human relevance labeling** for `phase2_real_pubmed_benchmark.json`.
 2. **Run real-corpus evaluation** after label import and record metrics.
 3. Optional: FAISS environment parity verification on a machine with `faiss-cpu` installed.
-4. External: Git push if credentials become available.
 
 ---
 
-## Phase 3 Confirmation
+## Post-audit scope note
 
-Phase 3 (taxonomy-aware evidence grading, strain/species/genus policy) was **not** started. No Crossref, OpenAlex, full-text ingestion, BGC, protein, SMILES, or agent functionality was added.
+At the time of this audit, Phase 3 had not started and no Crossref, OpenAlex, full-text ingestion, BGC, protein, SMILES, or agent functionality existed. Subsequent MVP work added Phases 3–8 (taxonomy grading, NP linking, own-data pipeline, grounded writer, evaluation, demo) **without** completing Phase 2 human labels or adding NPAtlas/MIBiG/agent integrations.

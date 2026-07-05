@@ -85,3 +85,9 @@ data/eval/annotation/reviewed*.csv
 
 # ── Docker volumes ──────────────────────────────────────
 docker-data/
+
+# ── Regenerated demo/runtime outputs (make smoke / make demo) ──
+data/output/
+
+# ── Regenerated evaluation reports (make eval-end-to-end) ──────
+data/eval/reports/latest/

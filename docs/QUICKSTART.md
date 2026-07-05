@@ -1,12 +1,18 @@
 # Quickstart
 
-This quickstart runs the RhizoNP Navigator MVP offline with deterministic fixtures. No external network access is required.
+This quickstart runs the RhizoNP Navigator MVP **offline** with deterministic fixtures. No external network access is required.
 
 ## Prerequisites
 
 ```bash
 python -m pip install -r requirements.txt
 python -m pip install pytest ruff mypy
+```
+
+Copy local configuration (no secrets in git):
+
+```bash
+cp .env.example .env
 ```
 
 ## One-command smoke test
@@ -17,6 +23,8 @@ make smoke
 
 Expected result: three demo cases complete with JSON/CSV/Markdown outputs under `data/output/smoke/`.
 
+These paths are **gitignored runtime artifacts** — regenerate them on any fresh clone.
+
 ## Full demo workflow
 
 ```bash
@@ -25,9 +33,13 @@ make demo
 
 Outputs are written to `data/output/demo/`:
 
-- Case 1: literature retrieval with provenance trace
-- Case 2: taxonomy-aware evidence grading
-- Case 3: own-data-to-literature candidate matrix
+| Case | Output prefix | Description |
+|---|---|---|
+| 1 | `case1_literature_retrieval` | Literature retrieval with provenance trace |
+| 2 | `case2_taxonomy_grading` | Taxonomy-aware evidence grading |
+| 3 | `case3_*` | Own-data-to-literature candidate matrix |
+
+Public-safe **input fixtures** (tracked in git): `data/fixtures/`
 
 ## Evaluation suite
 
@@ -35,7 +47,7 @@ Outputs are written to `data/output/demo/`:
 make eval-end-to-end
 ```
 
-Reports are written to `data/eval/reports/latest/`.
+Reports are written to `data/eval/reports/latest/` (gitignored). Metrics apply only to the declared synthetic/MVP replay scope — not PubMed-wide retrieval quality.
 
 ## Optional API server
 
