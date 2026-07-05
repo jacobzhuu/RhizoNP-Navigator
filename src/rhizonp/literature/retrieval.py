@@ -74,6 +74,7 @@ class SearchResult:
 
     @property
     def trace(self) -> dict[str, Any]:
+        source_hash = self.score_components.get("source_hash")
         return {
             "chunk_id": str(self.chunk_id),
             "paper_id": str(self.paper_id),
@@ -82,6 +83,7 @@ class SearchResult:
             "section": self.section,
             "char_start": self.char_start,
             "char_end": self.char_end,
+            "source_hash": source_hash,
         }
 
 
@@ -186,6 +188,7 @@ def _result_from_chunk(
     score_components: dict[str, Any],
 ) -> SearchResult:
     paper = chunk.paper
+    enriched_components = {**score_components, "source_hash": chunk.source_hash}
     return SearchResult(
         chunk_id=chunk.chunk_id,
         paper_id=paper.paper_id,
@@ -196,7 +199,7 @@ def _result_from_chunk(
         char_start=chunk.char_start,
         char_end=chunk.char_end,
         matched_terms=matched_terms,
-        score_components=score_components,
+        score_components=enriched_components,
         paper_title=paper.title,
         doi=paper.doi,
         source_url=paper.source_url,

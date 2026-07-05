@@ -1,0 +1,37 @@
+{
+  "benchmark_id": "phase2_synthetic_mini",
+  "description": "Small explicit gold labels for offline Phase 2 retrieval evaluation against the synthetic literature fixture. Not a production benchmark.",
+  "queries": [
+    {
+      "query_id": "Q001",
+      "query": "Streptomyces Feature_M123",
+      "relevant_source_hashes": [
+        "223fb0d8b61ad7371fcd289d97133c63a142b6ce7d50b6cad53d489fa11f755e"
+      ],
+      "filters": {
+        "sections": ["results"],
+        "taxa": ["Streptomyces"]
+      }
+    },
+    {
+      "query_id": "Q002",
+      "query": "genus-level strain production",
+      "relevant_source_hashes": [
+        "366323d12814d7c8458ac72fda3a300419356cd03a081e57179669b7fe7a32b5"
+      ],
+      "filters": {
+        "sections": ["discussion"]
+      }
+    },
+    {
+      "query_id": "Q003",
+      "query": "FixturePolyketide-A",
+      "relevant_source_hashes": [
+        "f572c8f6dc2336654df1818114587b8c826e7aa3b5f669f1a326e9edb98ec443"
+      ],
+      "filters": {
+        "sections": ["results"]
+      }
+    }
+  ]
+}
