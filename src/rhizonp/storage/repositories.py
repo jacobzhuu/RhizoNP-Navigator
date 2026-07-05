@@ -50,6 +50,9 @@ class PaperRepository(Repository[Paper, object]):
     def find_by_source_url(self, source_url: str) -> Paper | None:
         return self.session.scalar(select(Paper).where(Paper.source_url == source_url))
 
+    def find_by_pmid(self, pmid: str) -> Paper | None:
+        return self.session.scalar(select(Paper).where(Paper.pmid == pmid))
+
 
 class TaxonRepository(Repository[Taxon, object]):
     def __init__(self, session: Session) -> None:

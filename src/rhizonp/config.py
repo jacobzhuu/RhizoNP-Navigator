@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     literature_vector_index_backend: str = "in_memory"
     literature_reranker: str = "lexical"
 
+    ncbi_tool_name: str = "RhizoNP-Navigator"
+    ncbi_email: str = ""
+    ncbi_api_key: str = ""
+    ncbi_request_timeout: float = 30.0
+    ncbi_max_results: int = 20
+
 
 @lru_cache
 def get_settings() -> Settings:

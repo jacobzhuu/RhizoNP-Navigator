@@ -97,6 +97,10 @@ def _find_existing_paper(
         found = paper_repo.find_by_doi(record.doi)
         if found is not None:
             return found
+    if record.pmid:
+        found = paper_repo.find_by_pmid(record.pmid)
+        if found is not None:
+            return found
     if record.source_url:
         return paper_repo.find_by_source_url(record.source_url)
     return None
