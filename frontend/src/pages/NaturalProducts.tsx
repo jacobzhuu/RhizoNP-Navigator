@@ -32,7 +32,7 @@ export function NaturalProductsPage() {
       if (err instanceof BackendUnavailableError || err instanceof ApiError) {
         setError({ message: err.message, detail: err instanceof ApiError ? err.detail : undefined })
       } else {
-        setError({ message: 'Unexpected error', detail: String(err) })
+        setError({ message: '意外错误', detail: String(err) })
       }
     } finally {
       setLoading(false)
@@ -42,59 +42,59 @@ export function NaturalProductsPage() {
   return (
     <>
       <header className="page-header">
-        <h1>Natural Product Linking</h1>
-        <p className="subtitle">Rank candidate compounds by taxonomy distance and evidence tier</p>
+        <h1>天然产物关联</h1>
+        <p className="subtitle">按分类学距离与证据等级对候选化合物排序</p>
       </header>
 
       <InfoPanel>
-        Candidate matrix uses synthetic NP fixture records (<code>synthetic_fixture</code> database).
-        Rows marked as fixture are not real literature-derived associations.
+        候选矩阵使用合成 NP fixture 记录（<code>synthetic_fixture</code> 数据库）。
+        标记为 fixture 的行并非真实文献来源关联。
       </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="query">Query Taxon</label>
+            <label htmlFor="query">查询分类单元</label>
             <input id="query" value={queryTaxon} onChange={(e) => setQueryTaxon(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="metabolite">Metabolite Name</label>
-            <input id="metabolite" value={metabolite} onChange={(e) => setMetabolite(e.target.value)} placeholder="Optional" />
+            <label htmlFor="metabolite">代谢物名称</label>
+            <input id="metabolite" value={metabolite} onChange={(e) => setMetabolite(e.target.value)} placeholder="可选" />
           </div>
           <div className="form-group">
-            <label htmlFor="method">Observation Method</label>
+            <label htmlFor="method">观测方法</label>
             <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} />
           </div>
         </div>
         <button type="submit" className="btn" disabled={loading}>
-          {loading ? 'Linking…' : 'Link Candidates'}
+          {loading ? '关联中…' : '关联候选化合物'}
         </button>
       </form>
 
-      {loading && <p className="loading">Building candidate matrix…</p>}
+      {loading && <p className="loading">正在构建候选矩阵…</p>}
       {error && <ErrorPanel message={error.message} detail={error.detail} />}
 
       {result && (
         <div className="card">
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-            Query: {result.query_taxon}
-            {result.metabolite_name && ` · Metabolite: ${result.metabolite_name}`}
-            {' · '}{result.rows.length} candidate(s)
+            查询：{result.query_taxon}
+            {result.metabolite_name && ` · 代谢物：${result.metabolite_name}`}
+            {' · '}{result.rows.length} 个候选
           </p>
 
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>Compound</th>
-                  <th>Producer</th>
-                  <th>Match</th>
-                  <th>Distance</th>
-                  <th>Tier</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Source</th>
+                  <th>排名</th>
+                  <th>化合物</th>
+                  <th>生产者</th>
+                  <th>匹配</th>
+                  <th>距离</th>
+                  <th>等级</th>
+                  <th>得分</th>
+                  <th>状态</th>
+                  <th>来源</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,7 +111,7 @@ export function NaturalProductsPage() {
                       <td><Badge label={row.evidence_tier} variant={tierBadgeVariant(row.evidence_tier)} /></td>
                       <td>{row.score.toFixed(3)}</td>
                       <td>{row.status}</td>
-                      <td>{fixture ? <Badge label="Fixture" variant="fixture" /> : '—'}</td>
+                      <td>{fixture ? <Badge label="合成" variant="fixture" /> : '—'}</td>
                     </tr>
                   )
                 })}

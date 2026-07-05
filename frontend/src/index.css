@@ -17,7 +17,7 @@
   --color-tier-c: #c05621;
   --color-tier-a: #276749;
   --font-serif: 'Georgia', 'Times New Roman', serif;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
   --font-mono: 'SF Mono', 'Consolas', 'Liberation Mono', monospace;
   --radius: 6px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);

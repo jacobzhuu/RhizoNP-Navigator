@@ -39,7 +39,7 @@ export function EvidenceGraderPage() {
       if (err instanceof BackendUnavailableError || err instanceof ApiError) {
         setError({ message: err.message, detail: err instanceof ApiError ? err.detail : undefined })
       } else {
-        setError({ message: 'Unexpected error', detail: String(err) })
+        setError({ message: '意外错误', detail: String(err) })
       }
     } finally {
       setLoading(false)
@@ -49,60 +49,60 @@ export function EvidenceGraderPage() {
   return (
     <>
       <header className="page-header">
-        <h1>Evidence Grader</h1>
-        <p className="subtitle">Taxonomy-aware evidence grading with conservative claim limits</p>
+        <h1>证据分级</h1>
+        <p className="subtitle">分类学感知证据分级，保守限制可支持主张</p>
       </header>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="query">Query Taxon</label>
+            <label htmlFor="query">查询分类单元</label>
             <input id="query" value={queryTaxon} onChange={(e) => setQueryTaxon(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="lit">Literature Taxon</label>
+            <label htmlFor="lit">文献分类单元</label>
             <input id="lit" value={literatureTaxon} onChange={(e) => setLiteratureTaxon(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="method">Observation Method</label>
+            <label htmlFor="method">观测方法</label>
             <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} />
           </div>
         </div>
         <button type="submit" className="btn" disabled={loading}>
-          {loading ? 'Grading…' : 'Grade Evidence'}
+          {loading ? '分级中…' : '执行证据分级'}
         </button>
       </form>
 
-      {loading && <p className="loading">Applying taxonomy policy…</p>}
+      {loading && <p className="loading">正在应用分类学策略…</p>}
       {error && <ErrorPanel message={error.message} detail={error.detail} />}
 
       {result && (
         <div className={`card${isHighRisk(result) ? ' highlight-card' : ''}`} style={isHighRisk(result) ? { borderColor: 'var(--color-warning-border)', background: 'var(--color-warning-bg)' } : undefined}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
             <Badge label={result.taxonomy_distance} variant={distanceBadgeVariant(result.taxonomy_distance)} />
-            <Badge label={`Tier ${result.evidence_tier}`} variant={tierBadgeVariant(result.evidence_tier)} />
+            <Badge label={`等级 ${result.evidence_tier}`} variant={tierBadgeVariant(result.evidence_tier)} />
           </div>
 
           {result.taxonomy_distance.toUpperCase().includes('SAME_GENUS') && (
             <div className="panel-warning">
-              <strong>SAME_GENUS distance detected</strong>
-              Genus-level observations cannot support strain- or species-specific production claims.
+              <strong>检测到 SAME_GENUS 距离</strong>
+              属级观测不能支持菌株级或种级产物生产主张。
             </div>
           )}
 
           <WarningPanel items={result.warnings} />
           <LimitationsPanel items={result.limitations} />
 
-          <h3>Maximum Supported Claim</h3>
+          <h3>最高可支持主张</h3>
           <p>{result.max_supported_claim}</p>
 
           <div className="form-row" style={{ marginTop: '1rem' }}>
             <div className="form-group">
-              <label>Query Taxon (normalized)</label>
+              <label>查询分类单元（规范化）</label>
               <pre style={{ margin: 0, fontSize: '0.8rem' }}>{JSON.stringify(result.query_taxon, null, 2)}</pre>
             </div>
             <div className="form-group">
-              <label>Literature Taxon (normalized)</label>
+              <label>文献分类单元（规范化）</label>
               <pre style={{ margin: 0, fontSize: '0.8rem' }}>{JSON.stringify(result.literature_taxon, null, 2)}</pre>
             </div>
           </div>

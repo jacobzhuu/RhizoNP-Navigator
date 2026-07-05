@@ -1,12 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 const navItems = [
-  { to: '/', label: 'Overview', end: true },
-  { to: '/literature', label: 'Literature' },
-  { to: '/evidence-grader', label: 'Evidence Grader' },
-  { to: '/natural-products', label: 'Natural Products' },
-  { to: '/own-data', label: 'Own Data' },
-  { to: '/grounded-report', label: 'Grounded Report' },
+  { to: '/', label: '概览', end: true },
+  { to: '/literature', label: '文献检索' },
+  { to: '/evidence-grader', label: '证据分级' },
+  { to: '/natural-products', label: '天然产物' },
+  { to: '/own-data', label: '自有数据' },
+  { to: '/grounded-report', label: '证据报告' },
 ]
 
 export function Layout() {
@@ -28,7 +28,7 @@ export function Layout() {
               </NavLink>
             ))}
             <a href={docsUrl} target="_blank" rel="noopener noreferrer" className="external">
-              API Docs ↗
+              API 文档 ↗
             </a>
           </nav>
         </div>
@@ -37,7 +37,7 @@ export function Layout() {
         <Outlet />
       </main>
       <footer className="app-footer">
-        Research demo workspace — bounded synthetic fixtures; not a production system.
+        科研演示工作区 — 基于有界合成 fixtures，非生产系统。
       </footer>
     </div>
   )

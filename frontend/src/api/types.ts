@@ -168,7 +168,7 @@ export class ApiError extends Error {
 }
 
 export class BackendUnavailableError extends Error {
-  constructor(message = 'Backend unavailable. Start the API on port 8000.') {
+  constructor(message = '后端不可用，请先启动 API 服务（端口 8000）。') {
     super(message)
     this.name = 'BackendUnavailableError'
   }

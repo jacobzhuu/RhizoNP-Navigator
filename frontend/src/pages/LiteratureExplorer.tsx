@@ -45,7 +45,7 @@ export function LiteratureExplorerPage() {
         const dbUnavailable = err.status >= 500 || err.detail?.includes('database') || err.detail?.includes('connection')
         setError({ message: err.message, detail: err.detail, dbUnavailable })
       } else {
-        setError({ message: 'Unexpected error', detail: String(err) })
+        setError({ message: '意外错误', detail: String(err) })
       }
     } finally {
       setLoading(false)
@@ -55,23 +55,23 @@ export function LiteratureExplorerPage() {
   return (
     <>
       <header className="page-header">
-        <h1>Literature Explorer</h1>
-        <p className="subtitle">Search indexed paper chunks with provenance traces</p>
+        <h1>文献检索</h1>
+        <p className="subtitle">检索已索引文献片段，并展示溯源轨迹</p>
       </header>
 
       <div className="panel-info">
-        Requires PostgreSQL with Phase 2 literature fixtures loaded (
-        <code>./scripts/start.sh db</code>). Uses synthetic fixture corpus only.
+        需要 PostgreSQL 并加载 Phase 2 文献 fixtures（
+        <code>./scripts/start.sh db</code>）。当前仅使用合成 fixture 语料。
       </div>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group" style={{ flex: 3 }}>
-            <label htmlFor="query">Query</label>
+            <label htmlFor="query">查询</label>
             <input id="query" value={query} onChange={(e) => setQuery(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="mode">Retrieval Mode</label>
+            <label htmlFor="mode">检索模式</label>
             <select id="mode" value={mode} onChange={(e) => setMode(e.target.value)}>
               {RETRIEVAL_MODES.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -84,22 +84,22 @@ export function LiteratureExplorerPage() {
           </div>
         </div>
         <button type="submit" className="btn" disabled={loading}>
-          {loading ? 'Searching…' : 'Search Literature'}
+          {loading ? '检索中…' : '检索文献'}
         </button>
       </form>
 
-      {loading && <p className="loading">Retrieving chunks…</p>}
+      {loading && <p className="loading">正在检索文献片段…</p>}
 
       {error && (
         <>
           <ErrorPanel message={error.message} detail={error.detail} />
           {error.dbUnavailable && (
             <InfoPanel>
-              <strong>Database unavailable</strong>
+              <strong>数据库不可用</strong>
               <p style={{ margin: '0.35rem 0 0' }}>
-                Start the backend with fixtures: <code>./scripts/start.sh db</code> then{' '}
-                <code>make start-api</code>. Stateless endpoints (grading, linking, own-data, writer)
-                work without the database.
+                请先加载 fixtures：<code>./scripts/start.sh db</code>，再运行{' '}
+                <code>make start-api</code>。无数据库端点（分级、关联、自有数据、报告）
+                仍可正常使用。
               </p>
             </InfoPanel>
           )}
@@ -109,23 +109,23 @@ export function LiteratureExplorerPage() {
       {response && (
         <div>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-            Run {response.run_id.slice(0, 8)}… · Mode: {response.retrieval_mode} · {response.results.length} result(s)
+            运行 {response.run_id.slice(0, 8)}… · 模式：{response.retrieval_mode} · {response.results.length} 条结果
           </p>
           {response.results.length === 0 && (
-            <InfoPanel>No results matched the query and fixture filters.</InfoPanel>
+            <InfoPanel>查询与 fixture 过滤器未匹配到任何结果。</InfoPanel>
           )}
           {response.results.map((result) => (
             <div key={result.rank} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <strong>Rank #{result.rank}</strong>
-                <Badge label={`Score ${result.score.toFixed(4)}`} variant="mode" />
+                <strong>排名 #{result.rank}</strong>
+                <Badge label={`得分 ${result.score.toFixed(4)}`} variant="mode" />
               </div>
               <div className="result-meta">
-                <span>DOI: {result.trace.doi ?? '—'}</span>
-                <span>PMID: — (not in API trace)</span>
-                <span>Journal: fixture</span>
-                <span>Year: 2026 (fixture)</span>
-                <span>Section: {result.trace.section}</span>
+                <span>DOI：{result.trace.doi ?? '—'}</span>
+                <span>PMID：—（API 溯源中未返回）</span>
+                <span>期刊：fixture</span>
+                <span>年份：2026（fixture）</span>
+                <span>章节：{result.trace.section}</span>
               </div>
               <p className="result-text">{result.text}</p>
               {result.matched_terms.length > 0 && (

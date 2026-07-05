@@ -38,7 +38,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       detail = response.statusText
     }
-    throw new ApiError(`Request failed (${response.status})`, response.status, detail)
+    throw new ApiError(`请求失败（${response.status}）`, response.status, detail)
   }
 
   return response.json() as Promise<T>

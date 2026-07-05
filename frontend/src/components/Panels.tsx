@@ -5,7 +5,7 @@ interface WarningPanelProps {
   items: string[]
 }
 
-export function WarningPanel({ title = 'Warnings', items }: WarningPanelProps) {
+export function WarningPanel({ title = '警告', items }: WarningPanelProps) {
   if (items.length === 0) return null
   return (
     <div className="panel-warning">
@@ -23,7 +23,7 @@ export function LimitationsPanel({ items }: { items: string[] }) {
   if (items.length === 0) return null
   return (
     <div className="panel-info">
-      <strong>Limitations</strong>
+      <strong>局限性</strong>
       <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
         {items.map((item, i) => (
           <li key={i}>{item}</li>

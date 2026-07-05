@@ -53,7 +53,7 @@ export function OwnDataPage() {
       if (err instanceof BackendUnavailableError || err instanceof ApiError) {
         setError({ message: err.message, detail: err instanceof ApiError ? err.detail : undefined })
       } else {
-        setError({ message: 'Unexpected error', detail: String(err) })
+        setError({ message: '意外错误', detail: String(err) })
       }
     } finally {
       setLoading(false)
@@ -70,42 +70,42 @@ export function OwnDataPage() {
   return (
     <>
       <header className="page-header">
-        <h1>Own-data Workspace</h1>
-        <p className="subtitle">Omics association CSV → taxonomy grading → candidate linking</p>
+        <h1>自有数据工作区</h1>
+        <p className="subtitle">组学关联 CSV → 分类学分级 → 候选关联</p>
       </header>
 
       <InfoPanel>
-        No browser upload in MVP. Run demo fixtures from <code>data/fixtures/own_data_demo</code> or
-        specify a local directory path if the backend can read it.
+        MVP 不支持浏览器上传。可运行 <code>data/fixtures/own_data_demo</code> 演示数据，
+        或在后端可读时指定本地目录路径。
       </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="datadir">Local Data Directory (optional)</label>
+          <label htmlFor="datadir">本地数据目录（可选）</label>
           <input
             id="datadir"
             value={dataDir}
             onChange={(e) => setDataDir(e.target.value)}
-            placeholder="Leave empty for demo fixtures"
+            placeholder="留空则使用演示 fixtures"
           />
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="button" className="btn" onClick={() => runPipeline(true)} disabled={loading}>
-            Run Demo Data
+            运行演示数据
           </button>
           <button type="submit" className="btn btn-secondary" disabled={loading || !dataDir.trim()}>
-            Run Custom Directory
+            运行自定义目录
           </button>
         </div>
       </form>
 
-      {loading && <p className="loading">Running pipeline…</p>}
+      {loading && <p className="loading">正在运行流程…</p>}
       {error && <ErrorPanel message={error.message} detail={error.detail} />}
 
       {result && (
         <>
           <div className="card">
-            <strong>{result.association_count}</strong> association(s) processed
+            已处理 <strong>{result.association_count}</strong> 条关联
             <ProvenanceBlock data={result.provenance} />
           </div>
 
@@ -115,20 +115,20 @@ export function OwnDataPage() {
                 {assoc.source_raw_label} ↔ {assoc.target_raw_label}
               </h3>
               <div className="result-meta">
-                <span>Score: {assoc.score?.toFixed(4) ?? '—'}</span>
-                <span>Adj. p: {assoc.adjusted_p?.toFixed(4) ?? '—'}</span>
-                <span>Method: {assoc.method ?? '—'}</span>
+                <span>得分：{assoc.score?.toFixed(4) ?? '—'}</span>
+                <span>校正 p 值：{assoc.adjusted_p?.toFixed(4) ?? '—'}</span>
+                <span>方法：{assoc.method ?? '—'}</span>
               </div>
 
               {assoc.taxonomy_grading && (
                 <div style={{ marginTop: '1rem' }}>
-                  <h4 style={{ fontSize: '0.95rem' }}>Taxonomy Grading</h4>
+                  <h4 style={{ fontSize: '0.95rem' }}>分类学分级</h4>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                     {assoc.taxonomy_grading.taxonomy_distance && (
                       <Badge label={assoc.taxonomy_grading.taxonomy_distance} variant="same-genus" />
                     )}
                     {assoc.taxonomy_grading.evidence_tier && (
-                      <Badge label={`Tier ${assoc.taxonomy_grading.evidence_tier}`} variant={tierBadgeVariant(assoc.taxonomy_grading.evidence_tier)} />
+                      <Badge label={`等级 ${assoc.taxonomy_grading.evidence_tier}`} variant={tierBadgeVariant(assoc.taxonomy_grading.evidence_tier)} />
                     )}
                   </div>
                   {assoc.taxonomy_grading.max_supported_claim && (
@@ -144,17 +144,17 @@ export function OwnDataPage() {
 
               {assoc.candidate_links?.rows && assoc.candidate_links.rows.length > 0 && (
                 <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
-                  <h4 style={{ fontSize: '0.95rem' }}>Candidate Matrix</h4>
+                  <h4 style={{ fontSize: '0.95rem' }}>候选矩阵</h4>
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Rank</th>
-                        <th>Compound</th>
-                        <th>Producer</th>
-                        <th>Match</th>
-                        <th>Tier</th>
-                        <th>Score</th>
-                        <th>Status</th>
+                        <th>排名</th>
+                        <th>化合物</th>
+                        <th>生产者</th>
+                        <th>匹配</th>
+                        <th>等级</th>
+                        <th>得分</th>
+                        <th>状态</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -180,9 +180,9 @@ export function OwnDataPage() {
 
           {result.association_count > 0 && (
             <div className="card">
-              <h3>Export</h3>
+              <h3>导出</h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                Copy JSON below for notebooks or reports.
+                复制下方 JSON 用于 notebook 或报告。
               </p>
               <pre style={{ maxHeight: '300px', overflow: 'auto' }}>
                 {JSON.stringify(result, null, 2)}
