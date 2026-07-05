@@ -17,47 +17,54 @@ def parse_args() -> argparse.Namespace:
         "--benchmark",
         type=Path,
         default=PROJECT_ROOT / "data" / "eval" / "phase2_real_pubmed_benchmark.json",
-        help="Real PubMed benchmark JSON with query definitions.",
     )
     parser.add_argument(
         "--corpus",
         type=Path,
         default=PROJECT_ROOT / "data" / "snapshots" / "pubmed" / "rhizonp_domain_v1" / "corpus.json",
-        help="Corpus snapshot to ingest before export (offline).",
     )
     parser.add_argument(
         "--blind-output",
         type=Path,
         default=PROJECT_ROOT / "data" / "eval" / "annotation" / "blind_reviewer_sheet.csv",
-        help="Blind reviewer CSV without retrieval provenance.",
     )
     parser.add_argument(
         "--provenance-output",
         type=Path,
         default=PROJECT_ROOT / "data" / "eval" / "annotation" / "provenance_sidecar.csv",
-        help="Provenance sidecar CSV with system/rank/score.",
+    )
+    parser.add_argument(
+        "--qc-audit-output",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "eval" / "annotation" / "qc_audit_mapping.csv",
     )
     parser.add_argument(
         "--pool-depth",
         type=int,
         default=20,
-        help="Top-k depth per retrieval system before union.",
+    )
+    parser.add_argument(
+        "--shuffle-seed",
+        type=int,
+        default=20260705,
+        help="Deterministic seed for within-query blind ordering.",
+    )
+    parser.add_argument(
+        "--qc-fraction",
+        type=float,
+        default=0.0,
+        help="Optional fraction of primary items to duplicate for QC (0 disables).",
+    )
+    parser.add_argument(
+        "--qc-seed",
+        type=int,
+        default=20260705,
+        help="Deterministic seed for QC duplicate selection.",
     )
     parser.add_argument(
         "--legacy-output",
         type=Path,
         default=None,
-        help="Optional legacy single-system CSV export path.",
-    )
-    parser.add_argument(
-        "--legacy-system",
-        default="hybrid_hash",
-        help="Legacy export system label when --legacy-output is set.",
-    )
-    parser.add_argument(
-        "--legacy-mode",
-        default="hybrid",
-        help="Legacy export retrieval mode when --legacy-output is set.",
     )
     return parser.parse_args()
 
@@ -67,9 +74,11 @@ def main() -> None:
     from rhizonp.evaluation.annotation import (
         export_annotation_candidates,
         export_pooled_annotation_candidates,
+        prepare_blind_annotation_export,
         write_annotation_export_csv,
         write_blind_reviewer_sheet,
         write_provenance_sidecar,
+        write_qc_audit_mapping,
     )
     from rhizonp.evaluation.real_benchmark import load_real_benchmark
     from rhizonp.ingestion.corpus import load_corpus_snapshot, normalized_records_from_snapshot
@@ -96,22 +105,29 @@ def main() -> None:
             pool_depth=args.pool_depth,
         )
 
-    blind_path = write_blind_reviewer_sheet(args.blind_output, pooled)
-    provenance_path = write_provenance_sidecar(args.provenance_output, pooled)
-    print(
-        f"Exported {len(pooled)} pooled candidates -> blind={blind_path}, "
-        f"provenance={provenance_path}"
+    export_bundle = prepare_blind_annotation_export(
+        pooled,
+        shuffle_seed=args.shuffle_seed,
+        qc_fraction=args.qc_fraction,
+        qc_seed=args.qc_seed,
     )
+    blind_path = write_blind_reviewer_sheet(args.blind_output, export_bundle)
+    provenance_path = write_provenance_sidecar(args.provenance_output, export_bundle)
+    qc_path = write_qc_audit_mapping(args.qc_audit_output, export_bundle.qc_mappings)
+
+    print(
+        f"Exported {len(export_bundle.items)} blind items "
+        f"({len(pooled)} primary pooled candidates"
+        f"{f', {len(export_bundle.qc_mappings)} QC duplicates' if export_bundle.qc_mappings else ''})"
+    )
+    print(f"Blind sheet -> {blind_path}")
+    print(f"Provenance sidecar -> {provenance_path}")
+    if qc_path is not None:
+        print(f"QC audit mapping -> {qc_path} (not for reviewers)")
 
     if args.legacy_output is not None:
         with session_scope(session_factory) as session:
-            legacy = export_annotation_candidates(
-                session,
-                benchmark,
-                retrieval_system=args.legacy_system,
-                retrieval_mode=args.legacy_mode,
-                top_k=args.pool_depth,
-            )
+            legacy = export_annotation_candidates(session, benchmark, top_k=args.pool_depth)
         legacy_path = write_annotation_export_csv(args.legacy_output, legacy)
         print(f"Legacy single-system export -> {legacy_path}")
 

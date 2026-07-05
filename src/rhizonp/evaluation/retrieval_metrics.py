@@ -48,6 +48,15 @@ def ndcg_at_k(relevant: set[str], retrieved: Sequence[str], k: int) -> float:
     return dcg(retrieved[:k]) / ideal_dcg
 
 
+def judged_at_k(judged_pmids: set[str], retrieved: Sequence[str], k: int) -> float:
+    """Fraction of top-k retrieved PMIDs that have human judgments."""
+    top_k = retrieved[:k]
+    if not top_k:
+        return 0.0
+    judged_hits = sum(1 for pmid in top_k if pmid in judged_pmids)
+    return judged_hits / len(top_k)
+
+
 def aggregate_metric(values: Iterable[float]) -> float:
     values_list = list(values)
     if not values_list:

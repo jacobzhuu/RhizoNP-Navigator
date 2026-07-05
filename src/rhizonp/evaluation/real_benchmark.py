@@ -19,6 +19,7 @@ from rhizonp.evaluation.retrieval_metrics import (
     graded_mrr_at_k,
     graded_ndcg_at_k,
     graded_recall_at_k,
+    judged_at_k,
     strict_graded_mrr_at_k,
     strict_graded_recall_at_k,
 )
@@ -192,6 +193,8 @@ def evaluate_real_retrieval_system(
     recalls_10: list[float] = []
     mrrs: list[float] = []
     ndcgs: list[float] = []
+    judged_5: list[float] = []
+    judged_10: list[float] = []
 
     for gold in benchmark.queries:
         if not gold.labels:
@@ -209,6 +212,7 @@ def evaluate_real_retrieval_system(
         paper_hits = aggregate_results_to_papers(results, paper_id_to_pmid)
         retrieved_pmids = [pmid for pmid, _, _ in paper_hits]
         grades = _relevance_grades(gold.labels)
+        judged_pmids = set(grades.keys())
 
         query_metrics = {
             "recall_at_5": graded_recall_at_k(grades, retrieved_pmids, 5),
@@ -218,12 +222,16 @@ def evaluate_real_retrieval_system(
             "strict_recall_at_5": strict_graded_recall_at_k(grades, retrieved_pmids, 5),
             "strict_recall_at_10": strict_graded_recall_at_k(grades, retrieved_pmids, 10),
             "strict_mrr_at_10": strict_graded_mrr_at_k(grades, retrieved_pmids, 10),
+            "judged_at_5": judged_at_k(judged_pmids, retrieved_pmids, 5),
+            "judged_at_10": judged_at_k(judged_pmids, retrieved_pmids, 10),
         }
         per_query[gold.query_id] = query_metrics
         recalls_5.append(query_metrics["recall_at_5"])
         recalls_10.append(query_metrics["recall_at_10"])
         mrrs.append(query_metrics["mrr_at_10"])
         ndcgs.append(query_metrics["ndcg_at_10"])
+        judged_5.append(query_metrics["judged_at_5"])
+        judged_10.append(query_metrics["judged_at_10"])
 
     return SystemRetrievalMetrics(
         system_name=system_name,

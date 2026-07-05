@@ -60,6 +60,11 @@ import-annotation-labels:
 	@test -n "$(REVIEW)"
 	$(PYTHON) -m scripts.import_annotation_labels --review $(REVIEW)
 
+report-qc-consistency:
+	@echo "Usage: make report-qc-consistency REVIEW=path/to/reviewed.csv"
+	@test -n "$(REVIEW)"
+	$(PYTHON) -m scripts.report_qc_consistency --review $(REVIEW)
+
 run-leakage-audit:
 	$(PYTHON) -m scripts.run_leakage_audit
 

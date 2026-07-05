@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
+import random
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +42,7 @@ ANNOTATION_EXPORT_COLUMNS = (
 )
 
 BLIND_REVIEWER_COLUMNS = (
+    "annotation_item_id",
     "query_id",
     "query_text",
     "pmid",
@@ -51,12 +54,22 @@ BLIND_REVIEWER_COLUMNS = (
 )
 
 PROVENANCE_SIDECAR_COLUMNS = (
+    "annotation_item_id",
     "query_id",
     "pmid",
     "retrieval_system",
     "rank",
     "score",
 )
+
+QC_AUDIT_COLUMNS = (
+    "qc_annotation_item_id",
+    "source_annotation_item_id",
+    "query_id",
+    "pmid",
+)
+
+DEFAULT_BLIND_SHUFFLE_SEED = 20260705
 
 
 @dataclass(frozen=True)
@@ -104,6 +117,45 @@ class AnnotationImportResult:
     duplicate_labels: tuple[str, ...]
     unknown_pmids: tuple[str, ...]
     invalid_grades: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class BlindAnnotationItem:
+    annotation_item_id: str
+    query_id: str
+    query_text: str
+    pmid: str
+    title: str
+    abstract: str
+    doi: str | None
+    is_qc_duplicate: bool = False
+
+
+@dataclass(frozen=True)
+class QCAuditMapping:
+    qc_annotation_item_id: str
+    source_annotation_item_id: str
+    query_id: str
+    pmid: str
+
+
+@dataclass(frozen=True)
+class BlindExportBundle:
+    items: tuple[BlindAnnotationItem, ...]
+    candidates: tuple[PooledAnnotationCandidate, ...]
+    item_ids_by_pmid: dict[tuple[str, str], str]
+    qc_mappings: tuple[QCAuditMapping, ...]
+    shuffle_seed: int
+    qc_fraction: float
+
+
+@dataclass(frozen=True)
+class QCConsistencyReport:
+    pair_count: int
+    exact_agreement_count: int
+    exact_agreement_rate: float
+    weighted_agreement_rate: float
+    pairs: tuple[dict[str, Any], ...]
 
 
 def _paper_lookup(session: Session) -> dict[str, Paper]:
@@ -199,6 +251,208 @@ def export_pooled_annotation_candidates(
     return pooled
 
 
+def stable_annotation_item_id(query_id: str, pmid: str) -> str:
+    """Stable ID from query + PMID only; does not encode retrieval rank or score."""
+    digest = hashlib.sha256(f"{query_id}:{pmid}".encode()).hexdigest()[:16]
+    return f"ai_{query_id}_{digest}"
+
+
+def qc_duplicate_annotation_item_id(source_item_id: str, *, qc_seed: int) -> str:
+    digest = hashlib.sha256(f"{source_item_id}:{qc_seed}".encode()).hexdigest()[:12]
+    return f"{source_item_id}_qc_{digest}"
+
+
+def _query_shuffle_seed(base_seed: int, query_id: str) -> int:
+    query_digest = hashlib.sha256(f"{base_seed}:{query_id}".encode()).hexdigest()
+    return int(query_digest[:8], 16)
+
+
+def shuffle_blind_items_within_query(
+    items: Sequence[BlindAnnotationItem],
+    *,
+    shuffle_seed: int,
+) -> list[BlindAnnotationItem]:
+    """Randomize presentation order within each query using a deterministic seed."""
+    grouped: dict[str, list[BlindAnnotationItem]] = {}
+    for item in items:
+        grouped.setdefault(item.query_id, []).append(item)
+
+    shuffled: list[BlindAnnotationItem] = []
+    for query_id in sorted(grouped):
+        bucket = list(grouped[query_id])
+        rng = random.Random(_query_shuffle_seed(shuffle_seed, query_id))
+        rng.shuffle(bucket)
+        shuffled.extend(bucket)
+    return shuffled
+
+
+def apply_qc_duplicates(
+    items: Sequence[BlindAnnotationItem],
+    *,
+    qc_fraction: float,
+    qc_seed: int,
+) -> tuple[list[BlindAnnotationItem], list[QCAuditMapping]]:
+    if qc_fraction <= 0.0:
+        return list(items), []
+
+    primary_items = [item for item in items if not item.is_qc_duplicate]
+    if not primary_items:
+        return list(items), []
+
+    rng = random.Random(qc_seed)
+    count = max(1, round(len(primary_items) * qc_fraction)) if qc_fraction > 0 else 0
+    count = min(count, len(primary_items))
+    selected = rng.sample(primary_items, k=count)
+
+    qc_items: list[BlindAnnotationItem] = []
+    mappings: list[QCAuditMapping] = []
+    for source in selected:
+        qc_id = qc_duplicate_annotation_item_id(source.annotation_item_id, qc_seed=qc_seed)
+        qc_items.append(
+            BlindAnnotationItem(
+                annotation_item_id=qc_id,
+                query_id=source.query_id,
+                query_text=source.query_text,
+                pmid=source.pmid,
+                title=source.title,
+                abstract=source.abstract,
+                doi=source.doi,
+                is_qc_duplicate=True,
+            )
+        )
+        mappings.append(
+            QCAuditMapping(
+                qc_annotation_item_id=qc_id,
+                source_annotation_item_id=source.annotation_item_id,
+                query_id=source.query_id,
+                pmid=source.pmid,
+            )
+        )
+
+    combined = list(items) + qc_items
+    return combined, mappings
+
+
+def prepare_blind_annotation_export(
+    candidates: Sequence[PooledAnnotationCandidate],
+    *,
+    shuffle_seed: int = DEFAULT_BLIND_SHUFFLE_SEED,
+    qc_fraction: float = 0.0,
+    qc_seed: int = DEFAULT_BLIND_SHUFFLE_SEED,
+) -> BlindExportBundle:
+    primary_items = [
+        BlindAnnotationItem(
+            annotation_item_id=stable_annotation_item_id(candidate.query_id, candidate.pmid),
+            query_id=candidate.query_id,
+            query_text=candidate.query_text,
+            pmid=candidate.pmid,
+            title=candidate.title,
+            abstract=candidate.abstract,
+            doi=candidate.doi,
+            is_qc_duplicate=False,
+        )
+        for candidate in candidates
+    ]
+    shuffled = shuffle_blind_items_within_query(primary_items, shuffle_seed=shuffle_seed)
+    with_qc, qc_mappings = apply_qc_duplicates(
+        shuffled,
+        qc_fraction=qc_fraction,
+        qc_seed=qc_seed,
+    )
+    reshuffled = shuffle_blind_items_within_query(with_qc, shuffle_seed=shuffle_seed)
+    item_ids = {
+        (item.query_id, item.pmid): item.annotation_item_id
+        for item in reshuffled
+        if not item.is_qc_duplicate
+    }
+    return BlindExportBundle(
+        items=tuple(reshuffled),
+        candidates=tuple(candidates),
+        item_ids_by_pmid=item_ids,
+        qc_mappings=tuple(qc_mappings),
+        shuffle_seed=shuffle_seed,
+        qc_fraction=qc_fraction,
+    )
+
+
+def blind_items_to_rows(items: Sequence[BlindAnnotationItem]) -> list[dict[str, Any]]:
+    return [
+        {
+            "annotation_item_id": item.annotation_item_id,
+            "query_id": item.query_id,
+            "query_text": item.query_text,
+            "pmid": item.pmid,
+            "title": item.title,
+            "abstract": item.abstract,
+            "doi": item.doi or "",
+            "grade": "",
+            "notes": "",
+        }
+        for item in items
+    ]
+
+
+def qc_mappings_to_rows(mappings: Sequence[QCAuditMapping]) -> list[dict[str, Any]]:
+    return [
+        {
+            "qc_annotation_item_id": mapping.qc_annotation_item_id,
+            "source_annotation_item_id": mapping.source_annotation_item_id,
+            "query_id": mapping.query_id,
+            "pmid": mapping.pmid,
+        }
+        for mapping in mappings
+    ]
+
+
+def report_qc_consistency(
+    review_rows: Sequence[Mapping[str, Any]],
+    qc_mappings: Sequence[QCAuditMapping],
+) -> QCConsistencyReport:
+    grades_by_item: dict[str, int] = {}
+    for row in review_rows:
+        parsed = _parse_review_row(row)
+        if parsed is None:
+            continue
+        item_id = str(row.get("annotation_item_id") or "")
+        if not item_id:
+            continue
+        grades_by_item[item_id] = parsed[2]
+
+    pair_reports: list[dict[str, Any]] = []
+    exact_agreements = 0
+    weighted_total = 0.0
+    for mapping in qc_mappings:
+        source_grade = grades_by_item.get(mapping.source_annotation_item_id)
+        qc_grade = grades_by_item.get(mapping.qc_annotation_item_id)
+        if source_grade is None or qc_grade is None:
+            continue
+        exact = source_grade == qc_grade
+        if exact:
+            exact_agreements += 1
+        weighted_total += 1.0 - (abs(source_grade - qc_grade) / 2.0)
+        pair_reports.append(
+            {
+                "qc_annotation_item_id": mapping.qc_annotation_item_id,
+                "source_annotation_item_id": mapping.source_annotation_item_id,
+                "query_id": mapping.query_id,
+                "pmid": mapping.pmid,
+                "source_grade": source_grade,
+                "qc_grade": qc_grade,
+                "exact_agreement": exact,
+                "weighted_agreement": 1.0 - (abs(source_grade - qc_grade) / 2.0),
+            }
+        )
+
+    pair_count = len(pair_reports)
+    return QCConsistencyReport(
+        pair_count=pair_count,
+        exact_agreement_count=exact_agreements,
+        exact_agreement_rate=(exact_agreements / pair_count) if pair_count else 0.0,
+        weighted_agreement_rate=(weighted_total / pair_count) if pair_count else 0.0,
+        pairs=tuple(pair_reports),
+    )
+
+
 def export_annotation_candidates(
     session: Session,
     benchmark: RealBenchmarkSpec,
@@ -256,29 +510,39 @@ def export_annotation_candidates(
 def pooled_candidates_to_blind_rows(
     candidates: Sequence[PooledAnnotationCandidate],
 ) -> list[dict[str, Any]]:
-    return [
-        {
-            "query_id": candidate.query_id,
-            "query_text": candidate.query_text,
-            "pmid": candidate.pmid,
-            "title": candidate.title,
-            "abstract": candidate.abstract,
-            "doi": candidate.doi or "",
-            "grade": "",
-            "notes": "",
-        }
-        for candidate in candidates
-    ]
+    return blind_items_to_rows(
+        [
+            BlindAnnotationItem(
+                annotation_item_id=stable_annotation_item_id(candidate.query_id, candidate.pmid),
+                query_id=candidate.query_id,
+                query_text=candidate.query_text,
+                pmid=candidate.pmid,
+                title=candidate.title,
+                abstract=candidate.abstract,
+                doi=candidate.doi,
+                is_qc_duplicate=False,
+            )
+            for candidate in candidates
+        ]
+    )
 
 
 def pooled_candidates_to_provenance_rows(
     candidates: Sequence[PooledAnnotationCandidate],
+    *,
+    item_ids_by_pmid: Mapping[tuple[str, str], str] | None = None,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for candidate in candidates:
+        item_id = (
+            item_ids_by_pmid.get((candidate.query_id, candidate.pmid))
+            if item_ids_by_pmid is not None
+            else stable_annotation_item_id(candidate.query_id, candidate.pmid)
+        )
         for hit in candidate.provenance_hits:
             rows.append(
                 {
+                    "annotation_item_id": item_id,
                     "query_id": candidate.query_id,
                     "pmid": candidate.pmid,
                     "retrieval_system": hit.retrieval_system,
@@ -291,11 +555,26 @@ def pooled_candidates_to_provenance_rows(
 
 def write_blind_reviewer_sheet(
     path: str | Path,
-    candidates: Sequence[PooledAnnotationCandidate],
+    export: BlindExportBundle | Sequence[BlindAnnotationItem] | Sequence[PooledAnnotationCandidate],
+    *,
+    shuffle_seed: int = DEFAULT_BLIND_SHUFFLE_SEED,
+    qc_fraction: float = 0.0,
+    qc_seed: int = DEFAULT_BLIND_SHUFFLE_SEED,
 ) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    rows = pooled_candidates_to_blind_rows(candidates)
+    if isinstance(export, BlindExportBundle):
+        rows = blind_items_to_rows(export.items)
+    elif export and isinstance(export[0], BlindAnnotationItem):
+        rows = blind_items_to_rows(export)  # type: ignore[arg-type]
+    else:
+        bundle = prepare_blind_annotation_export(
+            export,  # type: ignore[arg-type]
+            shuffle_seed=shuffle_seed,
+            qc_fraction=qc_fraction,
+            qc_seed=qc_seed,
+        )
+        rows = blind_items_to_rows(bundle.items)
     with output.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(BLIND_REVIEWER_COLUMNS))
         writer.writeheader()
@@ -303,13 +582,34 @@ def write_blind_reviewer_sheet(
     return output
 
 
+def write_qc_audit_mapping(
+    path: str | Path,
+    mappings: Sequence[QCAuditMapping],
+) -> Path | None:
+    if not mappings:
+        return None
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(QC_AUDIT_COLUMNS))
+        writer.writeheader()
+        writer.writerows(qc_mappings_to_rows(mappings))
+    return output
+
+
 def write_provenance_sidecar(
     path: str | Path,
-    candidates: Sequence[PooledAnnotationCandidate],
+    candidates: Sequence[PooledAnnotationCandidate] | BlindExportBundle,
 ) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    rows = pooled_candidates_to_provenance_rows(candidates)
+    if isinstance(candidates, BlindExportBundle):
+        rows = pooled_candidates_to_provenance_rows(
+            candidates.candidates,
+            item_ids_by_pmid=candidates.item_ids_by_pmid,
+        )
+    else:
+        rows = pooled_candidates_to_provenance_rows(candidates)
     with output.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(PROVENANCE_SIDECAR_COLUMNS))
         writer.writeheader()
@@ -362,6 +662,21 @@ def write_annotation_export_json(path: str | Path, candidates: Sequence[Annotati
     }
     output.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return output
+
+
+def filter_qc_rows_for_import(
+    review_rows: Sequence[Mapping[str, Any]],
+    qc_mappings: Sequence[QCAuditMapping],
+) -> list[dict[str, Any]]:
+    """Remove QC duplicate rows before benchmark import (one label per query_id + pmid)."""
+    qc_ids = {mapping.qc_annotation_item_id for mapping in qc_mappings}
+    filtered: list[dict[str, Any]] = []
+    for row in review_rows:
+        item_id = str(row.get("annotation_item_id") or "")
+        if item_id and item_id in qc_ids:
+            continue
+        filtered.append(dict(row))
+    return filtered
 
 
 def _known_pmids(session: Session) -> set[str]:
