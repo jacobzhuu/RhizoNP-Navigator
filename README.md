@@ -67,7 +67,7 @@ Core packages live under `src/rhizonp/` (`domain`, `literature`, `taxonomy`, `li
 | 2 | **Engineering complete / empirical validation pending** | Literature chunking, BM25/dense/hybrid retrieval, provenance trace, bounded PubMed corpus workflow, annotation export |
 | 3 | Complete (MVP) | Taxonomy normalization, distance, evidence tier, overclaim prevention |
 | 4 | Complete (MVP) | Fixture-backed natural-product candidate linking |
-| 5 | Bridge implemented | Own-data CSV + literature retrieval bridge + NP linking (DB-backed validation limited) |
+| 5 | Bridge implemented / bounded PubMed validated | Own-data CSV + literature retrieval bridge + NP linking; real bounded PubMed corpus integration validated (`make validate-real-pubmed-bridge`); real applicant omics validation pending |
 | 6 | Complete (MVP) | Deterministic grounded writer; optional LLM path falls back offline |
 | 7 | Complete (MVP) | Offline end-to-end evaluation suite |
 | 8 | Complete (MVP) | `make smoke`, `make demo`, documentation |
@@ -91,6 +91,7 @@ Run locally with deterministic fixtures — no network required:
 ```bash
 make smoke    # quick 3-case validation
 make demo     # full demo outputs
+make validate-real-pubmed-bridge  # bounded PubMed own-data bridge validation (local corpus snapshot)
 ```
 
 Runtime demo outputs are **regenerated locally** and gitignored under `data/output/`. Tracked public fixtures live under `data/fixtures/`.

@@ -3,11 +3,11 @@
 ## Current MVP scope
 
 - Natural product records come from **local synthetic fixtures**, not NPAtlas, MIBiG, Crossref, or OpenAlex.
-- Literature retrieval uses synthetic and **bounded** PubMed corpus fixtures; production-scale indexing is not complete.
+- Literature retrieval uses synthetic fixtures for offline demos and a **bounded real PubMed corpus** (`rhizonp_domain_v1`, ~149 records) for DB-backed integration validation; this is not production-scale or PubMed-wide indexing.
 - Dense retrieval defaults to deterministic hashing embeddings unless optional model-backed providers are configured.
 - LLM writer mode is optional and falls back to deterministic synthesis in offline/demo paths.
 - **Phase 2 empirical human labeling** for the 543-item pooled annotation task remains **pending**. No real-benchmark retrieval quality claims are made until labels are imported.
-- Own-data pipeline literature retrieval requires an enabled flag and DB-backed corpus session; default offline runs report `DISABLED`/`RETRIEVAL_UNAVAILABLE` rather than fabricating papers.
+- Own-data pipeline literature retrieval requires an enabled flag and DB-backed corpus session; default offline runs report `DISABLED`/`RETRIEVAL_UNAVAILABLE` rather than fabricating papers. Phase 5.2 validates the bridge against the real bounded PubMed snapshot when ingested; this does not validate retrieval relevance or real applicant omics.
 - Real applicant 16S/LC-MS validation and PostgreSQL persistence of imported associations remain **pending**.
 
 ## What this system is not
