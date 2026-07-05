@@ -7,6 +7,8 @@
 - Dense retrieval defaults to deterministic hashing embeddings unless optional model-backed providers are configured.
 - LLM writer mode is optional and falls back to deterministic synthesis in offline/demo paths.
 - **Phase 2 empirical human labeling** for the 543-item pooled annotation task remains **pending**. No real-benchmark retrieval quality claims are made until labels are imported.
+- Own-data pipeline literature retrieval requires an enabled flag and DB-backed corpus session; default offline runs report `DISABLED`/`RETRIEVAL_UNAVAILABLE` rather than fabricating papers.
+- Real applicant 16S/LC-MS validation and PostgreSQL persistence of imported associations remain **pending**.
 
 ## What this system is not
 

@@ -7,7 +7,7 @@
 | Phase 2 | **ENGINEERING_COMPLETE / EMPIRICAL_VALIDATION_PENDING** | Retrieval stack implemented; 543-item human labeling pending |
 | Phase 3 | COMPLETE (MVP) | Taxonomy normalization, distance, evidence tier, overclaim prevention |
 | Phase 4 | COMPLETE (MVP) | Fixture-backed natural product candidate linking |
-| Phase 5 | COMPLETE (MVP) | Own-data CSV ingestion and candidate export |
+| Phase 5 | **OWN-DATA-TO-LITERATURE BRIDGE IMPLEMENTED** | CSV ingest + literature retrieval bridge + NP linking; DB-backed validation limited; real own-data validation pending |
 | Phase 6 | COMPLETE (MVP) | Deterministic grounded writer with abstention/conflict states |
 | Phase 7 | COMPLETE (MVP) | Offline end-to-end evaluation with JSON/Markdown reports |
 | Phase 8 | COMPLETE (MVP) | `make smoke`, `make demo`, docs, offline demo cases |

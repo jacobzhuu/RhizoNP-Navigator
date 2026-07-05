@@ -31,6 +31,9 @@ RhizoNP Navigator helps connect those **internal observations** to **external li
 Own omics CSV / demo fixtures
         │
         ▼
+Literature query bridge + retrieval (Phase 5.1, optional DB-backed)
+        │
+        ▼
 Taxonomy normalization + evidence grading (Phase 3)
         │
         ▼
@@ -64,7 +67,7 @@ Core packages live under `src/rhizonp/` (`domain`, `literature`, `taxonomy`, `li
 | 2 | **Engineering complete / empirical validation pending** | Literature chunking, BM25/dense/hybrid retrieval, provenance trace, bounded PubMed corpus workflow, annotation export |
 | 3 | Complete (MVP) | Taxonomy normalization, distance, evidence tier, overclaim prevention |
 | 4 | Complete (MVP) | Fixture-backed natural-product candidate linking |
-| 5 | Complete (MVP) | Own-data CSV ingestion (`taxa.csv`, `metabolites.csv`, `associations.csv`) |
+| 5 | Bridge implemented | Own-data CSV + literature retrieval bridge + NP linking (DB-backed validation limited) |
 | 6 | Complete (MVP) | Deterministic grounded writer; optional LLM path falls back offline |
 | 7 | Complete (MVP) | Offline end-to-end evaluation suite |
 | 8 | Complete (MVP) | `make smoke`, `make demo`, documentation |
@@ -83,7 +86,7 @@ Run locally with deterministic fixtures — no network required:
 |---|---|---|
 | **1. Literature retrieval** | `data/output/demo/case1_*` | Rhizosphere / plant–microbe query with chunk → paper provenance trace |
 | **2. Taxonomy safety** | `data/output/demo/case2_*` | Genus-level 16S observation vs strain-level literature; overclaim warnings |
-| **3. Own-data-to-literature** | `data/output/demo/case3_*` | Synthetic 16S/LC-MS associations → ranked NP candidate matrix (JSON + CSV) |
+| **3. Own-data-to-literature** | `data/output/demo/case3_*` | Synthetic associations → literature retrieval (bounded fixture corpus when enabled) + NP candidate matrix |
 
 ```bash
 make smoke    # quick 3-case validation

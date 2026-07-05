@@ -6,6 +6,9 @@ RhizoNP Navigator is an evidence-grounded AI-for-Science pipeline — **not** a 
 Own omics CSV / demo fixtures
         │
         ▼
+Query construction + literature retrieval bridge (Phase 5.1)
+        │
+        ▼
 Taxonomy normalization + evidence grading (Phase 3)
         │
         ▼
@@ -32,7 +35,7 @@ Evaluation + demo package (Phase 7/8)
 | `rhizonp.literature` | Chunking, retrieval, provenance |
 | `rhizonp.taxonomy` | Normalization, distance, evidence tier policy |
 | `rhizonp.linking` | Natural product candidate matrix |
-| `rhizonp.omics` | Own-data CSV ingestion and pipeline |
+| `rhizonp.omics` | Own-data CSV ingestion, literature query bridge, pipeline |
 | `rhizonp.writer` | Deterministic grounded answer synthesis |
 | `rhizonp.evaluation` | Retrieval and end-to-end metrics |
 | `rhizonp.demo` | Offline smoke/demo runner |
