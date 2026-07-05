@@ -174,8 +174,28 @@ ensure_database_url() {
     export DATABASE_URL="${current}"
     return 0
   fi
-  export DATABASE_URL="${DEFAULT_DATABASE_URL}"
-  warn "DATABASE_URL unset; using Docker Compose default for this session."
+
+  local pg_user pg_db pg_password pg_host pg_port
+  pg_user="$(read_env_value POSTGRES_USER)"
+  pg_db="$(read_env_value POSTGRES_DB)"
+  pg_password="$(read_env_value POSTGRES_PASSWORD)"
+  pg_host="$(read_env_value POSTGRES_HOST)"
+  pg_port="$(read_env_value POSTGRES_PORT)"
+
+  if [[ -z "${pg_user}" && -z "${pg_db}" && -z "${pg_password}" && -z "${pg_host}" && -z "${pg_port}" ]]; then
+    export DATABASE_URL="${DEFAULT_DATABASE_URL}"
+    warn "DATABASE_URL unset; using Docker Compose default (${DEFAULT_DATABASE_URL})."
+    return 0
+  fi
+
+  pg_user="${pg_user:-rhizonp}"
+  pg_db="${pg_db:-rhizonp}"
+  pg_password="${pg_password:-rhizonp_dev}"
+  pg_host="${pg_host:-localhost}"
+  pg_port="${pg_port:-5432}"
+
+  export DATABASE_URL="postgresql://${pg_user}:${pg_password}@${pg_host}:${pg_port}/${pg_db}"
+  warn "DATABASE_URL unset; derived from .env POSTGRES_* → postgresql://${pg_user}@${pg_host}:${pg_port}/${pg_db}"
 }
 
 docker_available() {
@@ -194,6 +214,12 @@ setup_db() {
   fi
 
   ensure_database_url
+  local pg_user pg_db
+  pg_user="$(read_env_value POSTGRES_USER)"
+  pg_db="$(read_env_value POSTGRES_DB)"
+  pg_user="${pg_user:-rhizonp}"
+  pg_db="${pg_db:-rhizonp}"
+
   step "starting PostgreSQL (docker compose)"
   (
     cd "${ROOT}"
@@ -208,7 +234,7 @@ setup_db() {
   step "waiting for PostgreSQL"
   local ready=0
   for _ in $(seq 1 30); do
-    if docker compose -f "${ROOT}/docker-compose.yml" exec -T postgres pg_isready -U rhizonp -d rhizonp >/dev/null 2>&1; then
+    if docker compose -f "${ROOT}/docker-compose.yml" exec -T postgres pg_isready -U "${pg_user}" -d "${pg_db}" >/dev/null 2>&1; then
       ready=1
       break
     fi
