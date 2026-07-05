@@ -27,8 +27,11 @@ from rhizonp.storage.repositories import (
 from .schemas import (
     CandidateLinkResponse,
     CompoundResponse,
+    EvidenceGradingRequest,
+    EvidenceGradingResponse,
     EvidenceItemResponse,
     HealthResponse,
+    NormalizedTaxonResponse,
     OmicsAssociationResponse,
     SearchRequest,
     SearchResponse,
@@ -177,7 +180,9 @@ def create_app() -> FastAPI:
     api = FastAPI(
         title="RhizoNP Navigator",
         version="0.1.0",
-        description="Phase 1 entity API and Phase 2 local literature provenance search.",
+        description=(
+            "Phase 1 entity API, Phase 2 literature search, Phase 3 taxonomy-aware evidence grading."
+        ),
     )
 
     @api.get("/api/v1/health", response_model=HealthResponse)
@@ -235,6 +240,41 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset_name}")
         associations = OmicsAssociationRepository(session).list_for_dataset(dataset.dataset_id)
         return [_omics_association_response(association) for association in associations]
+
+    @api.post("/api/v1/taxonomy/grade", response_model=EvidenceGradingResponse)
+    def grade_taxonomy_evidence(request: EvidenceGradingRequest) -> EvidenceGradingResponse:
+        from rhizonp.taxonomy.grading import grade_evidence
+
+        result = grade_evidence(
+            request.query_taxon,
+            request.literature_taxon,
+            observation_method=request.observation_method,
+        )
+
+        def _normalized_response(taxon: object) -> NormalizedTaxonResponse:
+            from rhizonp.taxonomy.models import NormalizedTaxon
+
+            assert isinstance(taxon, NormalizedTaxon)
+            return NormalizedTaxonResponse(
+                canonical_name=taxon.canonical_name,
+                rank=taxon.rank,
+                strain=taxon.strain,
+                species=taxon.species,
+                genus=taxon.genus,
+                normalization_status=taxon.normalization_status,
+                confidence=taxon.confidence,
+            )
+
+        return EvidenceGradingResponse(
+            query_taxon=_normalized_response(result.query_taxon),
+            literature_taxon=_normalized_response(result.literature_taxon),
+            taxonomy_distance=result.taxonomy_distance.value,
+            evidence_tier=result.evidence_tier.value,
+            warnings=result.warnings,
+            limitations=result.limitations,
+            max_supported_claim=result.max_supported_claim,
+            provenance=result.provenance,
+        )
 
     @api.post("/api/v1/search", response_model=SearchResponse)
     def search_literature(

@@ -131,3 +131,30 @@ class SearchResponse(BaseModel):
     run_id: uuid.UUID
     retrieval_mode: str
     results: list[SearchResultResponse]
+
+
+class NormalizedTaxonResponse(BaseModel):
+    canonical_name: str
+    rank: str | None
+    strain: str | None
+    species: str | None
+    genus: str | None
+    normalization_status: str
+    confidence: float
+
+
+class EvidenceGradingRequest(BaseModel):
+    query_taxon: str
+    literature_taxon: str
+    observation_method: str | None = None
+
+
+class EvidenceGradingResponse(BaseModel):
+    query_taxon: NormalizedTaxonResponse
+    literature_taxon: NormalizedTaxonResponse
+    taxonomy_distance: str
+    evidence_tier: str
+    warnings: list[str]
+    limitations: list[str]
+    max_supported_claim: str
+    provenance: dict[str, Any]

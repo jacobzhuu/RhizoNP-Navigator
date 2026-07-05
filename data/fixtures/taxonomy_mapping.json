@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "fixture": true,
+    "description": "Deterministic local taxonomy normalization mapping for offline tests and demos."
+  },
+  "aliases": {
+    "streptomyces": {
+      "canonical_name": "Streptomyces",
+      "rank": "genus",
+      "genus": "Streptomyces",
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
+    "streptomyces sp.": {
+      "canonical_name": "Streptomyces",
+      "rank": "genus",
+      "genus": "Streptomyces",
+      "normalization_status": "resolved_genus_only",
+      "confidence": 0.8
+    },
+    "s. hygroscopicus": {
+      "canonical_name": "Streptomyces hygroscopicus",
+      "rank": "species",
+      "species": "Streptomyces hygroscopicus",
+      "genus": "Streptomyces",
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
+    "streptomyces hygroscopicus": {
+      "canonical_name": "Streptomyces hygroscopicus",
+      "rank": "species",
+      "species": "Streptomyces hygroscopicus",
+      "genus": "Streptomyces",
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
+    "streptomyces hygroscopicus os-2": {
+      "canonical_name": "Streptomyces hygroscopicus OS-2",
+      "rank": "strain",
+      "strain": "OS-2",
+      "species": "Streptomyces hygroscopicus",
+      "genus": "Streptomyces",
+      "external_ids": {
+        "fixture_strain_id": "STRAIN_OS2"
+      },
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
+    "bacillus subtilis 168": {
+      "canonical_name": "Bacillus subtilis 168",
+      "rank": "strain",
+      "strain": "168",
+      "species": "Bacillus subtilis",
+      "genus": "Bacillus",
+      "family": "Bacillaceae",
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
+    "bacillus subtilis": {
+      "canonical_name": "Bacillus subtilis",
+      "rank": "species",
+      "species": "Bacillus subtilis",
+      "genus": "Bacillus",
+      "family": "Bacillaceae",
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    }
+  }
+}
