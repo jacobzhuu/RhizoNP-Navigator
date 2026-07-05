@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "corpus_id": "real_bounded_sample",
+    "corpus_name": "real_bounded_sample",
+    "description": "Offline sample with one real-shaped PubMed record for integration tests.",
+    "fetched_at": "2026-07-05T00:00:00+00:00",
+    "source_name": "pubmed_eutils",
+    "metadata_only": true,
+    "full_text": false,
+    "record_count": 2
+  },
+  "records": [
+    {
+      "source_id": "42348782",
+      "source_name": "pubmed_eutils",
+      "title": "Rhizosphere Streptomyces secondary metabolites and plant biocontrol",
+      "abstract": "Streptomyces strains from the rhizosphere produce secondary metabolites relevant to plant microbe interactions.",
+      "sections": {},
+      "doi": "10.1021/acs.jafc.testsample",
+      "pmid": "42348782",
+      "pmcid": null,
+      "year": 2024,
+      "journal": "Journal of Agricultural and Food Chemistry",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/42348782/",
+      "license": "metadata_only",
+      "metadata": {
+        "source_type": "paper"
+      },
+      "provenance": {
+        "source_name": "pubmed_eutils",
+        "source_id": "42348782",
+        "pmid": "42348782",
+        "doi": "10.1021/acs.jafc.testsample",
+        "fixture": false,
+        "not_real_literature": false,
+        "metadata_only": true,
+        "full_text": false,
+        "api": "NCBI E-utilities"
+      }
+    },
+    {
+      "source_id": "fixture_001",
+      "source_name": "synthetic_fixture",
+      "title": "Synthetic fixture paper",
+      "abstract": "Fixture abstract.",
+      "sections": {},
+      "doi": "10.0000/rhizonp.fixture.lit.001",
+      "pmid": null,
+      "year": 2026,
+      "journal": "fixture",
+      "source_url": "https://example.org/rhizonp/fixture-literature-001",
+      "license": "test-only",
+      "metadata": {},
+      "provenance": {
+        "source_name": "synthetic_fixture",
+        "fixture": true,
+        "not_real_literature": true
+      }
+    }
+  ]
+}
