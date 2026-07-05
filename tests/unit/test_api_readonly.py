@@ -76,6 +76,44 @@ def test_health_endpoint_does_not_require_database_url() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_taxonomy_grade_endpoint_backward_compatible_without_source() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/taxonomy/grade",
+        json={
+            "query_taxon": "Streptomyces",
+            "literature_taxon": "Streptomyces",
+            "observation_method": "synthetic_16S_fixture",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["taxonomy_distance"] == "SAME_GENUS"
+    assert payload["evidence_tier"] == "C"
+    assert "provenance" in payload
+
+
+def test_taxonomy_grade_endpoint_accepts_taxonomy_source() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/taxonomy/grade",
+        json={
+            "query_taxon": "Streptomyces",
+            "literature_taxon": "Streptomyces hygroscopicus OS-2",
+            "observation_method": "synthetic_16S_fixture",
+            "taxonomy_source": "fixture",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["taxonomy_distance"] == "SAME_GENUS"
+    assert payload["provenance"]["taxonomy_source"] == "fixture"
+
+
 def test_api_queries_fixture_taxon_and_compound() -> None:
     client = _client_with_phase1_fixture()
 

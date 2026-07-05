@@ -87,6 +87,8 @@ def test_pipeline_auto_uses_npatlas_when_snapshot_present() -> None:
     )
     first = result.association_results[0]
     assert first.candidate_matrix.natural_product_source == "npatlas_bounded"
+    assert first.candidate_matrix.natural_product_source_resolution["requested_source"] == "auto"
+    assert first.candidate_matrix.natural_product_source_resolution["resolved_source"] == "npatlas_bounded"
     assert first.candidate_matrix.rows[0].provenance["source_database"] == "npatlas"
 
 

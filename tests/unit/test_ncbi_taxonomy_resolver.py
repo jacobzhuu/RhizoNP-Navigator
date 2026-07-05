@@ -40,7 +40,10 @@ def test_parse_taxonomy_xml_extracts_taxid_and_lineage() -> None:
 
 
 def test_fixture_mode_unchanged_for_existing_tests() -> None:
-    taxon = normalize_taxon_label("Streptomyces hygroscopicus OS-2")
+    taxon = normalize_taxon_label(
+        "Streptomyces hygroscopicus OS-2",
+        resolver_mode=TaxonomyResolverMode.FIXTURE,
+    )
     assert taxon.rank == "strain"
     assert taxon.strain == "OS-2"
 
@@ -55,6 +58,8 @@ def test_ncbi_cached_resolver_returns_real_taxid() -> None:
     assert taxon.external_ids["ncbi_taxid"] == "1883"
     assert taxon.normalization_status == "resolved_ncbi"
     assert taxon.external_ids["source"] == "ncbi_taxonomy"
+    assert taxon.resolution is not None
+    assert taxon.resolution.resolved_source == "ncbi_bounded"
 
 
 def test_ncbi_cached_genus_to_species_distance() -> None:
@@ -67,6 +72,20 @@ def test_ncbi_cached_genus_to_species_distance() -> None:
     assert distance == TaxonomyDistance.SAME_GENUS
 
 
+def test_auto_mode_prefers_ncbi_for_cached_genus() -> None:
+    if not DEFAULT_NCBI_TAXONOMY_CACHE_PATH.is_file():
+        pytest.skip("Committed NCBI taxonomy cache not present.")
+    taxon = normalize_taxon_label(
+        "Streptomyces",
+        resolver_mode=TaxonomyResolverMode.AUTO,
+    )
+    assert taxon.external_ids.get("ncbi_taxid") == "1883"
+    assert taxon.resolution is not None
+    assert taxon.resolution.requested_source == "auto"
+    assert taxon.resolution.resolved_source == "ncbi_bounded"
+    assert taxon.resolution.cache_id == "ncbi_bounded_v1"
+
+
 def test_auto_mode_falls_back_to_fixture_for_strain_label() -> None:
     if not DEFAULT_NCBI_TAXONOMY_CACHE_PATH.is_file():
         pytest.skip("Committed NCBI taxonomy cache not present.")
@@ -77,6 +96,19 @@ def test_auto_mode_falls_back_to_fixture_for_strain_label() -> None:
     )
     assert auto.rank == fixture.rank
     assert auto.strain == fixture.strain
+    assert auto.resolution is not None
+    assert auto.resolution.resolved_source == "fixture"
+    assert auto.resolution.fallback_reason == "ncbi_cache_miss"
+
+
+def test_auto_mode_synonym_resolves_to_same_taxid() -> None:
+    if not DEFAULT_NCBI_TAXONOMY_CACHE_PATH.is_file():
+        pytest.skip("Committed NCBI taxonomy cache not present.")
+    taxon = normalize_taxon_label(
+        "Chainia",
+        resolver_mode=TaxonomyResolverMode.AUTO,
+    )
+    assert taxon.external_ids.get("ncbi_taxid") == "1883"
 
 
 def test_ncbi_cached_unknown_label_stays_unresolved() -> None:
@@ -84,9 +116,11 @@ def test_ncbi_cached_unknown_label_stays_unresolved() -> None:
         pytest.skip("Committed NCBI taxonomy cache not present.")
     taxon = normalize_taxon_label(
         "UnknownActinobacterium XYZ",
-        resolver_mode=TaxonomyResolverMode.NCBI_CACHED,
+        resolver_mode=TaxonomyResolverMode.NCBI_BOUNDED,
     )
     assert taxon.normalization_status == "unresolved"
+    assert taxon.resolution is not None
+    assert taxon.resolution.fallback_reason == "ncbi_cache_miss"
 
 
 def test_grade_evidence_with_ncbi_cached_preserves_genus_safety() -> None:
@@ -96,17 +130,33 @@ def test_grade_evidence_with_ncbi_cached_preserves_genus_safety() -> None:
         "Streptomyces",
         "Streptomyces hygroscopicus",
         observation_method="synthetic_16S_fixture",
-        resolver_mode=TaxonomyResolverMode.NCBI_CACHED.value,
+        taxonomy_source=TaxonomyResolverMode.NCBI_BOUNDED.value,
     )
     assert result.taxonomy_distance == TaxonomyDistance.SAME_GENUS
     assert result.query_taxon.external_ids["ncbi_taxid"] == "1883"
     assert any("strain-level" in warning.lower() for warning in result.warnings)
+    assert result.provenance["query_resolution"]["resolved_source"] == "ncbi_bounded"
+
+
+def test_auto_fallback_without_cache_is_explicit(tmp_path: Path) -> None:
+    missing_cache = tmp_path / "missing" / "cache.json"
+    taxon = normalize_taxon_label(
+        "Streptomyces",
+        resolver_mode=TaxonomyResolverMode.AUTO,
+        cache_path=missing_cache,
+    )
+    assert taxon.resolution is not None
+    assert taxon.resolution.resolved_source == "fixture"
+    assert taxon.resolution.fallback_reason == "ncbi_bounded_cache_unavailable"
 
 
 @pytest.fixture
 def tiny_cache(tmp_path: Path) -> Path:
     payload = {
-        "metadata": {"real_bounded_ncbi_taxonomy": True},
+        "metadata": {
+            "real_bounded_ncbi_taxonomy": True,
+            "cache_id": "test_cache",
+        },
         "entries": {
             normalize_taxonomy_key("Bacillus subtilis"): {
                 "query_label": "Bacillus subtilis",
