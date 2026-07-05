@@ -96,6 +96,7 @@
 | Alembic 初次运行失败：`ModuleNotFoundError: No module named 'rhizonp'` | 1 | 将 `alembic.ini` 的 `prepend_sys_path` 改为 `src` |
 | `python -m scripts.load_demo_fixtures` 初次失败：src-layout 下脚本无法导入 `rhizonp` | 1 | 脚本用 `pathlib` 将仓库 `src/` 加入 `sys.path` |
 | `docker compose up -d postgres` 失败：Docker daemon 未运行 | 1 | 记录为本地环境 blocker；SQLite migration/fixture 验证已通过 |
+| `git push origin HEAD:main` 失败：无法读取 GitHub HTTPS 用户名 | 1 | 记录为认证 blocker；本地 Phase 1 commit 已创建 |
 
 ## Phase 1 fixture 边界
 
@@ -103,3 +104,20 @@
 - fixture 明确标记 `fixture: true`、`not_real_literature`、`not_real_database_record` 和 `not_real_experiment`。
 - fixture 中的 Streptomyces 只作为 genus-level synthetic signal；候选关系状态为 `PARTIALLY_SUPPORTED`，并保留 genus-level limitation。
 - fixture 中的 `Feature_M123` 保持为 C4 unknown feature，不被转成确证化合物。
+
+## Phase 1 API 查询层
+
+- 新增 `rhizonp.api` 作为 Phase 1 最小只读 API；端点只查询已入库实体，不启动 RAG、Agent、多模态或外部数据接入。
+- API 入口为 `rhizonp.api:app` / `create_app()`；数据库 session 通过 `DATABASE_URL` 懒加载，测试可覆盖 `get_session`。
+- 当前端点覆盖 health、taxon、compound、taxon evidence、taxon candidate links、dataset omics associations。
+- API 测试使用内存 SQLite + synthetic fixture，验证 evidence tier、`PARTIALLY_SUPPORTED`、genus-level limitation 和 `correlation_not_causation` 元数据均可通过 API 返回。
+
+## Phase 1 独立 DoD 审计
+
+- 科研实体 schema：`rhizonp.domain.models` 和 `0001_domain_schema` 覆盖 Paper、Taxon、Compound、NaturalProductRecord、Dataset、OmicsObservation、OmicsAssociation、EvidenceItem、CandidateLink。
+- Repository layer：`rhizonp.storage.repositories` 覆盖实体 CRUD baseline 和领域查询方法。
+- Synthetic fixture ingestion：`data/fixtures/phase1_demo.json` 与 `load_phase1_demo_fixture()` 可导入 1 paper、1 taxon、1 compound、1 NP record、1 dataset、2 observations、1 association、1 evidence item、1 candidate link。
+- 最小只读 API：`rhizonp.api` 可查询 fixture 中的 taxon、compound、evidence、candidate links 和 omics associations。
+- Migration：SQLite `alembic upgrade head` / `current` 通过；PostgreSQL offline SQL 生成通过并包含 JSONB；PostgreSQL 容器实跑未完成，原因是本机 Docker daemon 未运行。
+- Tests：`make check` 通过，27 tests passed，保留原有 23 tests 并新增 4 个 API tests。
+- Cross-platform：路径通过 `pathlib`/env/config；CI matrix 覆盖 Linux/macOS/Windows 轻量检查；实际远端 CI 仍需 push 后验证。

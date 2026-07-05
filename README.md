@@ -23,6 +23,7 @@ my_project/
 ├── src/                     # 项目的主要源码文件
 │   ├── rhizonp/             # 小写 Python 包，承载当前实现
 │   │   ├── config.py
+│   │   ├── api/             # Phase 1 read-only API
 │   │   ├── download_model.py
 │   │   ├── embedding.py
 │   │   ├── get_answer.py
@@ -91,7 +92,7 @@ pip install -r requirements.txt
 开发检查工具：
 
 ```bash
-pip install pytest ruff mypy
+pip install -e ".[dev]"
 make check
 ```
 
@@ -218,7 +219,35 @@ make docker-test
 make db-down
 ```
 
-### 3.6 数据库 Schema
+### 3.6 Phase 1 demo fixture 与只读 API
+
+Phase 1 新增 SQLAlchemy/Alembic 领域模型、synthetic demo fixture 和最小只读 FastAPI 查询层。该 API 只查询已入库实体，不接入真实外部数据源，不执行 RAG/Agent/多模态流程。
+
+先配置 `DATABASE_URL` 并运行 migration：
+
+```bash
+alembic upgrade head
+python -m scripts.load_demo_fixtures
+```
+
+ASGI 入口：
+
+```python
+from rhizonp.api import app
+```
+
+当前只读端点：
+
+- `GET /api/v1/health`
+- `GET /api/v1/taxa/{canonical_name}`
+- `GET /api/v1/compounds/{canonical_name}`
+- `GET /api/v1/taxa/{canonical_name}/evidence`
+- `GET /api/v1/taxa/{canonical_name}/candidate-links`
+- `GET /api/v1/datasets/{dataset_name}/omics-associations`
+
+返回值会保留 `evidence_tier`、`status`、`rationale` 和 provenance 字段。Synthetic fixture 中的候选关系仍是 `PARTIALLY_SUPPORTED`，并明确保留 genus-level limitation；未知 LC-MS feature 仍作为 unknown feature，不会被 API 提升为确证化合物。
+
+### 3.7 数据库 Schema
 
 Phase 1 引入 SQLAlchemy/Alembic 领域模型。当前 baseline 包括 `Paper`、`Taxon`、`Compound`、`NaturalProductRecord`、`Dataset`、`OmicsObservation`、`OmicsAssociation`、`EvidenceItem` 和 `CandidateLink`。
 

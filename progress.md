@@ -28,3 +28,15 @@
 - 修复脚本在 src-layout 下无法导入 `rhizonp` 的问题：`scripts/bootstrap_db.py` 和 `scripts/load_demo_fixtures.py` 使用 `pathlib` 将仓库 `src/` 加入 `sys.path`。
 - 尝试 Docker PostgreSQL migration 验证失败：Docker daemon 未运行，无法拉起 `postgres:16`。
 - 验证结果：`make check` 通过，包含 23 个 pytest；`mypy src` 覆盖 20 个源码文件；SQLite 临时库 Alembic migration 和 fixture CLI 导入均通过。
+- 继续 Phase 1：重新审计迁移方案 Phase 0/1 DoD、当前 Git 状态、源码结构、依赖和测试集合。当前实际分支为 `main...origin/main`，已有提交 `feat: RhizoNP-Navigator initial codebase (Phase 0 + Phase 1)`。
+- 确认 Phase 0 本地 DoD 已满足：`pytest`、`ruff check .`、`mypy src` 已在上轮通过；外部凭据 rotate/revoke、远端 secret scanning/Git 历史清理和 Docker daemon 相关验证仍是外部/环境限制。
+- 确认 Phase 1 已有 schema、migration、repository、synthetic fixture ingestion 和 23 个测试；缺口是迁移方案 DoD 中的 API 查询层与最终独立验收。
+- 安装本地测试所需 `fastapi==0.115.6` 与 `httpx==0.27.2`，并同步到项目依赖/CI。
+- 新增 `rhizonp.api` 只读 FastAPI 层，覆盖 health、taxon、compound、taxon evidence、taxon candidate links、dataset omics associations。
+- 新增 API 测试，使用 SQLite `StaticPool` + synthetic fixture + FastAPI dependency override 验证查询路径和科研边界。
+- 针对新增 API 层的验证结果：`python -m pytest tests/unit/test_api_readonly.py -q` 4 passed；`ruff check src/rhizonp/api tests/unit/test_api_readonly.py` 通过；`mypy src/rhizonp/api tests/unit/test_api_readonly.py` 通过。
+- 完整验证结果：`make check` 通过，包含 secret scan、ruff、mypy 和 27 个 pytest；SQLite Alembic `upgrade head` / `current` 通过；SQLite migrated DB 上 `python -m scripts.load_demo_fixtures` 通过；`docker compose config` 通过；`git diff --check` 通过；`python -m compileall src tests scripts migrations` 通过。
+- PostgreSQL 兼容性补充验证：`DATABASE_URL=postgresql+psycopg2://... alembic upgrade head --sql` 通过，生成 PostgreSQL dialect SQL，包含 UUID、JSONB、索引和唯一约束。
+- PostgreSQL 容器实跑仍失败：`docker compose up -d postgres` 无法连接 Docker daemon (`unix:///Users/zzy/.docker/run/docker.sock`)。
+- 创建 Phase 1 本地提交：`feat: complete phase 1 read-only api`。
+- 尝试推送到 `origin/main` 失败：`fatal: could not read Username for 'https://github.com': Device not configured`。

@@ -31,6 +31,19 @@ Load it into a migrated local database with:
 python -m scripts.load_demo_fixtures
 ```
 
+## Read-Only API
+
+The Phase 1 API lives in `rhizonp.api` and exposes a minimal read-only query layer over the migrated domain tables:
+
+- `GET /api/v1/health`
+- `GET /api/v1/taxa/{canonical_name}`
+- `GET /api/v1/compounds/{canonical_name}`
+- `GET /api/v1/taxa/{canonical_name}/evidence`
+- `GET /api/v1/taxa/{canonical_name}/candidate-links`
+- `GET /api/v1/datasets/{dataset_name}/omics-associations`
+
+The API depends on `DATABASE_URL` for real database sessions. Tests override the session dependency with an in-memory SQLite database loaded from the synthetic fixture, so the query layer is covered without requiring a running PostgreSQL service.
+
 ## Scientific Boundaries
 
 The schema can represent weak, partial, conflicting, and insufficient evidence states. It does not imply that genus-level taxa produce strain-specific natural products, and it does not turn unknown LC-MS features into confirmed compounds.

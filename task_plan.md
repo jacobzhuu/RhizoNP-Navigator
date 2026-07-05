@@ -6,14 +6,14 @@
 
 ## 当前阶段
 
-Phase 0: 工程基线、安全、可复现性与跨平台修复。
+Phase 1: 领域化数据模型与最小只读查询层。
 
 ## 阶段状态
 
 | 阶段 | 状态 | 说明 |
 | --- | --- | --- |
-| Phase 0 | in_progress | 本地工程基线已提交；远端 CI/secret scanning 和凭据轮换仍需外部处理 |
-| Phase 1 | in_progress | SQLAlchemy/Alembic 领域模型 baseline 已开始 |
+| Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
+| Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
 | Phase 2 | pending | 文献证据检索与 provenance |
 | Phase 3 | pending | Hybrid retrieval、reranking、taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
@@ -74,11 +74,15 @@ Phase 0: 工程基线、安全、可复现性与跨平台修复。
 - [x] 增加 repository layer 的领域化查询方法。
 - [x] 增加 synthetic demo fixture 和导入脚本。
 - [x] 增加 fixture import 测试和 CLI 临时 SQLite 验证。
+- [x] 增加最小只读 FastAPI 查询层。
+- [x] 增加 API 查询 synthetic fixture 的单元测试。
 
 ## Phase 1 剩余项
 
+- [x] 运行完整检查并独立复核 Phase 1 DoD。
+- [x] 形成单独 Phase 1 commit。
+- [ ] push 到 `origin/main`；当前环境缺 GitHub HTTPS 凭据，推送失败。
 - [ ] 在 PostgreSQL 容器中实际运行 Alembic migration；当前环境 Docker daemon 未运行。
-- [ ] API 查询尚未实现。
 - [ ] 尚未建立 SQLAlchemy 与旧 PostgreSQL UUID 回查流程的集成边界。
 
 ## 决策原则
