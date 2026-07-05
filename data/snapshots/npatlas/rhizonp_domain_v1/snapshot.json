@@ -1,0 +1,421 @@
+{
+  "metadata": {
+    "snapshot_id": "rhizonp_domain_v1",
+    "source_name": "npatlas_api",
+    "description": "Bounded NPAtlas snapshot for Streptomyces/Bacillus genus compounds.",
+    "record_count": 12,
+    "license": "CC-BY-NC-4.0",
+    "real_bounded_npatlas": true,
+    "not_synthetic_fixture": true
+  },
+  "records": [
+    {
+      "npaid": "NPA000003",
+      "compound_name": "A-503083 F",
+      "producer_taxon": "sp. SANK 62799",
+      "producer_genus": "Streptomyces",
+      "producer_species": "sp. SANK 62799",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000003",
+      "inchikey": "RNRCUOCMUNIOMZ-UHFFFAOYSA-N",
+      "smiles": "COC1C(C(OC1C(C(=O)N)OC2C(C(C=C(O2)C(=O)O)O)O)N3C=CC(=O)NC3=O)OC(=O)N",
+      "mol_formula": "C18H22N4O13",
+      "origin_reference": {
+        "doi": "10.7164/antibiotics.57.639",
+        "pmid": 15638324,
+        "title": "A-503083 A, B, E and F, novel inhibitors of bacterial translocase i, produced by Streptomyces sp. SANK 62799",
+        "journal": "Journal of Antibiotics",
+        "year": 2004
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "sp. SANK 62799",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000003",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000024",
+      "compound_name": "3097-B1",
+      "producer_taxon": "sp. strain SA3097",
+      "producer_genus": "Streptomyces",
+      "producer_species": "sp. strain SA3097",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000024",
+      "inchikey": "HOTSKSXDTYBKBM-YDHLFZDLSA-N",
+      "smiles": "CCC(=O)O[C@@H]1[C@H](CN[C@H]1CC2=CC=C(C=C2)OC)O",
+      "mol_formula": "C15H21NO4",
+      "origin_reference": {
+        "doi": "10.7164/antibiotics.46.1300",
+        "pmid": 8407592,
+        "title": "Anisomycin and new congeners active against human tumor cell lines",
+        "journal": "Journal of Antibiotics",
+        "year": 1993
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "sp. strain SA3097",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000024",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000029",
+      "compound_name": "Daryamide C",
+      "producer_taxon": "sp. strain CNQ-085",
+      "producer_genus": "Streptomyces",
+      "producer_species": "sp. strain CNQ-085",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000029",
+      "inchikey": "ZQYBDDWUEWCXIM-GGWOSOGESA-N",
+      "smiles": "CC(C)/C=C/C=C/C(=O)NC1=CC(C=CC1=O)(CCC(=O)N)O",
+      "mol_formula": "C17H22N2O4",
+      "origin_reference": {
+        "doi": "10.1021/np0603828",
+        "pmid": 17190455,
+        "title": "Daryamides A-C, weakly cytotoxic polyketides from a marine-derived actinomycete of the genus Streptomyces strain CNQ-085",
+        "journal": "Journal of Natural Products",
+        "year": 2006
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "sp. strain CNQ-085",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000029",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000037",
+      "compound_name": "Lajollamycin",
+      "producer_taxon": "nodosus (NPS007994)",
+      "producer_genus": "Streptomyces",
+      "producer_species": "nodosus (NPS007994)",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000037",
+      "inchikey": "NSTDWVVCICGULY-RLJWGYAPSA-N",
+      "smiles": "CC1C(=O)N(C2(C1(C(CC(C)C(/C=C/C=C/CNC(=O)C(C)(C)C(/C(=C\\C=C/C=C/C(=C(\\C)/[N+](=O)[O-])/C)/C)O)O)OC)O)C(OC2=O)C)C",
+      "mol_formula": "C36H53N3O10",
+      "origin_reference": {
+        "doi": "10.1021/np049725x",
+        "pmid": 15730252,
+        "title": "Lajollamycin, a nitro-tetraene spiro-β-lactone-γ-lactam antibiotic from the marine actinomycete Streptomyces nodosus",
+        "journal": "Journal of Natural Products",
+        "year": 2005
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "nodosus (NPS007994)",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000037",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000045",
+      "compound_name": "Z-4-2",
+      "producer_taxon": "djakartensis NW35",
+      "producer_genus": "Streptomyces",
+      "producer_species": "djakartensis NW35",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000045",
+      "inchikey": "DZTCHAJNDPAYIL-UHFFFAOYSA-N",
+      "smiles": "COC1=C(C2=CC=CC=C2C(=C1)O)N=O",
+      "mol_formula": "C11H9NO3",
+      "origin_reference": {
+        "doi": "10.3390/molecules18032763",
+        "pmid": 23455667,
+        "title": "Antibacterial activity composition of the fermentation broth of Streptomyces djakartensis NW35",
+        "journal": "Molecules",
+        "year": 2013
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "djakartensis NW35",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000045",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000047",
+      "compound_name": "Lasalocid (X 537 A)",
+      "producer_taxon": "sp.",
+      "producer_genus": "Streptomyces",
+      "producer_species": "sp.",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000047",
+      "inchikey": "BBMULGJBVDDDNI-OWKLGTHSSA-N",
+      "smiles": "CC[C@H]([C@@H]1[C@H](C[C@@](O1)(CC)[C@H]2CC[C@@]([C@@H](O2)C)(CC)O)C)C(=O)[C@@H](C)[C@H]([C@H](C)CCC3=C(C(=C(C=C3)C)O)C(=O)O)O",
+      "mol_formula": "C34H54O8",
+      "origin_reference": {
+        "doi": "10.1039/c29700000071",
+        "pmid": null,
+        "title": "Structure of antibiotic X-537A",
+        "journal": "Journal of the Chemical Society D: Chemical Communications",
+        "year": 1970
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "sp.",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000047",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000050",
+      "compound_name": "ƞ-Isorhodomycinone",
+      "producer_taxon": "galilaeus",
+      "producer_genus": "Streptomyces",
+      "producer_species": "galilaeus",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000050",
+      "inchikey": "OMDREUAXDJZOKC-UHFFFAOYSA-N",
+      "smiles": "CCC1=C(C2=C(C=C1)C(=O)C3=C(C4=C(C=CC(=C4C(=C3C2=O)O)O)O)O)C(=O)OC",
+      "mol_formula": "C22H16O8",
+      "origin_reference": {
+        "doi": "10.1007/bf02926646",
+        "pmid": 527903,
+        "title": "Presence of eta-isorhodomycinone in Streptomyces galilaeus JA 3043",
+        "journal": "Folia Microbiologica",
+        "year": 1979
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "galilaeus",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000050",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000055",
+      "compound_name": "Oxachelin",
+      "producer_taxon": "sp. GW9/1258",
+      "producer_genus": "Streptomyces",
+      "producer_species": "sp. GW9/1258",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000055",
+      "inchikey": "SHCDDOATCRSWRH-UHFFFAOYSA-N",
+      "smiles": "C1CC(C(=O)N(C1)O)NC(=O)CCNC(=O)C(CCCN(C=O)O)NC(=O)C(CO)NC(=O)C2COC(=N2)C3=CC=CC=C3O",
+      "mol_formula": "C27H37N7O11",
+      "origin_reference": {
+        "doi": "10.1038/ja.2006.88",
+        "pmid": 17191682,
+        "title": "Oxachelin, a novel iron chelator and antifungal agent from Streptomyces sp. GW9/1258",
+        "journal": "Journal of Antibiotics",
+        "year": 2006
+      },
+      "origin_organism": {
+        "genus": "Streptomyces",
+        "species": "sp. GW9/1258",
+        "ncbi_id": 1883,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000055",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000017",
+      "compound_name": "Macrolactin P",
+      "producer_taxon": "sp. AH159-1",
+      "producer_genus": "Bacillus",
+      "producer_species": "sp. AH159-1",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000017",
+      "inchikey": "SVHVXVRYDBFIMU-JHHGODBBSA-N",
+      "smiles": "CC[C@@H]1CCC/C=C/C=C/[C@@H](C[C@H](C/C=C\\C=C\\[C@H](C/C=C/C=C\\C(=O)O1)O[C@H]2[C@@H]([C@H]([C@@H]([C@H](O2)CO)O)O)O)O)O",
+      "mol_formula": "C31H46O10",
+      "origin_reference": {
+        "doi": "10.1021/np0701327",
+        "pmid": 17887720,
+        "title": "Macrolactins O-R, glycosylated 24-membered lactones from Bacillus sp. AH159-1",
+        "journal": "Journal of Natural Products",
+        "year": 2007
+      },
+      "origin_organism": {
+        "genus": "Bacillus",
+        "species": "sp. AH159-1",
+        "ncbi_id": 1386,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000017",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000038",
+      "compound_name": "AHB-6-Methylneamine",
+      "producer_taxon": "circulans",
+      "producer_genus": "Bacillus",
+      "producer_species": "circulans",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000038",
+      "inchikey": "ZEDBVEJBXNAZMF-MOYHMMMDSA-N",
+      "smiles": "CNCC1C(C(C(C(O1)OC2C(CC(C(C2O)O)NC(=O)[C@H](CCN)O)N)N)O)O",
+      "mol_formula": "C17H35N5O8",
+      "origin_reference": {
+        "doi": "10.7164/antibiotics.31.1039",
+        "pmid": 81824,
+        "title": "Mutational biosynthesis of butirosin analogs. III. 6'-N-methylbutirosins and 3', 4'-dideoxy-6'-c-methylbutirosins, new semisynthetic aminoglycosides",
+        "journal": "Journal of Antibiotics",
+        "year": 1978
+      },
+      "origin_organism": {
+        "genus": "Bacillus",
+        "species": "circulans",
+        "ncbi_id": 1386,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000038",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000083",
+      "compound_name": "Oxydifficidin",
+      "producer_taxon": "sp. SNA-60-367",
+      "producer_genus": "Bacillus",
+      "producer_species": "sp. SNA-60-367",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000083",
+      "inchikey": "DRXGPYFQEKBQBQ-UHFFFAOYSA-N",
+      "smiles": "CC1C(C=CC=CC=CCCCC(C(=CC=CCC(OC(=O)CC1=C)CCC(=CC=C)C)C)OP(=O)(O)O)O",
+      "mol_formula": "C31H45O7P",
+      "origin_reference": {
+        "doi": "10.7164/antibiotics.40.1677",
+        "pmid": 3123448,
+        "title": "Difficidin and oxydifficidin: Novel broad spectrum antibacterial antibiotics produced by Bacillus subtilis. I. Production, taxonomy and antibacterial activity",
+        "journal": "Journal of Antibiotics",
+        "year": 1987
+      },
+      "origin_organism": {
+        "genus": "Bacillus",
+        "species": "sp. SNA-60-367",
+        "ncbi_id": 1386,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000083",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    },
+    {
+      "npaid": "NPA000236",
+      "compound_name": "Bacilosarcin C",
+      "producer_taxon": "sp. SNA-60-367",
+      "producer_genus": "Bacillus",
+      "producer_species": "sp. SNA-60-367",
+      "source_database": "npatlas",
+      "external_record_id": "NPA000236",
+      "inchikey": "AGFNOCSXEIUTSA-SHJDBJNPSA-N",
+      "smiles": "C[C@H]1[C@@](O[C@@H]([C@@H](N1)CC(=O)O)[C@@H](C(=O)N[C@@H](CC(C)C)[C@@H]2CC3=C(C(=CC=C3)O)C(=O)O2)O)(C)O",
+      "mol_formula": "C24H34N2O9",
+      "origin_reference": {
+        "doi": "10.3390/md10020319",
+        "pmid": 22412803,
+        "title": "Five New Amicoumacins Isolated from a Marine-Derived Bacterium Bacillus subtilis",
+        "journal": "Marine Drugs",
+        "year": 2012
+      },
+      "origin_organism": {
+        "genus": "Bacillus",
+        "species": "sp. SNA-60-367",
+        "ncbi_id": 1386,
+        "taxon_rank": "genus"
+      },
+      "provenance": {
+        "source": "npatlas_api",
+        "api_base": "https://www.npatlas.org/api/v1",
+        "fetched_at_utc": "2026-07-05T08:30:00Z",
+        "license": "CC-BY-NC-4.0",
+        "source_url": "https://www.npatlas.org/explore/compounds/NPA000236",
+        "real_bounded_snapshot": true,
+        "not_synthetic_fixture": true
+      }
+    }
+  ]
+}

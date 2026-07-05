@@ -5,7 +5,7 @@ from typing import Any
 
 from rhizonp.linking.compound_normalization import normalize_compound_name
 from rhizonp.linking.models import NaturalProductFixtureRecord
-from rhizonp.linking.np_adapter import load_natural_product_fixture
+from rhizonp.linking.np_adapter import NaturalProductSource, load_natural_product_records
 from rhizonp.taxonomy.grading import grade_evidence
 from rhizonp.taxonomy.models import EvidenceTier
 
@@ -106,12 +106,16 @@ def link_natural_product_candidates(
     metabolite_name: str | None = None,
     observation_method: str | None = None,
     fixture_path: str | None = None,
+    record_source: NaturalProductSource | str = NaturalProductSource.FIXTURE,
+    snapshot_path: str | None = None,
 ) -> CandidateMatrix:
-    kwargs: dict[str, Any] = {}
+    load_kwargs: dict[str, Any] = {"source": record_source}
     if fixture_path is not None:
-        kwargs["fixture_path"] = fixture_path
+        load_kwargs["fixture_path"] = fixture_path
+    if snapshot_path is not None:
+        load_kwargs["snapshot_path"] = snapshot_path
 
-    records = load_natural_product_fixture(**kwargs)
+    records = load_natural_product_records(**load_kwargs)
     normalized_metabolite = None
     if metabolite_name:
         normalize_kwargs: dict[str, Any] = {}

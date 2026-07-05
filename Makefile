@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app validate-real-pubmed-bridge
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -45,6 +45,9 @@ fetch-domain-corpus:
 
 ingest-domain-corpus:
 	$(PYTHON) -m scripts.build_domain_corpus --ingest
+
+fetch-npatlas-snapshot:
+	$(PYTHON) -m scripts.build_npatlas_snapshot
 
 eval-retrieval:
 	$(PYTHON) -m scripts.run_retrieval_eval

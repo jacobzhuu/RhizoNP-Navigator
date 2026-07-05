@@ -32,13 +32,25 @@ class HttpClient(Protocol):
     ) -> HttpResponse:
         ...
 
-
-class UrllibHttpClient:
-    def get(
+    def post(
         self,
         url: str,
         *,
         params: dict[str, str] | None = None,
+        timeout: float,
+    ) -> HttpResponse:
+        ...
+
+
+class UrllibHttpClient:
+    _USER_AGENT = "RhizoNP-Navigator/0.1"
+
+    def _request(
+        self,
+        url: str,
+        *,
+        method: str,
+        params: dict[str, str] | None,
         timeout: float,
     ) -> HttpResponse:
         request_url = url
@@ -48,7 +60,8 @@ class UrllibHttpClient:
             request_url = f"{url}{separator}{query}"
         request = urllib.request.Request(
             request_url,
-            headers={"User-Agent": "RhizoNP-Navigator/0.1"},
+            method=method,
+            headers={"User-Agent": self._USER_AGENT},
         )
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -63,3 +76,21 @@ class UrllibHttpClient:
             return HttpResponse(status_code=exc.code, text=body, url=request_url)
         except TimeoutError as exc:
             raise TimeoutError(f"Request timed out after {timeout}s: {request_url}") from exc
+
+    def get(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        timeout: float,
+    ) -> HttpResponse:
+        return self._request(url, method="GET", params=params, timeout=timeout)
+
+    def post(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        timeout: float,
+    ) -> HttpResponse:
+        return self._request(url, method="POST", params=params, timeout=timeout)

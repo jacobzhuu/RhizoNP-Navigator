@@ -1,0 +1,12 @@
+{
+  "snapshot_id": "rhizonp_domain_v1",
+  "source_name": "npatlas_api",
+  "record_count": 12,
+  "files": {
+    "snapshot.json": {
+      "record_count": 12
+    }
+  },
+  "license": "CC-BY-NC-4.0",
+  "public_repository_policy": "commit_bounded_metadata_snapshot"
+}
