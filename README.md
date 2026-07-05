@@ -308,6 +308,43 @@ make load-demo-fixtures
 
 数据模型说明见 `docs/DATA_MODEL.md`。
 
+### 3.9 Phase 3–8 MVP quickstart
+
+Phases 3–8 add taxonomy-aware evidence grading, natural-product candidate linking, own-data CSV ingestion, grounded writer, end-to-end evaluation, and an offline demo package.
+
+Quick commands:
+
+```bash
+make smoke          # 3-case offline smoke workflow
+make demo           # full demo outputs under data/output/demo/
+make eval-end-to-end
+make check
+```
+
+Documentation:
+
+- `docs/QUICKSTART.md`
+- `docs/ARCHITECTURE.md`
+- `docs/LIMITATIONS.md`
+- `docs/PHASE_STATUS.md`
+
+New API endpoints:
+
+- `POST /api/v1/taxonomy/grade`
+- `POST /api/v1/natural-products/link`
+- `POST /api/v1/own-data/pipeline`
+- `POST /api/v1/writer/answer`
+
+CLI entrypoints:
+
+```bash
+python -m scripts.grade_taxonomy_evidence "Streptomyces" "Streptomyces hygroscopicus OS-2"
+python -m scripts.run_own_data_pipeline
+python -m scripts.run_end_to_end_eval
+python -m scripts.run_demo
+python -m scripts.run_smoke
+```
+
 ---
 
 ## 4. 常见问题

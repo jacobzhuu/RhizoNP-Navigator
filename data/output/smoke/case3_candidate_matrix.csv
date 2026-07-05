@@ -1,0 +1,7 @@
+association_id,source_raw_label,target_raw_label,association_score,rank,compound_name,producer_taxon,taxonomy_distance,evidence_tier,candidate_score,status
+assoc_001,Streptomyces,Feature_M123,0.72,1,FixturePolyketide-A,Streptomyces,SAME_SPECIES,B,0.5,SUPPORTED
+assoc_001,Streptomyces,Feature_M123,0.72,2,Rapamycin,Streptomyces hygroscopicus OS-2,SAME_GENUS,C,0.29,PARTIALLY_SUPPORTED
+assoc_001,Streptomyces,Feature_M123,0.72,3,Avermectin,Streptomyces avermitilis,SAME_GENUS,C,0.29,PARTIALLY_SUPPORTED
+assoc_002,Streptomyces,rapamycin,0.55,1,Rapamycin,Streptomyces hygroscopicus OS-2,SAME_GENUS,C,0.54,PARTIALLY_SUPPORTED
+assoc_002,Streptomyces,rapamycin,0.55,2,FixturePolyketide-A,Streptomyces,SAME_SPECIES,B,0.5,SUPPORTED
+assoc_002,Streptomyces,rapamycin,0.55,3,Avermectin,Streptomyces avermitilis,SAME_GENUS,C,0.29,PARTIALLY_SUPPORTED

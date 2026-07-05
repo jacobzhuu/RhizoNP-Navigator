@@ -1,0 +1,18 @@
+{
+  "query": "Streptomyces rhizosphere natural product",
+  "result_count": 1,
+  "results": [
+    {
+      "rank": 1,
+      "score": 0.6072628615669108,
+      "text": "Synthetic results paragraph: Streptomyces co-occurs with Feature_M123 in a root injury fixture. This text is not experimental evidence and does not establish causality.",
+      "trace": {
+        "chunk_id": "f083ada2-33c8-4a55-b1ed-6fb8936f26a8",
+        "paper_id": "95a5164c-f70f-4b72-974c-3064e9604e47",
+        "doi": "10.0000/rhizonp.fixture.lit.001",
+        "source_url": "https://example.org/rhizonp/fixture-literature-001",
+        "section": "results"
+      }
+    }
+  ]
+}

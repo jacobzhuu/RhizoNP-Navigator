@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -67,6 +67,15 @@ report-qc-consistency:
 
 run-leakage-audit:
 	$(PYTHON) -m scripts.run_leakage_audit
+
+eval-end-to-end:
+	$(PYTHON) -m scripts.run_end_to_end_eval
+
+demo:
+	$(PYTHON) -m scripts.run_demo
+
+smoke:
+	$(PYTHON) -m scripts.run_smoke
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app
