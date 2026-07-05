@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)
-**Last updated:** 2026-07-05 (loop iteration 9 — unified scientific constraint validator)
+**Last updated:** 2026-07-05 (loop iteration 10–11 — PostgreSQL full-stack validation + DeepSeek writer prep)
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -22,8 +22,8 @@
 
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
-| MVP Engineering | 84% | **87%** | 89% |
-| Full Plan Functional | 63% | **70%** | 73% |
+| MVP Engineering | 86% | **90%** | 92% |
+| Full Plan Functional | 68% | **74%** | 76% |
 | Empirical / Scientific Validation | 18% | **27%** | 32% |
 
 Scoring uses 72 requirements below with equal weight unless noted. **Empirical validation excludes** unit tests, integration traces, bounded cache fetches, and source-provenance wiring unless they involve human judgments, real applicant omics, expert adjudication, or labeled benchmark evaluation. Iteration 5 incorrectly bumped empirical score; corrected here.
@@ -119,7 +119,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | O04 | §10 | 16S observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | De-sensitized real 16S | P1 | Applicant data |
 | O05 | §10 | LC-MS observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | Real LC-MS validation | P1 | Applicant data |
 | O06 | §8.2 | Chemical ID tier policy | IMPLEMENTED_MVP | C4 limitations in pipeline | Full C1–C4 enforcement | P2 | — |
-| O07 | §10.2 | Association DB persistence | IMPLEMENTED_NOT_VALIDATED | `omics/persistence.py` opt-in; **validated on SQLite in-memory tests only** | PostgreSQL integration (V11); API flag | P1 | Docker daemon |
+| O07 | §10.2 | Association DB persistence | IMPLEMENTED_MVP | `omics/persistence.py`; **PostgreSQL validated** via `make validate-postgresql-fullstack` (149 papers / own-data read-back / restart persistence) | API persist flag default off; scale beyond demo fixture | P1 | — |
 | O08 | §10 / Phase 5 | Own-data → literature search | IMPLEMENTED_MVP | `literature_bridge.py`, `search_paper_chunks`, Phase 5.2 validation | Default disabled; not PubMed-wide quality eval | P1 | R16 for quality |
 | O09 | §10.4 | Candidate matrix + paper counts | IMPLEMENTED_MVP | CSV has literature_status/hit_count | Richer paper-level matrix | P2 | — |
 | O10 | §10.4 | Validation suggestions | IMPLEMENTED_MVP | limitations lists | Evidence-driven from papers | P2 | — |
@@ -131,7 +131,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 |---|---|---|---|---|---|---|---|
 | W01 | §15.2 | Pydantic answer schema | FULLY_IMPLEMENTED | `writer/models.py` | — | — | — |
 | W02 | §15 | Deterministic fallback writer | FULLY_IMPLEMENTED | `fallback_writer.py` | — | — | — |
-| W03 | §15 | LLM grounded writer | INTERFACE_ONLY | `writer/service.py` disabled | Constrained LLM path | P1 | API keys + eval |
+| W03 | §15 | LLM grounded writer | IMPLEMENTED_NOT_VALIDATED | `writer/llm_writer.py` DeepSeek path + citation/constraint gates; `make check-deepseek-config`; **remote execution pending user API key** | Bounded live eval after credential fill; human faithfulness | P1 | DEEPSEEK_API_KEY |
 | W04 | §14 | Scientific constraint validator | IMPLEMENTED_MVP | `rhizonp.evidence.validator` cross-module consistency + `make eval-scientific-constraints` | Runtime enforcement gate; semantic completeness | P2 | — |
 | W05 | §15.2 | Claim-level citations | IMPLEMENTED_MVP | retrieval-grounded writer + structural citation validation | Human faithfulness adjudication | P1 | V02 |
 | W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | explicit predicate conflict rule + writer safety benchmark (`CON001`/`CON002`) | Literature-derived semantic conflicts | P2 | — |
@@ -152,7 +152,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | V08 | §17.5 | Faithfulness metric | IMPLEMENTED_NOT_VALIDATED | heuristic overlap diagnostic only (`human_faithfulness_pending`) | Human faithfulness labels | P1 | V02 |
 | V09 | §17.5 | Abstention accuracy | IMPLEMENTED_MVP | `writer_safety_cases.json` (16 cases) + `make eval-writer-safety` | Human-labeled abstention adjudication | P1 | V02 |
 | V10 | §17.5 | Taxonomy safety accuracy | IMPLEMENTED_NOT_VALIDATED | 2 replay cases | Real query eval | P1 | V02 |
-| V11 | §18.2 | PG integration test chain | NOT_STARTED | SQLite unit tests only; **Docker unavailable in loop env** | Docker PG E2E per Option A checklist | P1 | Docker daemon |
+| V11 | §18.2 | PG integration test chain | IMPLEMENTED_MVP | `postgresql_fullstack_validation.py`, `make validate-postgresql-fullstack`, `tests/integration/test_postgresql_fullstack.py` | CI Docker service wiring | P1 | — |
 | V12 | §Phase 7 | Eval reports directory | FULLY_IMPLEMENTED | `data/eval/reports/latest/` | — | — | — |
 
 ## Phase 8 — Demo & delivery
@@ -168,20 +168,19 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | P07 | §20 | Four demo UI pages | IMPLEMENTED_MVP | 6 React pages | Commit stable frontend | P2 | WIP files |
 | P08 | §Phase 8 | One-command demo/smoke | FULLY_IMPLEMENTED | `make smoke`, `make demo` | — | — | — |
 | P09 | §22 | Three case studies | FULLY_IMPLEMENTED | demo outputs | Honest eval numbers | P3 | V02 |
-| P10 | §19 | Fresh-machine reproducibility | IMPLEMENTED_NOT_VALIDATED | offline fixtures | Docker PG E2E proof | P2 | Docker |
+| P10 | §19 | Fresh-machine reproducibility | IMPLEMENTED_MVP | offline fixtures + **PostgreSQL full-stack validation report** | CI Docker reproducibility proof | P2 | — |
 
 ---
 
 ## Top remaining gaps (re-ranked after iteration 9)
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)
-2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**
+2. **DeepSeek live writer validation** (W03) — READY_FOR_USER_CONFIGURATION (`DEEPSEEK_API_KEY` in local `.env`)
 3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT
 4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only
-5. **Evaluated LLM writer** (W03) — disabled placeholder
-6. **NPAtlas scale + assay bioactivity** (N02) — bounded 12-record corpus; title-derived activity only
-7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache
-8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
+5. **NPAtlas scale + assay bioactivity** (N02) — bounded 12-record corpus; title-derived activity only
+6. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache
+7. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
 
@@ -197,6 +196,8 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | 7 | Deterministic writer safety benchmark (abstain/conflict/bounded-answer) | **68%** / **27%** (safety regression only; empirical held) |
 | 8 | Bounded NPAtlas origin-reference bioactivity on linking path | **69%** / **27%** (title-derived metadata; no assay validation) |
 | 9 | Unified scientific constraint validator (cross-module consistency) | **70%** / **27%** (deterministic regression only) |
+| 10 | PostgreSQL full-stack validation (Docker PG, migrations, ingest, own-data persistence, API) | **74%** / **27%** (integration proof only) |
+| 11 | DeepSeek writer provider + config handoff (no live remote eval) | **74%** / **27%** (scaffolding only) |
 
 ---
 
