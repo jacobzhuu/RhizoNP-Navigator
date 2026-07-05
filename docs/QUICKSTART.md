@@ -78,6 +78,15 @@ Key endpoints:
 make check
 ```
 
+Pytest collects **140** tests. Skip counts depend on whether optional `faiss-cpu` is installed:
+
+| Environment | Passed | Skipped | Notes |
+|---|---|---|---|
+| `faiss-cpu` installed | 139 | 1 | `test_faiss_index_raises_when_dependency_missing` skips |
+| `faiss-cpu` absent | 137 | 3 | FAISS integration tests skip via `@pytest.mark.skipif` |
+
+Both outcomes are valid; neither indicates a regression.
+
 ## Research workspace frontend
 
 The user-facing research demo runs separately from the FastAPI backend during development.
@@ -110,3 +119,13 @@ Production builds can set `VITE_API_BASE_URL` in `frontend/.env` (see `frontend/
 make frontend-build   # compile to frontend/dist/
 make frontend-typecheck
 ```
+
+**One command — API + frontend (background):**
+
+```bash
+make app
+# or: ./scripts/start.sh app
+# stop: ./scripts/start.sh stop
+```
+
+Prints workspace URL (`http://127.0.0.1:5173/`) and API docs (`http://127.0.0.1:8000/docs`).

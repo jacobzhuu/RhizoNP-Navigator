@@ -21,6 +21,8 @@ ENV/
 !.env.example
 .rhizonp-api.pid
 .rhizonp-api.log
+.rhizonp-frontend.pid
+.rhizonp-frontend.log
 .rhizonp-bootstrap.log
 
 # ── IDE / Editor ────────────────────────────────────────
