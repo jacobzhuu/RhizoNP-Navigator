@@ -184,31 +184,54 @@ def _search_result_response(result: SearchResult) -> SearchResultResponse:
     )
 
 
+TAGS_HEALTH = "Health"
+TAGS_ENTITIES = "Entities"
+TAGS_LITERATURE = "Literature"
+TAGS_TAXONOMY = "Taxonomy"
+TAGS_NATURAL_PRODUCTS = "Natural Products"
+TAGS_OWN_DATA = "Own Data"
+TAGS_WRITER = "Grounded Writer"
+
+
 def create_app() -> FastAPI:
     api = FastAPI(
         title="RhizoNP Navigator",
         version="0.1.0",
         description=(
-            "Phase 1 entity API, Phase 2 literature search, Phase 3 taxonomy-aware evidence grading."
+            "Evidence-grounded research API for plant–microbe interactions and microbial "
+            "natural products. Exposes literature retrieval, taxonomy-aware evidence grading, "
+            "natural product candidate linking, own-data omics pipelines, and a grounded report "
+            "writer. Entity endpoints require PostgreSQL with loaded fixtures; grading, linking, "
+            "own-data, and writer endpoints are stateless. See the research workspace frontend "
+            "for workflow demos."
         ),
+        openapi_tags=[
+            {"name": TAGS_HEALTH, "description": "Service health checks."},
+            {"name": TAGS_ENTITIES, "description": "Normalized taxa, compounds, evidence, and omics associations."},
+            {"name": TAGS_LITERATURE, "description": "Literature chunk retrieval with provenance traces."},
+            {"name": TAGS_TAXONOMY, "description": "Taxonomy-aware evidence grading and claim limits."},
+            {"name": TAGS_NATURAL_PRODUCTS, "description": "Natural product candidate linking matrix."},
+            {"name": TAGS_OWN_DATA, "description": "Own-data omics CSV pipeline."},
+            {"name": TAGS_WRITER, "description": "Evidence-grounded scientific report writer."},
+        ],
     )
 
-    @api.get("/api/v1/health", response_model=HealthResponse)
+    @api.get("/api/v1/health", response_model=HealthResponse, tags=[TAGS_HEALTH])
     def health() -> HealthResponse:
         return HealthResponse(status="ok")
 
-    @api.get("/api/v1/taxa/{canonical_name}", response_model=TaxonResponse)
+    @api.get("/api/v1/taxa/{canonical_name}", response_model=TaxonResponse, tags=[TAGS_ENTITIES])
     def get_taxon(canonical_name: str, session: Session = SESSION_DEPENDENCY) -> TaxonResponse:
         return _taxon_response(_taxon_or_404(session, canonical_name))
 
-    @api.get("/api/v1/compounds/{canonical_name}", response_model=CompoundResponse)
+    @api.get("/api/v1/compounds/{canonical_name}", response_model=CompoundResponse, tags=[TAGS_ENTITIES])
     def get_compound(
         canonical_name: str,
         session: Session = SESSION_DEPENDENCY,
     ) -> CompoundResponse:
         return _compound_response(_compound_or_404(session, canonical_name))
 
-    @api.get("/api/v1/taxa/{canonical_name}/evidence", response_model=list[EvidenceItemResponse])
+    @api.get("/api/v1/taxa/{canonical_name}/evidence", response_model=list[EvidenceItemResponse], tags=[TAGS_ENTITIES])
     def list_taxon_evidence(
         canonical_name: str,
         session: Session = SESSION_DEPENDENCY,
@@ -223,6 +246,7 @@ def create_app() -> FastAPI:
     @api.get(
         "/api/v1/taxa/{canonical_name}/candidate-links",
         response_model=list[CandidateLinkResponse],
+        tags=[TAGS_ENTITIES],
     )
     def list_taxon_candidate_links(
         canonical_name: str,
@@ -238,6 +262,7 @@ def create_app() -> FastAPI:
     @api.get(
         "/api/v1/datasets/{dataset_name}/omics-associations",
         response_model=list[OmicsAssociationResponse],
+        tags=[TAGS_ENTITIES],
     )
     def list_dataset_omics_associations(
         dataset_name: str,
@@ -249,7 +274,7 @@ def create_app() -> FastAPI:
         associations = OmicsAssociationRepository(session).list_for_dataset(dataset.dataset_id)
         return [_omics_association_response(association) for association in associations]
 
-    @api.post("/api/v1/taxonomy/grade", response_model=EvidenceGradingResponse)
+    @api.post("/api/v1/taxonomy/grade", response_model=EvidenceGradingResponse, tags=[TAGS_TAXONOMY])
     def grade_taxonomy_evidence(request: EvidenceGradingRequest) -> EvidenceGradingResponse:
         from rhizonp.taxonomy.grading import grade_evidence
 
@@ -284,7 +309,7 @@ def create_app() -> FastAPI:
             provenance=result.provenance,
         )
 
-    @api.post("/api/v1/natural-products/link", response_model=NaturalProductLinkResponse)
+    @api.post("/api/v1/natural-products/link", response_model=NaturalProductLinkResponse, tags=[TAGS_NATURAL_PRODUCTS])
     def link_natural_products(request: NaturalProductLinkRequest) -> NaturalProductLinkResponse:
         from rhizonp.linking.candidate_engine import link_natural_product_candidates
 
@@ -301,7 +326,7 @@ def create_app() -> FastAPI:
             ],
         )
 
-    @api.post("/api/v1/own-data/pipeline", response_model=OwnDataPipelineResponse)
+    @api.post("/api/v1/own-data/pipeline", response_model=OwnDataPipelineResponse, tags=[TAGS_OWN_DATA])
     def run_own_data_to_literature(
         request: OwnDataPipelineRequest,
     ) -> OwnDataPipelineResponse:
@@ -322,7 +347,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse)
+    @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
     def write_answer(request: GroundedAnswerRequest) -> GroundedAnswerResponse:
         from rhizonp.writer.models import EvidenceInput, WriterRequest
         from rhizonp.writer.service import write_grounded_answer
@@ -352,7 +377,7 @@ def create_app() -> FastAPI:
             provenance=answer.provenance,
         )
 
-    @api.post("/api/v1/search", response_model=SearchResponse)
+    @api.post("/api/v1/search", response_model=SearchResponse, tags=[TAGS_LITERATURE])
     def search_literature(
         request: SearchRequest,
         session: Session = SESSION_DEPENDENCY,

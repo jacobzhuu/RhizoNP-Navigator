@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -85,6 +85,15 @@ start-api:
 
 test-api:
 	bash scripts/test_api_integration.sh --base-url http://127.0.0.1:8000
+
+frontend-dev:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build
+
+frontend-typecheck:
+	cd frontend && npm run typecheck
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app

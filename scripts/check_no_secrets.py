@@ -33,6 +33,7 @@ IGNORED_DIRS = {
     "__pycache__",
     "data",
     "env",
+    "node_modules",
     "venv",
 }
 

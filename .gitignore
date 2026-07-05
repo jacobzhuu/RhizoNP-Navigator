@@ -21,6 +21,7 @@ ENV/
 !.env.example
 .rhizonp-api.pid
 .rhizonp-api.log
+.rhizonp-bootstrap.log
 
 # ── IDE / Editor ────────────────────────────────────────
 .vscode/
@@ -93,3 +94,7 @@ data/output/
 
 # ── Regenerated evaluation reports (make eval-end-to-end) ──────
 data/eval/reports/latest/
+
+# ── Frontend (Node.js) ─────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/

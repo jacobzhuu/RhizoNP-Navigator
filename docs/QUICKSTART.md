@@ -77,3 +77,36 @@ Key endpoints:
 ```bash
 make check
 ```
+
+## Research workspace frontend
+
+The user-facing research demo runs separately from the FastAPI backend during development.
+
+**Terminal 1 — backend (port 8000):**
+
+```bash
+make start-api
+# or: ./scripts/start.sh api
+```
+
+For literature search, load the database first:
+
+```bash
+./scripts/start.sh db
+```
+
+**Terminal 2 — frontend (port 5173):**
+
+```bash
+make frontend-dev
+# or: cd frontend && npm install && npm run dev
+```
+
+The Vite dev server proxies `/api` to `http://127.0.0.1:8000`. Swagger remains at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for developers.
+
+Production builds can set `VITE_API_BASE_URL` in `frontend/.env` (see `frontend/.env.example`).
+
+```bash
+make frontend-build   # compile to frontend/dist/
+make frontend-typecheck
+```
