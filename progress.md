@@ -66,3 +66,7 @@
 - 定向验证：`make check` 通过，70 passed / 3 skipped（FAISS parity tests skip when faiss-cpu unavailable）。
 - 新增本地 commits：`feat: add PubMed E-utilities literature source adapter`、`feat: add bounded PubMed domain corpus workflow`、`feat: add Phase 2 offline retrieval benchmark framework`、`docs: document PubMed adapter, corpus, and retrieval eval`。
 - push 仍未执行：GitHub HTTPS 凭据不可用。
+- 继续 Phase 2 empirical validation gap：versioned PubMed snapshot（149 records）、real benchmark template（18 queries）、annotation export/import、graded metrics。
+- 新增 commits 待创建：corpus versioning、real benchmark workflow、live snapshot data、Phase 2 closure audit。
+- 完整验证：`make check` 82 passed / 3 skipped；Alembic head `0002_literature_provenance`；`docker compose config` 通过。
+- Phase 2 empirical DoD：human labels pending；不声明 Phase 2 complete。

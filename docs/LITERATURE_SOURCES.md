@@ -72,25 +72,42 @@ Policy reference: [NCBI website and data usage policies](https://www.ncbi.nlm.ni
 
 - plant–microbe interactions
 - rhizosphere microbiome
-- Streptomyces / biocontrol
+- PGPR / Streptomyces / biocontrol
 - microbial natural products / secondary metabolites
+- bridge questions (metabolites ↔ plant–microbe)
+
+Versioned snapshots live under `data/snapshots/pubmed/<corpus_id>/` with `corpus.json` and `manifest.json` (checksums, deduplication rules, query config provenance).
 
 Commands:
 
 ```bash
-make fetch-domain-corpus   # live network; writes data/processed/pubmed_corpus/
+make fetch-domain-corpus   # live network; writes data/snapshots/pubmed/rhizonp_domain_v1/
 make ingest-domain-corpus  # offline ingest from saved snapshot
 ```
 
-Fetch and ingest are intentionally separable so evaluation can run offline after a snapshot exists.
+Fetch and ingest are intentionally separatable so evaluation can run offline after a snapshot exists.
 
 ## Retrieval Benchmark
 
-`data/eval/phase2_retrieval_gold.json` provides explicit gold labels for a **small synthetic mini-benchmark**. It is not a production benchmark and makes no quality claims beyond the labeled fixture.
+### Synthetic fixture benchmark (CI default)
+
+`data/eval/phase2_retrieval_gold.json` provides explicit gold labels for a **small synthetic mini-benchmark**. It is not a production benchmark.
 
 ```bash
 make eval-retrieval
 ```
+
+### Real PubMed benchmark (human labels required)
+
+`data/eval/phase2_real_pubmed_benchmark.json` defines 18 paper-level domain queries with graded relevance schema (0/1/2). **No fabricated gold labels** — annotation is pending until human review.
+
+```bash
+make export-annotation-candidates                              # export CSV for review
+make import-annotation-labels REVIEW=path/to/reviewed.csv      # import 0/1/2 labels
+make eval-real-retrieval                                       # offline eval after labels
+```
+
+See `docs/PHASE2_CLOSURE_AUDIT.md` for Phase 2 engineering vs empirical DoD status.
 
 Supported offline systems by default:
 

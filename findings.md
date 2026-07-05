@@ -130,7 +130,10 @@
 - PubMed/NCBI E-utilities metadata adapter 已实现：`PubMedEutilitiesAdapter` 支持 injectable HTTP、metadata-only provenance、PMID/DOI/source URL 映射；不含 full-text。
 - bounded domain corpus workflow：`data/eval/domain_corpus_queries.json` + `scripts/build_domain_corpus.py`（`--fetch` / `--ingest` 分离）。
 - offline Phase 2 retrieval benchmark：`data/eval/phase2_retrieval_gold.json` + `scripts/run_retrieval_eval.py`；metrics 为 Recall@5/10、MRR@10、nDCG@10；默认基于 synthetic fixture gold labels，不声称 production benchmark 质量。
-- 生产级 live PubMed corpus benchmark 与 model-backed 系统评估仍未完成，因此 Phase 2 仍是 in-progress。
+- real PubMed corpus snapshot：`data/snapshots/pubmed/rhizonp_domain_v1/`（149 deduplicated metadata records, manifest + checksums）。
+- real PubMed benchmark template：`data/eval/phase2_real_pubmed_benchmark.json`（18 queries, PMID labels 0/1/2 schema, annotation pending）。
+- human annotation workflow：`export_annotation_candidates.py` / `import_annotation_labels.py`；可导出/导入 auditable CSV labels。
+- Phase 2 工程 DoD 已满足；empirical DoD 仍 blocked on human annotation，因此 Phase 2 仍是 in-progress。
 - Phase 3 的 taxonomy-aware evidence grading 未开始；本轮不实现 evidence tier policy 自动判定。
 
 ## Phase 2 provenance baseline 验证

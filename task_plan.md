@@ -14,7 +14,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 | --- | --- | --- |
 | Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
 | Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
-| Phase 2 | in_progress | PubMed adapter, corpus workflow, offline retrieval eval added; production benchmark on live corpus still pending |
+| Phase 2 | in_progress | Engineering DoD met; real PubMed snapshot + annotation workflow added; human labels pending |
 | Phase 3 | pending | taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
 | Phase 5 | pending | own-data-to-literature |
@@ -119,7 +119,11 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] 真实外部 PubMed/NCBI E-utilities source adapter（metadata-only）。
 - [x] bounded domain corpus fetch/ingest workflow。
 - [x] offline Phase 2 retrieval benchmark framework（explicit synthetic gold labels）。
-- [ ] 基于 live PubMed corpus 的 production retrieval benchmark 与 model-backed 系统评估。
+- [x] versioned real PubMed corpus snapshot with manifest/checksums（149 records）。
+- [x] real PubMed benchmark query template（18 queries, PMID-based, graded 0/1/2 schema）。
+- [x] human annotation export/import workflow。
+- [ ] human relevance labeling completed for real benchmark。
+- [ ] real-corpus retrieval evaluation with human labels。
 - [ ] Phase 2 完整 DoD 终验（含可选 FAISS 实装环境 parity 验证）。
 - [ ] push 到 origin/main；当前环境缺 GitHub HTTPS 凭据。
 
