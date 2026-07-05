@@ -43,13 +43,16 @@ Two files are produced:
 
 ### 1. Blind reviewer sheet
 
-Columns: `query_id`, `query_text`, `pmid`, `title`, `abstract`, `doi`, `grade`, `notes`
+Columns: `annotation_item_id`, `query_id`, `query_text`, `pmid`, `title`, `abstract`, `doi`, `grade`, `notes`
 
 Must **not** contain: `retrieval_system`, `rank`, `score`, `category`, `source_url`
 
+Rows are **shuffled within each query** using a deterministic seed (default `20260705`).
+`annotation_item_id` is derived from `(query_id, pmid)` only and does not encode rank.
+
 ### 2. Provenance sidecar
 
-Columns: `query_id`, `pmid`, `retrieval_system`, `rank`, `score`
+Columns: `annotation_item_id`, `query_id`, `pmid`, `retrieval_system`, `rank`, `score`
 
 Used after annotation to audit which systems surfaced each candidate. Not shown to
 reviewers during grading.
@@ -105,6 +108,24 @@ by best score per paper.
 - Unjudged retrieved PMIDs contribute gain 0
 - Ideal DCG uses the sorted judged positive grades for that query
 
+### Judged@5 / Judged@10 (coverage)
+
+- Fraction of top-k retrieved PMIDs that have any human judgment (grades 0/1/2)
+- Report alongside Recall/MRR when comparing systems with different retrieval behavior
+- Low Judged@k means metrics may not be comparable without additional labeling
+
+---
+
+## Optional QC Duplicate Mode
+
+Disabled by default. When enabled via export (`--qc-fraction`):
+
+- A configurable fraction of primary items are duplicated under new `annotation_item_id` values
+- Duplicates are **not** marked in the blind sheet
+- Private mapping: `qc_audit_mapping.csv`
+- Post-review: `make report-qc-consistency REVIEW=...`
+- Import: exclude QC rows via `--qc-audit` (one label per `query_id + pmid`)
+
 ---
 
 ## Duplicate Judgment Handling
@@ -130,4 +151,4 @@ DATABASE_URL=sqlite+pysqlite:///./rhizonp.db \
 make run-leakage-audit
 ```
 
-See also: `docs/SNAPSHOT_PUBLIC_REPO_AUDIT.md`, `docs/PHASE2_CLOSURE_AUDIT.md`
+See also: `docs/ANNOTATION_INSTRUCTIONS.md`, `docs/BENCHMARK_SCOPE.md`, `docs/SNAPSHOT_PUBLIC_REPO_AUDIT.md`, `docs/PHASE2_CLOSURE_AUDIT.md`

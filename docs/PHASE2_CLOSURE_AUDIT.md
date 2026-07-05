@@ -68,8 +68,10 @@ Provenance preserved per record: PMID, DOI (when available), source URL, fetch/q
 | Queries defined | 18 |
 | Queries labeled | 0 |
 | Annotation status | `pending` |
-| Pool export | `blind_reviewer_sheet.csv` (543 pooled candidates) + `provenance_sidecar.csv` |
-| Deprecated | Single-system `candidates_template.csv` removed (hybrid-only bias) |
+| Pool export | `blind_reviewer_sheet.csv` (shuffled, `annotation_item_id`) + `provenance_sidecar.csv` |
+| Blind ordering | Deterministic within-query shuffle (seed `20260705`); no rank/score in blind sheet |
+| QC duplicates | Optional via `--qc-fraction`; disabled by default |
+| Public git corpus | `pmids.json` + manifest; `corpus.json` gitignored (regenerate locally) |
 
 ### Workflow
 
