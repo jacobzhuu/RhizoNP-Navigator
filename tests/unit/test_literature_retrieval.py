@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
+from rhizonp.literature.embeddings import HashingEmbeddingProvider
+from rhizonp.literature.reranker import LexicalOverlapReranker
 from rhizonp.literature.retrieval import (
-    HashingEmbeddingProvider,
-    LexicalOverlapReranker,
     SearchFilters,
     bm25_search,
     dense_search,

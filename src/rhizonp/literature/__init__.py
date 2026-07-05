@@ -18,9 +18,15 @@ from rhizonp.literature.faiss_index import (
     create_literature_vector_index,
     faiss_available,
 )
+from rhizonp.literature.reranker import (
+    BGLiteratureReranker,
+    LexicalOverlapReranker,
+    LiteratureReranker,
+    NoOpLiteratureReranker,
+    create_literature_reranker,
+)
 from rhizonp.literature.retrieval import (
     HybridWeights,
-    LexicalOverlapReranker,
     SearchFilters,
     SearchResult,
     bm25_search,
@@ -39,6 +45,7 @@ from rhizonp.literature.vector_index import (
 )
 
 __all__ = [
+    "BGLiteratureReranker",
     "FaissLiteratureVectorIndex",
     "HashingEmbeddingProvider",
     "HuggingFaceLiteratureEmbeddingProvider",
@@ -46,7 +53,9 @@ __all__ = [
     "InMemoryLiteratureVectorIndex",
     "LexicalOverlapReranker",
     "LiteratureEmbeddingProvider",
+    "LiteratureReranker",
     "LiteratureVectorIndex",
+    "NoOpLiteratureReranker",
     "NormalizedLiteratureRecord",
     "RawLiteratureRecord",
     "SearchFilters",
@@ -58,6 +67,7 @@ __all__ = [
     "VectorIndexHit",
     "bm25_search",
     "create_literature_embedding_provider",
+    "create_literature_reranker",
     "create_literature_vector_index",
     "dense_search",
     "faiss_available",

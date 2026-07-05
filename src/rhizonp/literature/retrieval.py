@@ -5,7 +5,7 @@ import re
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Protocol
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -14,6 +14,10 @@ from rhizonp.domain.models import Paper, PaperChunk, RetrievalResult, RetrievalR
 from rhizonp.literature.embeddings import (
     HashingEmbeddingProvider,
     LiteratureEmbeddingProvider,
+)
+from rhizonp.literature.reranker import (
+    LiteratureReranker,
+    create_literature_reranker,
 )
 from rhizonp.literature.vector_index import InMemoryLiteratureVectorIndex, LiteratureVectorIndex
 
@@ -82,22 +86,7 @@ class SearchResult:
 
 
 TextEmbeddingProvider = LiteratureEmbeddingProvider
-
-
-class SearchReranker(Protocol):
-    def score(self, query: str, passages: list[str]) -> list[float]:
-        ...
-
-
-class LexicalOverlapReranker:
-    def score(self, query: str, passages: list[str]) -> list[float]:
-        query_terms = set(tokenize(query))
-        if not query_terms:
-            return [0.0 for _ in passages]
-        return [
-            len(query_terms.intersection(tokenize(passage))) / len(query_terms)
-            for passage in passages
-        ]
+SearchReranker = LiteratureReranker
 
 
 def tokenize(text: str) -> list[str]:
@@ -469,7 +458,7 @@ def rerank_search_results(
 ) -> list[SearchResult]:
     if not results:
         return []
-    active_reranker = reranker or LexicalOverlapReranker()
+    active_reranker = reranker or create_literature_reranker()
     rerank_scores = active_reranker.score(query, [result.text for result in results])
     if len(rerank_scores) != len(results):
         raise RuntimeError(
