@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app validate-real-pubmed-bridge
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-scientific-constraints eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app validate-real-pubmed-bridge
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -63,6 +63,9 @@ validate-retrieval-grounded-writer:
 
 eval-writer-safety:
 	$(PYTHON) -m scripts.run_writer_safety_eval
+
+eval-scientific-constraints:
+	$(PYTHON) -m scripts.run_scientific_constraint_eval
 
 eval-retrieval:
 	$(PYTHON) -m scripts.run_retrieval_eval
