@@ -269,6 +269,11 @@ make load-literature-fixtures
 - `hybrid`
 - `hybrid_rerank`
 
+当前 filters 支持：
+
+- column-backed：`year_from`、`year_to`、`sections`、`dois`、`source_urls`、`journals`
+- metadata-backed：`source_types`、`taxa`、`compounds`、`host`
+
 响应中的每条结果都包含：
 
 ```text

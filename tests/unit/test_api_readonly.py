@@ -140,7 +140,15 @@ def test_api_search_returns_traceable_literature_chunks() -> None:
         json={
             "query": "Streptomyces Feature_M123",
             "top_k": 2,
-            "filters": {"sections": ["results"], "taxa": ["Streptomyces"]},
+            "filters": {
+                "sections": ["results"],
+                "source_types": ["paper"],
+                "dois": ["10.0000/rhizonp.fixture.lit.001"],
+                "journals": ["fixture"],
+                "taxa": ["Streptomyces"],
+                "compounds": ["FixturePolyketide-A"],
+                "host": ["Synthetic plant"],
+            },
         },
     )
 
@@ -153,6 +161,21 @@ def test_api_search_returns_traceable_literature_chunks() -> None:
     assert top_result["trace"]["source_url"] == "https://example.org/rhizonp/fixture-literature-001"
     assert top_result["trace"]["section"] == "results"
     assert "streptomyces" in top_result["matched_terms"]
+
+
+def test_api_search_metadata_filters_can_exclude_results() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.post(
+        "/api/v1/search",
+        json={
+            "query": "Streptomyces",
+            "filters": {"compounds": ["UnknownCompound"]},
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["results"] == []
 
 
 def test_api_search_supports_hybrid_rerank_mode() -> None:

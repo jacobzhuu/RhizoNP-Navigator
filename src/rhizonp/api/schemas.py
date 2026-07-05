@@ -89,7 +89,13 @@ class SearchFiltersRequest(BaseModel):
     year_from: int | None = None
     year_to: int | None = None
     sections: list[str] = Field(default_factory=list)
+    source_types: list[str] = Field(default_factory=list)
+    dois: list[str] = Field(default_factory=list)
+    source_urls: list[str] = Field(default_factory=list)
+    journals: list[str] = Field(default_factory=list)
     taxa: list[str] = Field(default_factory=list)
+    compounds: list[str] = Field(default_factory=list)
+    host: list[str] = Field(default_factory=list)
 
 
 class SearchRequest(BaseModel):

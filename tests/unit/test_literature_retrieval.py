@@ -72,9 +72,39 @@ def test_bm25_search_respects_metadata_filters() -> None:
             "Streptomyces",
             filters=SearchFilters(taxa=("Bacillus",)),
         )
+        allowed_by_rich_filters = bm25_search(
+            session,
+            "FixturePolyketide-A",
+            filters=SearchFilters(
+                year_from=2020,
+                year_to=2026,
+                sections=("results",),
+                source_types=("paper",),
+                dois=("10.0000/RHIZONP.FIXTURE.LIT.001",),
+                source_urls=("https://example.org/rhizonp/fixture-literature-001",),
+                journals=("fixture",),
+                taxa=("Streptomyces",),
+                compounds=("FixturePolyketide-A",),
+                host=("Synthetic plant",),
+            ),
+        )
+        blocked_by_compound = bm25_search(
+            session,
+            "FixturePolyketide-A",
+            filters=SearchFilters(compounds=("UnknownCompound",)),
+        )
+        blocked_by_source_type = bm25_search(
+            session,
+            "Streptomyces",
+            filters=SearchFilters(source_types=("dataset",)),
+        )
 
     assert blocked_by_year == []
     assert blocked_by_taxon == []
+    assert allowed_by_rich_filters
+    assert allowed_by_rich_filters[0].section == "results"
+    assert blocked_by_compound == []
+    assert blocked_by_source_type == []
 
 
 def test_dense_search_uses_deterministic_vectors_and_trace() -> None:

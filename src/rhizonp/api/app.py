@@ -245,7 +245,13 @@ def create_app() -> FastAPI:
             year_from=request.filters.year_from,
             year_to=request.filters.year_to,
             sections=tuple(request.filters.sections),
+            source_types=tuple(request.filters.source_types),
+            dois=tuple(request.filters.dois),
+            source_urls=tuple(request.filters.source_urls),
+            journals=tuple(request.filters.journals),
             taxa=tuple(request.filters.taxa),
+            compounds=tuple(request.filters.compounds),
+            host=tuple(request.filters.host),
         )
         try:
             results = search_paper_chunks(

@@ -52,6 +52,8 @@ The API depends on `DATABASE_URL` for real database sessions. Tests override the
 
 `POST /api/v1/search` currently supports local `bm25`, `dense`, `hybrid`, and `hybrid_rerank` modes over persisted `paper_chunks`. It records `retrieval_runs` and `retrieval_results`; it does not call external literature APIs, model-backed embedding services, or external reranker services.
 
+Search filters include column-backed constraints (`year_from`, `year_to`, `sections`, `dois`, `source_urls`, `journals`) and cross-database metadata constraints (`source_types`, `taxa`, `compounds`, `host`).
+
 ## Scientific Boundaries
 
 The schema can represent weak, partial, conflicting, and insufficient evidence states. It does not imply that genus-level taxa produce strain-specific natural products, and it does not turn unknown LC-MS features into confirmed compounds.

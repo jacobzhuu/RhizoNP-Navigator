@@ -40,6 +40,15 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 
 These modes are intentionally deterministic. They are not benchmarks and do not claim model-level semantic retrieval quality.
 
+## Metadata Filters
+
+Search filters are split by storage surface:
+
+- Column-backed filters are applied in the SQLAlchemy query: `year_from`, `year_to`, `sections`, `dois`, `source_urls`, and `journals`.
+- Metadata-backed filters are applied after fetch for cross-database compatibility: `source_types`, `taxa`, `compounds`, and `host`.
+
+The metadata-backed filters avoid PostgreSQL-only JSONB operators so the same unit tests run on SQLite, macOS, Linux, and Windows.
+
 ## Fixture Boundary
 
 `data/fixtures/phase2_literature_demo.json` is synthetic. It is not real literature, not real experimental evidence, and not a claim that any taxon produces any compound.

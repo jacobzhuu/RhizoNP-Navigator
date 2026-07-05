@@ -53,3 +53,6 @@
 - 定向验证结果：`tests/unit/test_literature_retrieval.py` 和 `tests/unit/test_api_readonly.py` 共 11 个测试通过；相关 Ruff 和 mypy 均通过。
 - 完整验证结果：`make check` 通过，37 tests passed；`git diff --check` 通过；`python -m compileall src tests scripts migrations` 通过；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；`docker compose config` 通过。
 - 补充 API 边界：不支持的 `retrieval_mode` 返回 HTTP 400，并有单元测试覆盖。
+- 继续 Phase 2 metadata filters：新增 column-backed SQL filters（year、section、DOI、source URL、journal）与跨数据库 metadata filters（source type、taxa、compounds、host）。
+- 定向验证结果：`tests/unit/test_literature_retrieval.py` 和 `tests/unit/test_api_readonly.py` 共 13 个测试通过；相关 Ruff 和 mypy 均通过。
+- 完整验证结果：`make check` 通过，38 tests passed；`git diff --check` 通过；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；`python -m compileall src tests scripts migrations` 通过；`docker compose config` 通过。

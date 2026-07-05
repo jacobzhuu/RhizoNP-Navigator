@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk, RetrievalResult, RetrievalRun
@@ -19,14 +19,26 @@ class SearchFilters:
     year_from: int | None = None
     year_to: int | None = None
     sections: tuple[str, ...] = ()
+    source_types: tuple[str, ...] = ()
+    dois: tuple[str, ...] = ()
+    source_urls: tuple[str, ...] = ()
+    journals: tuple[str, ...] = ()
     taxa: tuple[str, ...] = ()
+    compounds: tuple[str, ...] = ()
+    host: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "year_from": self.year_from,
             "year_to": self.year_to,
             "sections": list(self.sections),
+            "source_types": list(self.source_types),
+            "dois": list(self.dois),
+            "source_urls": list(self.source_urls),
+            "journals": list(self.journals),
             "taxa": list(self.taxa),
+            "compounds": list(self.compounds),
+            "host": list(self.host),
         }
 
 
@@ -118,6 +130,25 @@ def _cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
     return numerator / (left_norm * right_norm)
 
 
+def _casefolded(values: Sequence[str]) -> set[str]:
+    return {value.casefold() for value in values if value}
+
+
+def _metadata_values(chunk: PaperChunk, key: str) -> set[str]:
+    value = chunk.chunk_metadata.get(key)
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        return {value.casefold()}
+    if isinstance(value, Sequence):
+        return {str(item).casefold() for item in value}
+    return {str(value).casefold()}
+
+
+def _overlaps(left: set[str], right: Sequence[str]) -> bool:
+    return not left.isdisjoint(_casefolded(right))
+
+
 def _passes_filters(chunk: PaperChunk, filters: SearchFilters) -> bool:
     paper = chunk.paper
     if filters.year_from is not None and (paper.year is None or paper.year < filters.year_from):
@@ -128,18 +159,48 @@ def _passes_filters(chunk: PaperChunk, filters: SearchFilters) -> bool:
         section.casefold() for section in filters.sections
     }:
         return False
+    if filters.dois and (paper.doi is None or paper.doi.casefold() not in _casefolded(filters.dois)):
+        return False
+    if filters.source_urls and (
+        paper.source_url is None or paper.source_url.casefold() not in _casefolded(filters.source_urls)
+    ):
+        return False
+    if filters.journals and (
+        paper.journal is None or paper.journal.casefold() not in _casefolded(filters.journals)
+    ):
+        return False
+    if filters.source_types and not _overlaps(_metadata_values(chunk, "source_type"), filters.source_types):
+        return False
     if filters.taxa:
-        chunk_taxa = {taxon.casefold() for taxon in chunk.chunk_metadata.get("taxa", [])}
-        requested_taxa = {taxon.casefold() for taxon in filters.taxa}
-        if chunk_taxa.isdisjoint(requested_taxa):
+        if not _overlaps(_metadata_values(chunk, "taxa"), filters.taxa):
+            return False
+    if filters.compounds:
+        if not _overlaps(_metadata_values(chunk, "compounds"), filters.compounds):
+            return False
+    if filters.host:
+        if not _overlaps(_metadata_values(chunk, "host"), filters.host):
             return False
     return True
 
 
 def _filtered_chunks(session: Session, filters: SearchFilters) -> list[PaperChunk]:
+    statement = select(PaperChunk).join(Paper).order_by(PaperChunk.created_at)
+    if filters.year_from is not None:
+        statement = statement.where(Paper.year >= filters.year_from)
+    if filters.year_to is not None:
+        statement = statement.where(Paper.year <= filters.year_to)
+    if filters.sections:
+        statement = statement.where(func.lower(PaperChunk.section).in_(_casefolded(filters.sections)))
+    if filters.dois:
+        statement = statement.where(func.lower(Paper.doi).in_(_casefolded(filters.dois)))
+    if filters.source_urls:
+        statement = statement.where(func.lower(Paper.source_url).in_(_casefolded(filters.source_urls)))
+    if filters.journals:
+        statement = statement.where(func.lower(Paper.journal).in_(_casefolded(filters.journals)))
+
     return [
         chunk
-        for chunk in session.scalars(select(PaperChunk).join(Paper).order_by(PaperChunk.created_at))
+        for chunk in session.scalars(statement)
         if _passes_filters(chunk, filters)
     ]
 

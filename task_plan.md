@@ -99,6 +99,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] 新增 BM25 + dense hybrid fusion baseline。
 - [x] 新增 local reranker protocol integration 和 lexical-overlap reranker baseline。
 - [x] `POST /api/v1/search` 支持 `bm25`、`dense`、`hybrid`、`hybrid_rerank`。
+- [x] 增加 column-backed 与 metadata-backed search filters。
 - [x] 新增 `POST /api/v1/search`，返回 chunk→paper→DOI/source trace。
 - [x] 新增单元/API 测试覆盖 chunking、ingestion、retrieval、API trace。
 - [x] 运行完整本地检查与 SQLite/PostgreSQL offline migration 验证。
@@ -109,7 +110,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] 形成 Phase 2 local retrieval baseline 单独 commit。
 - [ ] 生产级 model-backed literature embeddings / FAISS literature index。
 - [ ] 外部 cross-encoder/BGE literature reranker 集成。
-- [ ] metadata filters 的数据库级实现和更完整过滤语义。
+- [x] metadata filters 的 column-backed SQL 实现和跨数据库 metadata 过滤语义。
 - [ ] 真实外部 source adapter 及许可/API rate-limit 审计。
 - [ ] Phase 2 完整 DoD 终验和单独 commit。
 
