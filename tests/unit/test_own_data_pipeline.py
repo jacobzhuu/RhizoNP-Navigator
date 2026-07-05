@@ -28,6 +28,7 @@ def test_pipeline_links_associations_to_candidates() -> None:
     assert first.association.source_raw_label == "Streptomyces"
     assert first.candidate_matrix.rows
     assert first.limitations
+    assert first.literature_retrieval["status"] == "DISABLED"
 
 
 def test_pipeline_exports_json_and_csv(tmp_path: Path) -> None:

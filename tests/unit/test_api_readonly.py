@@ -211,3 +211,37 @@ def test_api_search_rejects_unsupported_retrieval_mode() -> None:
 
     assert response.status_code == 400
     assert "Unsupported retrieval_mode" in response.json()["detail"]
+
+
+def test_api_own_data_pipeline_backward_compatible_empty_request() -> None:
+    client = TestClient(create_app())
+
+    response = client.post("/api/v1/own-data/pipeline", json={})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["association_count"] == 2
+    assert payload["results"][0]["literature_retrieval"]["status"] == "DISABLED"
+
+
+def test_api_own_data_pipeline_literature_enabled_without_database_url() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/own-data/pipeline",
+        json={
+            "enable_literature_retrieval": True,
+            "retrieval_mode": "bm25",
+            "top_k": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    feature_result = next(
+        item for item in payload["results"] if item["target_raw_label"] == "Feature_M123"
+    )
+    literature = feature_result["literature_retrieval"]
+    assert literature["status"] in {"RETRIEVED", "FIXTURE_TEST_ONLY"}
+    assert literature["hits"]
+    assert literature["hits"][0]["doi"] == "10.0000/rhizonp.fixture.lit.001"
