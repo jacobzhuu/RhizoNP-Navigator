@@ -102,6 +102,16 @@ Acceptable wording:
 
 ---
 
+## Scientific Constraint Consistency (cross-module regression)
+
+- **Benchmark ID:** `scientific_constraint_v1`
+- **Scope:** Validates that taxonomy grading, linking, own-data pipeline, literature bridge, and writer outputs obey the same biological/evidentiary boundaries
+- **Command:** `make eval-scientific-constraints`
+
+This checks stable constraint IDs (genus→no strain production, unknown feature→no compound confirmation, correlation→no causality, mention→no production, etc.) against **existing module outputs**. It does **not** replace runtime enforcement inside each module and does **not** constitute human empirical validation.
+
+---
+
 ## Related Documents
 
 - `docs/ANNOTATION_POLICY.md` — grades, metrics, pooling, blind export

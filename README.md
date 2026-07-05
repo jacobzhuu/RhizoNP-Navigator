@@ -155,6 +155,7 @@ RhizoNP Navigator reports metrics **only within declared benchmark scope**:
 | `data/eval/end_to_end_cases.json` | Deterministic MVP replay cases | Built-in expected outcomes | End-to-end suite (`make eval-end-to-end`) |
 | `data/eval/writer_safety_cases.json` | 16-case writer abstention/conflict/bounded-answer safety set | Built-in expected status + forbidden patterns | Writer safety regression (`make eval-writer-safety`) |
 | `data/snapshots/npatlas/rhizonp_domain_v1/` | 12-record bounded NPAtlas metadata snapshot | Origin-reference-derived bioactivity (not assay records) | NPAtlas linking + `make validate-npatlas-bioactivity` |
+| Cross-module scientific constraints | 8 dynamic cases (taxonomy/linking/omics/writer) | Built-in constraint IDs + module output boundaries | `make eval-scientific-constraints` |
 | `data/eval/phase2_real_pubmed_benchmark.json` | 18 real PubMed queries | **Human labels pending** | Blocked until annotation import |
 
 **Do not interpret** perfect scores on the 3-query synthetic gold, MVP replay cases, or writer safety benchmark as PubMed-wide retrieval accuracy or human-validated scientific faithfulness. See [`docs/BENCHMARK_SCOPE.md`](docs/BENCHMARK_SCOPE.md).

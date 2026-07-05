@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)
-**Last updated:** 2026-07-05 (loop iteration 8 — bounded NPAtlas origin-reference bioactivity)
+**Last updated:** 2026-07-05 (loop iteration 9 — unified scientific constraint validator)
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -22,8 +22,8 @@
 
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
-| MVP Engineering | 83% | **86%** | 88% |
-| Full Plan Functional | 62% | **69%** | 72% |
+| MVP Engineering | 84% | **87%** | 89% |
+| Full Plan Functional | 63% | **70%** | 73% |
 | Empirical / Scientific Validation | 18% | **27%** | 32% |
 
 Scoring uses 72 requirements below with equal weight unless noted. **Empirical validation excludes** unit tests, integration traces, bounded cache fetches, and source-provenance wiring unless they involve human judgments, real applicant omics, expert adjudication, or labeled benchmark evaluation. Iteration 5 incorrectly bumped empirical score; corrected here.
@@ -132,7 +132,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | W01 | §15.2 | Pydantic answer schema | FULLY_IMPLEMENTED | `writer/models.py` | — | — | — |
 | W02 | §15 | Deterministic fallback writer | FULLY_IMPLEMENTED | `fallback_writer.py` | — | — | — |
 | W03 | §15 | LLM grounded writer | INTERFACE_ONLY | `writer/service.py` disabled | Constrained LLM path | P1 | API keys + eval |
-| W04 | §14 | Scientific constraint validator | IMPLEMENTED_MVP | taxonomy + writer logic | Unified evidence module | P2 | — |
+| W04 | §14 | Scientific constraint validator | IMPLEMENTED_MVP | `rhizonp.evidence.validator` cross-module consistency + `make eval-scientific-constraints` | Runtime enforcement gate; semantic completeness | P2 | — |
 | W05 | §15.2 | Claim-level citations | IMPLEMENTED_MVP | retrieval-grounded writer + structural citation validation | Human faithfulness adjudication | P1 | V02 |
 | W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | explicit predicate conflict rule + writer safety benchmark (`CON001`/`CON002`) | Literature-derived semantic conflicts | P2 | — |
 | W07 | §20 | Audit view UI | IMPLEMENTED_MVP | `GroundedReport.tsx` (WIP uncommitted) | E2E browser validation | P3 | — |
@@ -172,7 +172,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 
 ---
 
-## Top remaining gaps (re-ranked after iteration 8)
+## Top remaining gaps (re-ranked after iteration 9)
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)
 2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**
@@ -196,6 +196,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | 6 | Retrieval-grounded writer + citation validity harness | **67%** / **27%** (real bounded trace; no human faithfulness) |
 | 7 | Deterministic writer safety benchmark (abstain/conflict/bounded-answer) | **68%** / **27%** (safety regression only; empirical held) |
 | 8 | Bounded NPAtlas origin-reference bioactivity on linking path | **69%** / **27%** (title-derived metadata; no assay validation) |
+| 9 | Unified scientific constraint validator (cross-module consistency) | **70%** / **27%** (deterministic regression only) |
 
 ---
 
