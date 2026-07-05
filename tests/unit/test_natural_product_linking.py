@@ -41,6 +41,30 @@ def test_genus_query_gets_conservative_tier_for_strain_record() -> None:
     assert any("strain-level" in warning.lower() for warning in strain_row.warnings)
 
 
+def test_unknown_metabolite_feature_is_not_supported_without_compound_match() -> None:
+    matrix = link_natural_product_candidates(
+        "Streptomyces",
+        metabolite_name="Feature_M123",
+        observation_method="synthetic_16S_fixture",
+    )
+    top = matrix.rows[0]
+    assert top.compound_match is False
+    assert top.status == "PARTIALLY_SUPPORTED"
+    assert top.evidence_tier == "C"
+    assert top.taxonomy_distance == "SAME_GENUS"
+    assert any("did not match any known compound name" in item for item in top.limitations)
+
+
+def test_genus_vs_genus_producer_with_named_compound_match_can_still_be_supported() -> None:
+    matrix = link_natural_product_candidates(
+        "Streptomyces",
+        metabolite_name="FixturePolyketide-A",
+    )
+    matched = next(row for row in matrix.rows if row.compound_match)
+    assert matched.evidence_tier == "C"
+    assert matched.status == "PARTIALLY_SUPPORTED"
+
+
 def test_candidate_matrix_preserves_provenance() -> None:
     matrix = link_natural_product_candidates("Streptomyces")
     payload = matrix.to_dict()

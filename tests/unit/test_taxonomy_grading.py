@@ -57,6 +57,37 @@ def test_same_genus_distance() -> None:
     assert distance_to_evidence_tier(distance) == "C"
 
 
+def test_genus_vs_same_genus_label_is_same_genus_not_same_species() -> None:
+    query = normalize_taxon_label("Streptomyces")
+    literature = normalize_taxon_label("Streptomyces")
+    distance = compute_taxonomy_distance(query, literature)
+    assert distance == TaxonomyDistance.SAME_GENUS
+    assert distance != TaxonomyDistance.SAME_SPECIES
+
+
+def test_genus_vs_genus_grading_is_tier_c_with_candidate_claim() -> None:
+    result = grade_evidence("Streptomyces", "Streptomyces")
+    assert result.taxonomy_distance == TaxonomyDistance.SAME_GENUS
+    assert result.evidence_tier == EvidenceTier.C
+    assert result.max_supported_claim == "genus_level_candidate"
+
+
+def test_different_genus_distance_is_unknown() -> None:
+    query = normalize_taxon_label("Streptomyces")
+    literature = normalize_taxon_label("Bacillus subtilis")
+    distance = compute_taxonomy_distance(query, literature)
+    assert distance == TaxonomyDistance.UNKNOWN
+    assert distance_to_evidence_tier(distance) == "D"
+
+
+def test_unresolved_taxon_distance_is_conservative() -> None:
+    query = normalize_taxon_label("UnknownActinobacterium XYZ")
+    literature = normalize_taxon_label("Streptomyces")
+    distance = compute_taxonomy_distance(query, literature)
+    assert distance == TaxonomyDistance.UNKNOWN
+    assert distance_to_evidence_tier(distance) == "D"
+
+
 def test_genus_16s_cannot_support_strain_claim() -> None:
     result = grade_evidence(
         "Streptomyces",

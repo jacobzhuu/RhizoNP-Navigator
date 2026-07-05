@@ -9,6 +9,7 @@ from rhizonp.omics.pipeline import (
     export_pipeline_json,
     run_own_data_pipeline,
 )
+from rhizonp.taxonomy.models import TaxonomyDistance
 
 
 def test_load_own_data_csv_bundle() -> None:
@@ -46,4 +47,9 @@ def test_genus_16s_association_carries_taxonomy_warnings() -> None:
         item for item in result.association_results if item.taxon.raw_label == "Streptomyces"
     )
     assert genus_result.taxonomy_grading is not None
-    assert genus_result.taxonomy_grading.evidence_tier.value in {"C", "D", "B", "A"}
+    assert genus_result.taxonomy_grading.taxonomy_distance == TaxonomyDistance.SAME_GENUS
+    assert genus_result.taxonomy_grading.evidence_tier.value == "C"
+    assert genus_result.taxonomy_grading.max_supported_claim == "genus_level_candidate"
+    feature_row = genus_result.candidate_matrix.rows[0]
+    assert feature_row.compound_match is False
+    assert feature_row.status == "PARTIALLY_SUPPORTED"

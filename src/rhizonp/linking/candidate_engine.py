@@ -69,7 +69,15 @@ def _tier_score(tier: EvidenceTier) -> float:
     }[tier]
 
 
-def _status_from_tier(tier: EvidenceTier, warnings: list[str]) -> str:
+def _status_from_tier(
+    tier: EvidenceTier,
+    warnings: list[str],
+    *,
+    compound_match: bool,
+    metabolite_queried: bool,
+) -> str:
+    if metabolite_queried and not compound_match:
+        return "PARTIALLY_SUPPORTED"
     if warnings:
         return "PARTIALLY_SUPPORTED"
     if tier in {EvidenceTier.A, EvidenceTier.B}:
@@ -165,6 +173,7 @@ def _build_row(
         normalized_metabolite is not None
         and normalize_compound_name(normalized_metabolite) == record.compound_name
     )
+    metabolite_queried = normalized_metabolite is not None
     evidence_count = 1
     score = _score_candidate(
         tier=grading.evidence_tier,
@@ -179,6 +188,13 @@ def _build_row(
             "evidence_level": record.bioactivity.evidence_level,
         }
 
+    limitations = list(grading.limitations)
+    if metabolite_queried and not compound_match:
+        limitations.append(
+            "Metabolite feature did not match any known compound name; "
+            "link is taxonomy-compatible only."
+        )
+
     return CandidateMatrixRow(
         rank=0,
         query_taxon=query_taxon,
@@ -189,10 +205,15 @@ def _build_row(
         compound_match=compound_match,
         evidence_count=evidence_count,
         score=score,
-        status=_status_from_tier(grading.evidence_tier, grading.warnings),
+        status=_status_from_tier(
+            grading.evidence_tier,
+            grading.warnings,
+            compound_match=compound_match,
+            metabolite_queried=metabolite_queried,
+        ),
         bioactivity=bioactivity,
         warnings=grading.warnings,
-        limitations=grading.limitations,
+        limitations=limitations,
         provenance={
             "source_database": record.source_database,
             "external_record_id": record.external_record_id,
