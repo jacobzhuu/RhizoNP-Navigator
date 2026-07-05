@@ -197,3 +197,42 @@ class OwnDataPipelineResponse(BaseModel):
     association_count: int
     results: list[dict[str, Any]]
     provenance: dict[str, Any]
+
+
+class WriterEvidenceInputRequest(BaseModel):
+    evidence_id: uuid.UUID
+    claim_type: str
+    predicate: str
+    object_literal: str | None = None
+    evidence_tier: str
+    directness: str = "indirect"
+    confidence: float = 0.5
+    supporting_span: str | None = None
+    taxonomy_distance: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    provenance: dict[str, Any] = Field(default_factory=dict)
+
+
+class WriterClaimResponse(BaseModel):
+    text: str
+    evidence_refs: list[uuid.UUID]
+    claim_level: str
+
+
+class GroundedAnswerRequest(BaseModel):
+    question: str
+    evidence_items: list[WriterEvidenceInputRequest]
+    taxonomy_warnings: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    use_llm: bool = False
+
+
+class GroundedAnswerResponse(BaseModel):
+    status: str
+    answer: str
+    claims: list[WriterClaimResponse]
+    evidence_refs: list[uuid.UUID]
+    limitations: list[str]
+    suggested_validations: list[str]
+    writer_mode: str
+    provenance: dict[str, Any]

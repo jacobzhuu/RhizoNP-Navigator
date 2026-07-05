@@ -30,6 +30,8 @@ from .schemas import (
     EvidenceGradingRequest,
     EvidenceGradingResponse,
     EvidenceItemResponse,
+    GroundedAnswerRequest,
+    GroundedAnswerResponse,
     HealthResponse,
     NaturalProductLinkRequest,
     NaturalProductLinkResponse,
@@ -317,6 +319,36 @@ def create_app() -> FastAPI:
                 **payload["bundle_provenance"],
                 **payload["pipeline_provenance"],
             },
+        )
+
+    @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse)
+    def write_answer(request: GroundedAnswerRequest) -> GroundedAnswerResponse:
+        from rhizonp.writer.models import EvidenceInput, WriterRequest
+        from rhizonp.writer.service import write_grounded_answer
+
+        writer_request = WriterRequest(
+            question=request.question,
+            evidence_items=[EvidenceInput(**item.model_dump()) for item in request.evidence_items],
+            taxonomy_warnings=request.taxonomy_warnings,
+            limitations=request.limitations,
+        )
+        answer = write_grounded_answer(writer_request, use_llm=request.use_llm)
+        return GroundedAnswerResponse(
+            status=answer.status.value,
+            answer=answer.answer,
+            claims=[
+                {
+                    "text": claim.text,
+                    "evidence_refs": claim.evidence_refs,
+                    "claim_level": claim.claim_level,
+                }
+                for claim in answer.claims
+            ],
+            evidence_refs=answer.evidence_refs,
+            limitations=answer.limitations,
+            suggested_validations=answer.suggested_validations,
+            writer_mode=answer.writer_mode,
+            provenance=answer.provenance,
         )
 
     @api.post("/api/v1/search", response_model=SearchResponse)
