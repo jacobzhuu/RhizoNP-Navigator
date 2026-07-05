@@ -114,6 +114,54 @@ def test_taxonomy_grade_endpoint_accepts_taxonomy_source() -> None:
     assert payload["provenance"]["taxonomy_source"] == "fixture"
 
 
+def test_writer_answer_backward_compatible_with_manual_evidence() -> None:
+    client = TestClient(create_app())
+    evidence_id = "00000000-0000-4000-8000-000000000001"
+
+    response = client.post(
+        "/api/v1/writer/answer",
+        json={
+            "question": "Does this strain produce rapamycin?",
+            "evidence_items": [
+                {
+                    "evidence_id": evidence_id,
+                    "claim_type": "taxon_produces_compound",
+                    "predicate": "PRODUCES",
+                    "object_literal": "Rapamycin",
+                    "evidence_tier": "A",
+                    "supporting_span": "Synthetic supporting span.",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "SUPPORTED"
+    assert payload["claims"]
+
+
+def test_writer_answer_can_retrieve_fixture_evidence() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/writer/answer",
+        json={
+            "question": "What literature mentions Streptomyces metabolites?",
+            "retrieve_evidence": True,
+            "retrieval_query": "Streptomyces rapamycin",
+            "query_taxon": "Streptomyces",
+            "retrieval_mode": "bm25",
+            "top_k": 3,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["citation_validation"] is not None
+    assert payload["citation_validation"]["citation_ref_validity_rate"] == 1.0
+
+
 def test_api_queries_fixture_taxon_and_compound() -> None:
     client = _client_with_phase1_fixture()
 
