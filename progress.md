@@ -40,3 +40,11 @@
 - PostgreSQL 容器实跑仍失败：`docker compose up -d postgres` 无法连接 Docker daemon (`unix:///Users/zzy/.docker/run/docker.sock`)。
 - 创建 Phase 1 本地提交：`feat: complete phase 1 read-only api`。
 - 尝试推送到 `origin/main` 失败：`fatal: could not read Username for 'https://github.com': Device not configured`。
+- 继续目标恢复：确认当前本地 `main` ahead 1；`gh auth status` 显示未登录，`git ls-remote` 可读远端但没有写凭据，push blocker 仍存在。
+- 重新审计 Phase 2：DoD 是搜索结果可追溯 `chunk -> paper -> DOI/source`；当前缺少 `paper_chunks`、retrieval run/result、literature adapter、chunking 和 search trace。
+- 开始 Phase 2 provenance baseline：新增 `paper_chunks`、`retrieval_runs`、`retrieval_results` ORM schema 与 Alembic `0002_literature_provenance`。
+- 新增 `rhizonp.literature`：SourceAdapter protocol、SyntheticLiteratureAdapter、structured chunking、本地 BM25 search 和 retrieval result persistence。
+- 新增 synthetic literature fixture、fixture loader、`scripts/load_literature_fixtures.py` 和 `make load-literature-fixtures`。
+- 新增 `POST /api/v1/search`，返回每条结果的 chunk/paper/DOI/source trace 并记录 retrieval run/result。
+- 定向验证结果：新增/相关 14 个测试通过；Phase 2 相关 Ruff 和 mypy 均通过。
+- 完整验证结果：`make check` 通过，32 tests passed；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；SQLite Phase 2 literature fixture CLI 导入通过；PostgreSQL offline SQL 生成通过；`docker compose config` 通过；Phase 1 + Phase 2 fixtures 在同一 migrated SQLite DB 中连续导入通过；`python -m compileall src tests scripts migrations` 通过。

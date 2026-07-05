@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HealthResponse(BaseModel):
@@ -83,3 +83,41 @@ class OmicsAssociationResponse(BaseModel):
     treatment: str | None
     timepoint: str | None
     metadata: dict[str, Any]
+
+
+class SearchFiltersRequest(BaseModel):
+    year_from: int | None = None
+    year_to: int | None = None
+    sections: list[str] = Field(default_factory=list)
+    taxa: list[str] = Field(default_factory=list)
+
+
+class SearchRequest(BaseModel):
+    query: str
+    filters: SearchFiltersRequest = Field(default_factory=SearchFiltersRequest)
+    top_k: int = 10
+
+
+class SearchTraceResponse(BaseModel):
+    chunk_id: uuid.UUID
+    paper_id: uuid.UUID
+    doi: str | None
+    source_url: str | None
+    section: str
+    char_start: int
+    char_end: int
+
+
+class SearchResultResponse(BaseModel):
+    rank: int
+    score: float
+    text: str
+    matched_terms: list[str]
+    score_components: dict[str, Any]
+    trace: SearchTraceResponse
+
+
+class SearchResponse(BaseModel):
+    run_id: uuid.UUID
+    retrieval_mode: str
+    results: list[SearchResultResponse]

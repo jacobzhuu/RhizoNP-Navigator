@@ -59,6 +59,46 @@ class Paper(TimestampMixin, Base):
     natural_product_records: Mapped[list[NaturalProductRecord]] = relationship(
         back_populates="reference_paper"
     )
+    chunks: Mapped[list[PaperChunk]] = relationship(
+        back_populates="paper",
+        cascade="all, delete-orphan",
+    )
+
+
+class PaperChunk(TimestampMixin, Base):
+    __tablename__ = "paper_chunks"
+    __table_args__ = (
+        UniqueConstraint(
+            "paper_id",
+            "source_hash",
+            "char_start",
+            "char_end",
+            name="uq_paper_chunk_source_span",
+        ),
+    )
+
+    chunk_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    paper_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("papers.paper_id"), nullable=False)
+    section: Mapped[str] = mapped_column(String(64), nullable=False)
+    paragraph_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    char_start: Mapped[int] = mapped_column(Integer, nullable=False)
+    char_end: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    token_count: Mapped[int | None] = mapped_column(Integer)
+    source_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    chunk_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata",
+        JSON_TYPE,
+        default=dict,
+        nullable=False,
+    )
+
+    paper: Mapped[Paper] = relationship(back_populates="chunks")
+    retrieval_results: Mapped[list[RetrievalResult]] = relationship(back_populates="chunk")
 
 
 class Taxon(TimestampMixin, Base):
@@ -254,10 +294,57 @@ class CandidateLink(TimestampMixin, Base):
     rationale: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
 
 
+class RetrievalRun(TimestampMixin, Base):
+    __tablename__ = "retrieval_runs"
+
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    query: Mapped[str] = mapped_column(Text, nullable=False)
+    retrieval_mode: Mapped[str] = mapped_column(String(64), nullable=False)
+    filters: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    parameters: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+
+    results: Mapped[list[RetrievalResult]] = relationship(
+        back_populates="run",
+        cascade="all, delete-orphan",
+    )
+
+
+class RetrievalResult(Base):
+    __tablename__ = "retrieval_results"
+    __table_args__ = (
+        UniqueConstraint("run_id", "rank", name="uq_retrieval_result_run_rank"),
+    )
+
+    result_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("retrieval_runs.run_id"), nullable=False)
+    chunk_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("paper_chunks.chunk_id"), nullable=False)
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
+    score_components: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    matched_terms: Mapped[list[str]] = mapped_column(JSON_TYPE, default=list, nullable=False)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+
+    run: Mapped[RetrievalRun] = relationship(back_populates="results")
+    chunk: Mapped[PaperChunk] = relationship(back_populates="retrieval_results")
+
+
 Index("idx_taxa_canonical_name_lower", func.lower(Taxon.canonical_name))
 Index("idx_compounds_canonical_name_lower", func.lower(Compound.canonical_name))
 Index("idx_compounds_inchikey", Compound.inchikey)
+Index("idx_paper_chunks_paper", PaperChunk.paper_id)
+Index("idx_paper_chunks_section", PaperChunk.section)
+Index("idx_paper_chunks_source_hash", PaperChunk.source_hash)
 Index("idx_evidence_subject", EvidenceItem.subject_entity_type, EvidenceItem.subject_entity_id)
 Index("idx_evidence_source", EvidenceItem.source_type, EvidenceItem.source_id)
 Index("idx_candidate_links_source", CandidateLink.source_entity_type, CandidateLink.source_entity_id)
 Index("idx_candidate_links_status", CandidateLink.status)
+Index("idx_retrieval_results_run_rank", RetrievalResult.run_id, RetrievalResult.rank)
+Index("idx_retrieval_results_chunk", RetrievalResult.chunk_id)

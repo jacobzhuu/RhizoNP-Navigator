@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "fixture": true,
+    "description": "Synthetic Phase 2 literature fixture for chunk provenance and retrieval tests. Not real literature."
+  },
+  "records": [
+    {
+      "source_id": "LIT_FIXTURE_001",
+      "title": "Synthetic fixture: Streptomyces evidence in rhizosphere biocontrol",
+      "abstract": "Synthetic abstract mentioning Streptomyces and plant rhizosphere context for retrieval tests only.",
+      "doi": "10.0000/rhizonp.fixture.lit.001",
+      "year": 2026,
+      "journal": "fixture",
+      "source_url": "https://example.org/rhizonp/fixture-literature-001",
+      "license": "test-only",
+      "metadata": {
+        "taxa": ["Streptomyces"],
+        "compounds": ["FixturePolyketide-A"],
+        "host": ["Synthetic plant"]
+      },
+      "sections": {
+        "methods": "Synthetic methods section. No real experiment was performed.",
+        "results": "Synthetic results paragraph: Streptomyces co-occurs with Feature_M123 in a root injury fixture. This text is not experimental evidence and does not establish causality.\n\nA second synthetic results paragraph mentions FixturePolyketide-A as a schema placeholder only.",
+        "discussion": "Synthetic discussion states that genus-level observations can only support candidate evidence, not strain-level production claims."
+      }
+    }
+  ]
+}

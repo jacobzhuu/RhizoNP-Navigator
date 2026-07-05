@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from rhizonp.api.app import create_app, get_session
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.fixtures import load_phase1_demo_fixture
+from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.storage.postgres import create_session_factory, session_scope
 
 
@@ -26,6 +27,32 @@ def _client_with_phase1_fixture() -> TestClient:
 
     with session_scope(session_factory) as session:
         load_phase1_demo_fixture(session)
+
+    api = create_app()
+
+    def override_get_session() -> Iterator[Session]:
+        session = session_factory()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    api.dependency_overrides[get_session] = override_get_session
+    return TestClient(api)
+
+
+def _client_with_phase2_literature_fixture() -> TestClient:
+    engine = create_engine(
+        "sqlite+pysqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    with session_scope(session_factory) as session:
+        load_phase2_literature_fixture(session)
 
     api = create_app()
 
@@ -103,3 +130,26 @@ def test_api_queries_dataset_omics_associations_without_causal_claims() -> None:
     assert associations[0]["source_raw_label"] == "Streptomyces"
     assert associations[0]["target_raw_label"] == "Feature_M123"
     assert associations[0]["metadata"]["correlation_not_causation"] is True
+
+
+def test_api_search_returns_traceable_literature_chunks() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.post(
+        "/api/v1/search",
+        json={
+            "query": "Streptomyces Feature_M123",
+            "top_k": 2,
+            "filters": {"sections": ["results"], "taxa": ["Streptomyces"]},
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["retrieval_mode"] == "bm25"
+    assert payload["results"]
+    top_result = payload["results"][0]
+    assert top_result["trace"]["doi"] == "10.0000/rhizonp.fixture.lit.001"
+    assert top_result["trace"]["source_url"] == "https://example.org/rhizonp/fixture-literature-001"
+    assert top_result["trace"]["section"] == "results"
+    assert "streptomyces" in top_result["matched_terms"]

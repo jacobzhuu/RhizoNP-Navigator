@@ -247,9 +247,32 @@ from rhizonp.api import app
 
 返回值会保留 `evidence_tier`、`status`、`rationale` 和 provenance 字段。Synthetic fixture 中的候选关系仍是 `PARTIALLY_SUPPORTED`，并明确保留 genus-level limitation；未知 LC-MS feature 仍作为 unknown feature，不会被 API 提升为确证化合物。
 
-### 3.7 数据库 Schema
+### 3.7 Phase 2 literature provenance baseline
 
-Phase 1 引入 SQLAlchemy/Alembic 领域模型。当前 baseline 包括 `Paper`、`Taxon`、`Compound`、`NaturalProductRecord`、`Dataset`、`OmicsObservation`、`OmicsAssociation`、`EvidenceItem` 和 `CandidateLink`。
+Phase 2 当前只实现本地 provenance baseline：synthetic literature fixture、结构化 paper chunks、BM25 lexical search、retrieval run/result 记录和 search trace。它不接入 PubMed、Crossref、OpenAlex 或真实全文，不加载 embedding 模型，也不声明 dense/hybrid/reranker 已完成。
+
+导入 synthetic literature fixture：
+
+```bash
+alembic upgrade head
+make load-literature-fixtures
+```
+
+最小 search API：
+
+- `POST /api/v1/search`
+
+响应中的每条结果都包含：
+
+```text
+trace.chunk_id -> trace.paper_id -> trace.doi / trace.source_url
+```
+
+Phase 2 说明见 `docs/LITERATURE_PROVENANCE.md`。
+
+### 3.8 数据库 Schema
+
+Phase 1/2 引入 SQLAlchemy/Alembic 领域模型。当前 baseline 包括 `Paper`、`PaperChunk`、`RetrievalRun`、`RetrievalResult`、`Taxon`、`Compound`、`NaturalProductRecord`、`Dataset`、`OmicsObservation`、`OmicsAssociation`、`EvidenceItem` 和 `CandidateLink`。
 
 运行 Alembic migration 需要先配置 `DATABASE_URL`：
 

@@ -121,3 +121,19 @@
 - Migration：SQLite `alembic upgrade head` / `current` 通过；PostgreSQL offline SQL 生成通过并包含 JSONB；PostgreSQL 容器实跑未完成，原因是本机 Docker daemon 未运行。
 - Tests：`make check` 通过，27 tests passed，保留原有 23 tests 并新增 4 个 API tests。
 - Cross-platform：路径通过 `pathlib`/env/config；CI matrix 覆盖 Linux/macOS/Windows 轻量检查；实际远端 CI 仍需 push 后验证。
+
+## Phase 2 范围审计
+
+- 迁移方案 Phase 2 目标是带 provenance 的文献检索；DoD 是搜索结果可追溯 `chunk -> paper -> DOI/source`。
+- 当前实现选择 Phase 2 provenance baseline：schema、synthetic adapter、structured chunking、BM25 本地检索和 persisted source trace。
+- 未接入真实外部文献源，因此不需要也不能声称 PubMed/Crossref/OpenAlex/full-text integration 已完成。
+- 未实现 dense retrieval、hybrid fusion 或 literature reranker，因此 Phase 2 仍是 in-progress。
+- Phase 3 的 taxonomy-aware evidence grading 未开始；本轮不实现 evidence tier policy 自动判定。
+
+## Phase 2 provenance baseline 验证
+
+- `paper_chunks` 存储 section、paragraph index、char span、source hash 和 chunk metadata。
+- `retrieval_runs` / `retrieval_results` 记录 query、filters、parameters、rank、score、matched terms 和 trace provenance。
+- Synthetic literature fixture 导入 1 个 paper 和 6 个 chunks；fixture 明确 `not_real_literature`。
+- BM25 search 可以按 year、section、taxa 过滤，并返回 DOI/source URL trace。
+- `POST /api/v1/search` 使用本地 BM25，不调用外部 API 或 embedding 模型。

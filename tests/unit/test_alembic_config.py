@@ -2,8 +2,8 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 
 
-def test_alembic_has_phase_1_initial_revision() -> None:
+def test_alembic_head_includes_phase_2_literature_provenance() -> None:
     config = Config("alembic.ini")
     script = ScriptDirectory.from_config(config)
 
-    assert script.get_current_head() == "0001_domain_schema"
+    assert script.get_current_head() == "0002_literature_provenance"

@@ -7,6 +7,12 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session, sessionmaker
 
 from rhizonp.domain.models import CandidateLink, Compound, EvidenceItem, OmicsAssociation, Taxon
+from rhizonp.literature.retrieval import (
+    SearchFilters,
+    SearchResult,
+    bm25_search,
+    persist_retrieval_results,
+)
 from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
 from rhizonp.storage.repositories import (
     CandidateLinkRepository,
@@ -23,6 +29,10 @@ from .schemas import (
     EvidenceItemResponse,
     HealthResponse,
     OmicsAssociationResponse,
+    SearchRequest,
+    SearchResponse,
+    SearchResultResponse,
+    SearchTraceResponse,
     TaxonResponse,
 )
 
@@ -143,11 +153,30 @@ def _omics_association_response(association: OmicsAssociation) -> OmicsAssociati
     )
 
 
+def _search_result_response(result: SearchResult) -> SearchResultResponse:
+    return SearchResultResponse(
+        rank=result.rank,
+        score=result.score,
+        text=result.text,
+        matched_terms=result.matched_terms,
+        score_components=result.score_components,
+        trace=SearchTraceResponse(
+            chunk_id=result.chunk_id,
+            paper_id=result.paper_id,
+            doi=result.doi,
+            source_url=result.source_url,
+            section=result.section,
+            char_start=result.char_start,
+            char_end=result.char_end,
+        ),
+    )
+
+
 def create_app() -> FastAPI:
     api = FastAPI(
         title="RhizoNP Navigator",
         version="0.1.0",
-        description="Read-only Phase 1 API for synthetic fixture and domain entity queries.",
+        description="Phase 1 entity API and Phase 2 local literature provenance search.",
     )
 
     @api.get("/api/v1/health", response_model=HealthResponse)
@@ -205,6 +234,32 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset_name}")
         associations = OmicsAssociationRepository(session).list_for_dataset(dataset.dataset_id)
         return [_omics_association_response(association) for association in associations]
+
+    @api.post("/api/v1/search", response_model=SearchResponse)
+    def search_literature(
+        request: SearchRequest,
+        session: Session = SESSION_DEPENDENCY,
+    ) -> SearchResponse:
+        filters = SearchFilters(
+            year_from=request.filters.year_from,
+            year_to=request.filters.year_to,
+            sections=tuple(request.filters.sections),
+            taxa=tuple(request.filters.taxa),
+        )
+        results = bm25_search(session, request.query, top_k=request.top_k, filters=filters)
+        run = persist_retrieval_results(
+            session,
+            query=request.query,
+            results=results,
+            filters=filters,
+            parameters={"top_k": request.top_k},
+        )
+        session.commit()
+        return SearchResponse(
+            run_id=run.run_id,
+            retrieval_mode=run.retrieval_mode,
+            results=[_search_result_response(result) for result in results],
+        )
 
     return api
 

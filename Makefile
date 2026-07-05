@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures docker-test
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -36,6 +36,9 @@ bootstrap-db:
 
 load-demo-fixtures:
 	$(PYTHON) -m scripts.load_demo_fixtures
+
+load-literature-fixtures:
+	$(PYTHON) -m scripts.load_literature_fixtures
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app

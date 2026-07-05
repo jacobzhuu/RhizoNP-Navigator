@@ -6,7 +6,7 @@
 
 ## 当前阶段
 
-Phase 1: 领域化数据模型与最小只读查询层。
+Phase 2: 文献 provenance baseline 与本地检索。
 
 ## 阶段状态
 
@@ -14,7 +14,7 @@ Phase 1: 领域化数据模型与最小只读查询层。
 | --- | --- | --- |
 | Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
 | Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
-| Phase 2 | pending | 文献证据检索与 provenance |
+| Phase 2 | in_progress | 本地 synthetic literature provenance、paper_chunks、BM25 和 search trace baseline 已开始 |
 | Phase 3 | pending | Hybrid retrieval、reranking、taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
 | Phase 5 | pending | own-data-to-literature |
@@ -84,6 +84,30 @@ Phase 1: 领域化数据模型与最小只读查询层。
 - [ ] push 到 `origin/main`；当前环境缺 GitHub HTTPS 凭据，推送失败。
 - [ ] 在 PostgreSQL 容器中实际运行 Alembic migration；当前环境 Docker daemon 未运行。
 - [ ] 尚未建立 SQLAlchemy 与旧 PostgreSQL UUID 回查流程的集成边界。
+
+## Phase 2 当前完成
+
+- [x] 重新审计迁移方案 Phase 2 范围。
+- [x] 明确不接真实外部文献源、不虚构 dense/hybrid/reranker。
+- [x] 新增 `paper_chunks`、`retrieval_runs`、`retrieval_results` ORM schema。
+- [x] 新增 Alembic `0002_literature_provenance` migration。
+- [x] 新增 synthetic literature adapter interface baseline。
+- [x] 新增结构化 chunking，保留 section、paragraph、char span、source hash 和 metadata。
+- [x] 新增 synthetic Phase 2 literature fixture 与导入脚本。
+- [x] 新增本地 BM25 search 和 persisted retrieval provenance。
+- [x] 新增 `POST /api/v1/search`，返回 chunk→paper→DOI/source trace。
+- [x] 新增单元/API 测试覆盖 chunking、ingestion、retrieval、API trace。
+- [x] 运行完整本地检查与 SQLite/PostgreSQL offline migration 验证。
+
+## Phase 2 剩余项
+
+- [x] 形成 Phase 2 provenance baseline 单独 commit。
+- [ ] dense literature retrieval。
+- [ ] BM25 与 dense hybrid fusion。
+- [ ] literature reranker。
+- [ ] metadata filters 的数据库级实现和更完整过滤语义。
+- [ ] 真实外部 source adapter 及许可/API rate-limit 审计。
+- [ ] Phase 2 完整 DoD 终验和单独 commit。
 
 ## 决策原则
 

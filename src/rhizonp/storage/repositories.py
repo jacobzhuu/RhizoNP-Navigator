@@ -13,6 +13,9 @@ from rhizonp.domain.models import (
     NaturalProductRecord,
     OmicsAssociation,
     Paper,
+    PaperChunk,
+    RetrievalResult,
+    RetrievalRun,
     Taxon,
 )
 
@@ -43,6 +46,9 @@ class PaperRepository(Repository[Paper, object]):
 
     def find_by_doi(self, doi: str) -> Paper | None:
         return self.session.scalar(select(Paper).where(Paper.doi == doi))
+
+    def find_by_source_url(self, source_url: str) -> Paper | None:
+        return self.session.scalar(select(Paper).where(Paper.source_url == source_url))
 
 
 class TaxonRepository(Repository[Taxon, object]):
@@ -87,6 +93,23 @@ class NaturalProductRecordRepository(Repository[NaturalProductRecord, object]):
                 NaturalProductRecord.external_record_id == external_record_id,
             )
         )
+
+
+class PaperChunkRepository(Repository[PaperChunk, object]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, PaperChunk)
+
+    def list_for_paper(self, paper_id: object) -> list[PaperChunk]:
+        return list(
+            self.session.scalars(
+                select(PaperChunk)
+                .where(PaperChunk.paper_id == paper_id)
+                .order_by(PaperChunk.section, PaperChunk.paragraph_index)
+            )
+        )
+
+    def find_by_source_hash(self, source_hash: str) -> PaperChunk | None:
+        return self.session.scalar(select(PaperChunk).where(PaperChunk.source_hash == source_hash))
 
 
 class DatasetRepository(Repository[Dataset, object]):
@@ -150,3 +173,22 @@ class CandidateLinkRepository(Repository[CandidateLink, object]):
 
     def list_by_status(self, status: str) -> list[CandidateLink]:
         return list(self.session.scalars(select(CandidateLink).where(CandidateLink.status == status)))
+
+
+class RetrievalRunRepository(Repository[RetrievalRun, object]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, RetrievalRun)
+
+
+class RetrievalResultRepository(Repository[RetrievalResult, object]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, RetrievalResult)
+
+    def list_for_run(self, run_id: object) -> list[RetrievalResult]:
+        return list(
+            self.session.scalars(
+                select(RetrievalResult)
+                .where(RetrievalResult.run_id == run_id)
+                .order_by(RetrievalResult.rank)
+            )
+        )
