@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk, RetrievalResult, RetrievalRun
+from rhizonp.literature.vector_index import InMemoryLiteratureVectorIndex, LiteratureVectorIndex
 
 
 @dataclass(frozen=True)
@@ -256,6 +257,29 @@ def _normalize_scores(scores: dict[Any, float]) -> dict[Any, float]:
     return {key: value / max_score for key, value in scores.items()}
 
 
+def _dense_chunk_scores(
+    chunks: list[PaperChunk],
+    query: str,
+    provider: TextEmbeddingProvider,
+    vector_index: LiteratureVectorIndex | None,
+) -> tuple[dict[Any, float], str]:
+    if not chunks:
+        return {}, vector_index.index_name if vector_index is not None else InMemoryLiteratureVectorIndex.index_name
+
+    chunk_by_key = {str(chunk.chunk_id): chunk for chunk in chunks}
+    active_index = vector_index or InMemoryLiteratureVectorIndex.from_chunks(chunks, provider)
+    hits = active_index.search(
+        provider.embed(query),
+        top_k=len(chunks),
+        candidate_chunk_ids=set(chunk_by_key),
+    )
+    return {
+        chunk_by_key[hit.chunk_id].chunk_id: hit.score
+        for hit in hits
+        if hit.chunk_id in chunk_by_key
+    }, active_index.index_name
+
+
 def _bm25_chunk_scores(
     chunks: list[PaperChunk],
     query_terms: list[str],
@@ -333,20 +357,22 @@ def dense_search(
     top_k: int = 10,
     filters: SearchFilters | None = None,
     embedding_provider: TextEmbeddingProvider | None = None,
+    vector_index: LiteratureVectorIndex | None = None,
 ) -> list[SearchResult]:
     resolved_filters = filters or SearchFilters()
-    if not tokenize(query) or top_k <= 0:
+    query_terms = tokenize(query)
+    if not query_terms or top_k <= 0:
         return []
     provider = embedding_provider or HashingEmbeddingProvider()
-    query_vector = provider.embed(query)
+    chunks = _filtered_chunks(session, resolved_filters)
+    dense_scores, vector_index_name = _dense_chunk_scores(chunks, query, provider, vector_index)
+    chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
 
     results: list[SearchResult] = []
-    for chunk in _filtered_chunks(session, resolved_filters):
-        dense_score = _cosine_similarity(query_vector, provider.embed(chunk.text))
-        if dense_score <= 0:
-            continue
+    for chunk_id, dense_score in dense_scores.items():
+        chunk = chunk_by_id[chunk_id]
         chunk_terms = set(tokenize(chunk.text))
-        matched_terms = sorted(set(tokenize(query)).intersection(chunk_terms))
+        matched_terms = sorted(set(query_terms).intersection(chunk_terms))
         results.append(
             _result_from_chunk(
                 chunk,
@@ -356,10 +382,30 @@ def dense_search(
                 score_components={
                     "dense": dense_score,
                     "embedding_provider": provider.provider_name,
+                    "vector_index": vector_index_name,
                 },
             )
         )
     return _sort_and_rank(results, top_k=top_k)
+
+
+def indexed_dense_search(
+    session: Session,
+    query: str,
+    *,
+    vector_index: LiteratureVectorIndex,
+    top_k: int = 10,
+    filters: SearchFilters | None = None,
+    embedding_provider: TextEmbeddingProvider | None = None,
+) -> list[SearchResult]:
+    return dense_search(
+        session,
+        query,
+        top_k=top_k,
+        filters=filters,
+        embedding_provider=embedding_provider,
+        vector_index=vector_index,
+    )
 
 
 def hybrid_search(
@@ -370,6 +416,7 @@ def hybrid_search(
     filters: SearchFilters | None = None,
     embedding_provider: TextEmbeddingProvider | None = None,
     weights: HybridWeights | None = None,
+    vector_index: LiteratureVectorIndex | None = None,
 ) -> list[SearchResult]:
     resolved_filters = filters or SearchFilters()
     query_terms = tokenize(query)
@@ -384,12 +431,7 @@ def hybrid_search(
     bm25_terms = {chunk.chunk_id: terms for _score, chunk, _matched, terms in bm25_scored}
     bm25_matched = {chunk.chunk_id: matched for _score, chunk, matched, _terms in bm25_scored}
 
-    query_vector = provider.embed(query)
-    dense_scores: dict[Any, float] = {}
-    for chunk in chunks:
-        dense_score = _cosine_similarity(query_vector, provider.embed(chunk.text))
-        if dense_score > 0:
-            dense_scores[chunk.chunk_id] = dense_score
+    dense_scores, vector_index_name = _dense_chunk_scores(chunks, query, provider, vector_index)
 
     normalized_bm25 = _normalize_scores(bm25_scores)
     normalized_dense = _normalize_scores(dense_scores)
@@ -428,6 +470,7 @@ def hybrid_search(
                     },
                     "terms": bm25_terms.get(chunk_id, {}),
                     "embedding_provider": provider.provider_name,
+                    "vector_index": vector_index_name,
                 },
             )
         )
@@ -477,6 +520,7 @@ def search_paper_chunks(
     embedding_provider: TextEmbeddingProvider | None = None,
     reranker: SearchReranker | None = None,
     hybrid_weights: HybridWeights | None = None,
+    vector_index: LiteratureVectorIndex | None = None,
     reranker_weight: float = 1.0,
 ) -> list[SearchResult]:
     if retrieval_mode == "bm25":
@@ -488,6 +532,7 @@ def search_paper_chunks(
             top_k=top_k,
             filters=filters,
             embedding_provider=embedding_provider,
+            vector_index=vector_index,
         )
     if retrieval_mode == "hybrid":
         return hybrid_search(
@@ -497,6 +542,7 @@ def search_paper_chunks(
             filters=filters,
             embedding_provider=embedding_provider,
             weights=hybrid_weights,
+            vector_index=vector_index,
         )
     if retrieval_mode == "hybrid_rerank":
         base_results = hybrid_search(
@@ -506,6 +552,7 @@ def search_paper_chunks(
             filters=filters,
             embedding_provider=embedding_provider,
             weights=hybrid_weights,
+            vector_index=vector_index,
         )
         return rerank_search_results(
             query,

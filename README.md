@@ -249,7 +249,7 @@ from rhizonp.api import app
 
 ### 3.7 Phase 2 literature provenance baseline
 
-Phase 2 当前实现本地 provenance/retrieval baseline：synthetic literature fixture、结构化 paper chunks、BM25 lexical search、deterministic dense-vector baseline、hybrid fusion、local rerank、retrieval run/result 记录和 search trace。它不接入 PubMed、Crossref、OpenAlex 或真实全文，也不声明已完成生产级 embedding/FAISS 文献索引或外部 reranker 模型集成。
+Phase 2 当前实现本地 provenance/retrieval baseline：synthetic literature fixture、结构化 paper chunks、BM25 lexical search、deterministic dense-vector baseline、可持久化的本地 literature vector index abstraction、hybrid fusion、local rerank、retrieval run/result 记录和 search trace。它不接入 PubMed、Crossref、OpenAlex 或真实全文，也不声明已完成生产级 model-backed embedding、FAISS 文献索引或外部 reranker 模型集成。
 
 导入 synthetic literature fixture：
 
@@ -279,6 +279,8 @@ make load-literature-fixtures
 ```text
 trace.chunk_id -> trace.paper_id -> trace.doi / trace.source_url
 ```
+
+Python 层可使用 `InMemoryLiteratureVectorIndex` 为 dense/hybrid search 提供预构建索引；该索引使用 `pathlib` + JSON 持久化，目的是测试接口和 provenance，不替代后续 FAISS/model-backed adapter。
 
 Phase 2 说明见 `docs/LITERATURE_PROVENANCE.md`。
 

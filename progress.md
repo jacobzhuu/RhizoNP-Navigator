@@ -56,3 +56,9 @@
 - 继续 Phase 2 metadata filters：新增 column-backed SQL filters（year、section、DOI、source URL、journal）与跨数据库 metadata filters（source type、taxa、compounds、host）。
 - 定向验证结果：`tests/unit/test_literature_retrieval.py` 和 `tests/unit/test_api_readonly.py` 共 13 个测试通过；相关 Ruff 和 mypy 均通过。
 - 完整验证结果：`make check` 通过，38 tests passed；`git diff --check` 通过；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；`python -m compileall src tests scripts migrations` 通过；`docker compose config` 通过。
+- 继续 Phase 2 vector index boundary：新增 `LiteratureVectorIndex` protocol、`VectorIndexEntry`/`VectorIndexHit` 和 JSON 可持久化的 `InMemoryLiteratureVectorIndex`。
+- 将 dense/hybrid retrieval 接入可选预构建 vector index；默认仍从过滤后的 `PaperChunk` 临时构建 deterministic 本地 index，保持 API 兼容。
+- 新增 vector index 单元测试覆盖 index 构建、candidate chunk 过滤、JSON save/load、dense/hybrid 使用预构建 index 后仍返回 DOI/source trace。
+- 定向验证结果：`python -m pytest tests/unit/test_literature_vector_index.py tests/unit/test_literature_retrieval.py -q` 通过，9 passed；相关 Ruff 和 mypy 均通过。
+- 完整验证结果：`make check` 通过，42 tests passed；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；PostgreSQL offline SQL 生成通过；SQLite literature fixture CLI 导入通过；`python -m compileall src tests scripts migrations` 通过；`git diff --check` 与 `git diff --cached --check` 通过；`docker compose config` 通过。
+- 创建 Phase 2 vector index boundary 本地提交；远端 push 仍需 GitHub HTTPS/gh 凭据。

@@ -10,6 +10,7 @@ Phase 2 currently provides a local, synthetic, test-backed provenance baseline f
 - Structured chunking for title, abstract, methods, results, discussion, and additional sections.
 - Local BM25 lexical search over persisted `paper_chunks`.
 - Deterministic hashing-vector dense retrieval baseline.
+- `LiteratureVectorIndex` protocol with a JSON-serializable `InMemoryLiteratureVectorIndex` baseline.
 - Hybrid BM25 + dense fusion with configurable weights.
 - Local lexical-overlap reranker through the same `score(query, passages)` protocol shape used by the existing reranker adapter.
 - `POST /api/v1/search` returning traceable results.
@@ -24,7 +25,7 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 
 - Real external literature adapters.
 - Production model-backed literature embeddings.
-- FAISS-backed literature vector index.
+- FAISS-backed literature vector index adapter.
 - External cross-encoder or BGE reranker integration for literature results.
 - License-aware full-text download.
 - Taxonomy-aware evidence grading, which belongs to Phase 3.
@@ -34,11 +35,17 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 `POST /api/v1/search` supports:
 
 - `bm25`: local lexical retrieval.
-- `dense`: deterministic hashing-vector retrieval, intended for reproducible tests and interface validation.
-- `hybrid`: weighted BM25 + deterministic dense fusion.
+- `dense`: deterministic hashing-vector retrieval through the local vector index boundary, intended for reproducible tests and interface validation.
+- `hybrid`: weighted BM25 + deterministic dense fusion through the same vector index boundary.
 - `hybrid_rerank`: hybrid retrieval followed by local lexical-overlap reranking.
 
 These modes are intentionally deterministic. They are not benchmarks and do not claim model-level semantic retrieval quality.
+
+## Vector Index Boundary
+
+`InMemoryLiteratureVectorIndex` can be built from persisted `PaperChunk` rows, searched with an embedding provider, and saved/loaded as JSON via `pathlib`. Dense and hybrid retrieval accept an optional `LiteratureVectorIndex`, so a future FAISS/model-backed adapter can replace the local implementation without changing API result provenance.
+
+The local index stores chunk IDs, paper IDs, text, embedding vectors, and trace metadata such as section, source hash, DOI, and source URL. It is a deterministic development and test baseline, not a production semantic search index.
 
 ## Metadata Filters
 

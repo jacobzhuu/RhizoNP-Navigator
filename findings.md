@@ -125,9 +125,9 @@
 ## Phase 2 范围审计
 
 - 迁移方案 Phase 2 目标是带 provenance 的文献检索；DoD 是搜索结果可追溯 `chunk -> paper -> DOI/source`。
-- 当前实现选择 Phase 2 provenance baseline：schema、synthetic adapter、structured chunking、BM25 本地检索和 persisted source trace。
+- 当前实现选择 Phase 2 provenance/retrieval baseline：schema、synthetic adapter、structured chunking、BM25 本地检索、deterministic dense/hybrid/rerank baseline、vector index abstraction 和 persisted source trace。
 - 未接入真实外部文献源，因此不需要也不能声称 PubMed/Crossref/OpenAlex/full-text integration 已完成。
-- 未实现 dense retrieval、hybrid fusion 或 literature reranker，因此 Phase 2 仍是 in-progress。
+- 生产级 model-backed embedding、FAISS-backed literature index adapter、外部 cross-encoder/BGE reranker 和真实 source adapter 尚未实现，因此 Phase 2 仍是 in-progress。
 - Phase 3 的 taxonomy-aware evidence grading 未开始；本轮不实现 evidence tier policy 自动判定。
 
 ## Phase 2 provenance baseline 验证
@@ -144,3 +144,5 @@
 - 本地 baseline 不替代后续 model-backed embedding、FAISS literature index 或 BGE/cross-encoder literature reranker；这些仍需要单独实现和评估。
 - Search filters 分为 column-backed SQL filters（year、section、DOI、source URL、journal）和 metadata-backed filters（source type、taxa、compounds、host）。
 - Metadata-backed filters 暂不使用 PostgreSQL-only JSONB operator，以保持 SQLite/Windows/macOS/Linux 测试一致。
+- `LiteratureVectorIndex` protocol 已建立，`InMemoryLiteratureVectorIndex` 可从 `PaperChunk` 构建并用 JSON 保存/加载；dense/hybrid search 可接收预构建 index。
+- 本地 vector index 保存 chunk/paper IDs、text、vector 和 DOI/source URL 等 trace metadata；它是 deterministic development/test baseline，不是 FAISS 或生产级语义索引。

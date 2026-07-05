@@ -98,6 +98,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] 新增 deterministic dense-vector literature retrieval baseline。
 - [x] 新增 BM25 + dense hybrid fusion baseline。
 - [x] 新增 local reranker protocol integration 和 lexical-overlap reranker baseline。
+- [x] 新增 `LiteratureVectorIndex` protocol 与可 JSON 持久化的 `InMemoryLiteratureVectorIndex` baseline。
 - [x] `POST /api/v1/search` 支持 `bm25`、`dense`、`hybrid`、`hybrid_rerank`。
 - [x] 增加 column-backed 与 metadata-backed search filters。
 - [x] 新增 `POST /api/v1/search`，返回 chunk→paper→DOI/source trace。
@@ -108,7 +109,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 
 - [x] 形成 Phase 2 provenance baseline 单独 commit。
 - [x] 形成 Phase 2 local retrieval baseline 单独 commit。
-- [ ] 生产级 model-backed literature embeddings / FAISS literature index。
+- [ ] 生产级 model-backed literature embeddings / FAISS literature index adapter。
 - [ ] 外部 cross-encoder/BGE literature reranker 集成。
 - [x] metadata filters 的 column-backed SQL 实现和跨数据库 metadata 过滤语义。
 - [ ] 真实外部 source adapter 及许可/API rate-limit 审计。

@@ -16,15 +16,24 @@ from rhizonp.literature.retrieval import (
     bm25_search,
     dense_search,
     hybrid_search,
+    indexed_dense_search,
     persist_retrieval_results,
     rerank_search_results,
     search_paper_chunks,
+)
+from rhizonp.literature.vector_index import (
+    InMemoryLiteratureVectorIndex,
+    LiteratureVectorIndex,
+    VectorIndexEntry,
+    VectorIndexHit,
 )
 
 __all__ = [
     "HashingEmbeddingProvider",
     "HybridWeights",
+    "InMemoryLiteratureVectorIndex",
     "LexicalOverlapReranker",
+    "LiteratureVectorIndex",
     "NormalizedLiteratureRecord",
     "RawLiteratureRecord",
     "SearchFilters",
@@ -32,9 +41,12 @@ __all__ = [
     "SourceAdapter",
     "StructuredChunk",
     "SyntheticLiteratureAdapter",
+    "VectorIndexEntry",
+    "VectorIndexHit",
     "bm25_search",
     "dense_search",
     "hybrid_search",
+    "indexed_dense_search",
     "persist_retrieval_results",
     "rerank_search_results",
     "search_paper_chunks",
