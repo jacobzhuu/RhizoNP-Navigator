@@ -19,6 +19,8 @@ cp .env.example .env
 
 ```bash
 make smoke
+# or full bootstrap + API + integration checks:
+./scripts/start.sh
 ```
 
 Expected result: three demo cases complete with JSON/CSV/Markdown outputs under `data/output/smoke/`.
@@ -50,6 +52,13 @@ make eval-end-to-end
 Reports are written to `data/eval/reports/latest/` (gitignored). Metrics apply only to the declared synthetic/MVP replay scope — not PubMed-wide retrieval quality.
 
 ## Optional API server
+
+```bash
+./scripts/start.sh api          # foreground
+./scripts/start.sh              # setup + DB (if Docker) + API background + test-api
+./scripts/start.sh test-api     # integration checks against running API
+make start-api
+```
 
 ```bash
 uvicorn rhizonp.api.app:app --app-dir src --reload

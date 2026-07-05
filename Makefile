@@ -77,5 +77,14 @@ demo:
 smoke:
 	$(PYTHON) -m scripts.run_smoke
 
+start:
+	bash scripts/start.sh all
+
+start-api:
+	bash scripts/start.sh api
+
+test-api:
+	bash scripts/test_api_integration.sh --base-url http://127.0.0.1:8000
+
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app

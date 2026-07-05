@@ -1,0 +1,36 @@
+# Conda environment for RhizoNP Navigator (Python 3.11 recommended).
+#
+# Create:
+#   conda env create -f environment.yml
+#
+# Update after dependency changes:
+#   conda env update -f environment.yml --prune
+#
+# Activate:
+#   conda activate rhizonp
+
+name: rhizonp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - alembic==1.14.0
+      - faiss-cpu
+      - fastapi==0.115.6
+      - FlagEmbedding==1.3.4
+      - httpx==0.27.2
+      - langchain==0.3.14
+      - langchain-community==0.3.14
+      - langchain-huggingface==0.1.2
+      - langchain-openai==0.2.14
+      - modelscope==1.22.1
+      - mypy>=1.10,<2
+      - psycopg2-binary==2.9.9
+      - pydantic-settings==2.14.2
+      - pytest>=8.0
+      - ruff>=0.6
+      - sentence-transformers==3.2.0
+      - SQLAlchemy==2.0.35
+      - uvicorn[standard]>=0.30.0

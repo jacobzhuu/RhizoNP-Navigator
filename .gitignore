@@ -19,6 +19,8 @@ ENV/
 .env
 .env.*
 !.env.example
+.rhizonp-api.pid
+.rhizonp-api.log
 
 # ── IDE / Editor ────────────────────────────────────────
 .vscode/
