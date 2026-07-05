@@ -1,0 +1,9 @@
+{
+  "annotation_status": "pending",
+  "benchmark_id": "phase2_real_pubmed_v1",
+  "benchmark_type": "real_pubmed",
+  "corpus_id": "rhizonp_domain_v1",
+  "description": "Paper-level real PubMed retrieval benchmark for Phase 2 empirical validation. Queries are defined; human relevance labels (grades 0/1/2) must be imported after manual review. No fabricated gold labels.",
+  "labeled_query_count": 0,
+  "systems": []
+}

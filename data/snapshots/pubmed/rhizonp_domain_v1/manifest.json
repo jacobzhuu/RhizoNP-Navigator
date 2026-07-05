@@ -1,0 +1,26 @@
+{
+  "corpus_id": "rhizonp_domain_v1",
+  "corpus_name": "rhizonp_domain_v1",
+  "created_at": "2026-07-05T06:10:12.342980+00:00",
+  "deduplication_rules": {
+    "description": "Records deduplicated by PMID (or source_id when PMID absent); first query run wins.",
+    "fallback_key": "source_id",
+    "key": "pmid",
+    "strategy": "first_seen_wins"
+  },
+  "description": "Bounded PubMed metadata corpus for plant-microbe, rhizosphere, PGPR/Streptomyces/biocontrol, and microbial natural product literature.",
+  "files": {
+    "corpus.json": {
+      "checksum_sha256": "218f376184263451fb524db780bb9389a5c072cbadf02a2690f28e3c89fe95d7",
+      "record_count": 149
+    }
+  },
+  "full_text": false,
+  "metadata_only": true,
+  "paper_count": 149,
+  "query_config": {
+    "checksum_sha256": "1f2441490f4fffb255cc8f88dfdd911ecfc613c2d089feabfa89332b3fc79a95",
+    "path": "/Users/zzy/Projects/RhizoNP-Navigator/data/eval/domain_corpus_queries.json"
+  },
+  "source_name": "pubmed_eutils"
+}
