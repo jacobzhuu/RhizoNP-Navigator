@@ -1,0 +1,58 @@
+{
+  "benchmark_id": "phase7_end_to_end_mini",
+  "description": "Deterministic end-to-end evaluation cases for offline MVP validation.",
+  "retrieval_gold_path": "data/eval/phase2_retrieval_gold.json",
+  "taxonomy_cases": [
+    {
+      "case_id": "TAX001",
+      "query_taxon": "Streptomyces",
+      "literature_taxon": "Streptomyces hygroscopicus OS-2",
+      "observation_method": "synthetic_16S_fixture",
+      "expected_distance": "SAME_GENUS",
+      "expected_tier": "C",
+      "must_prevent_strain_claim": true
+    },
+    {
+      "case_id": "TAX002",
+      "query_taxon": "Streptomyces hygroscopicus OS-2",
+      "literature_taxon": "Streptomyces hygroscopicus OS-2",
+      "expected_distance": "SAME_STRAIN",
+      "expected_tier": "A",
+      "must_prevent_strain_claim": false
+    }
+  ],
+  "linking_cases": [
+    {
+      "case_id": "LINK001",
+      "query_taxon": "Streptomyces hygroscopicus OS-2",
+      "metabolite_name": "rapamycin",
+      "expected_top_compound": "Rapamycin",
+      "min_tier": "A"
+    }
+  ],
+  "abstention_cases": [
+    {
+      "case_id": "ABS001",
+      "question": "Does unknown taxon produce unknown compound?",
+      "evidence_items": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE"
+    }
+  ],
+  "conflict_cases": [
+    {
+      "case_id": "CON001",
+      "question": "Does the taxon produce rapamycin?",
+      "support_tier": "B",
+      "conflict_predicate": "DOES_NOT_PRODUCE",
+      "expected_status": "CONFLICTING_EVIDENCE"
+    }
+  ],
+  "citation_cases": [
+    {
+      "case_id": "CIT001",
+      "question": "Supported claim with citation",
+      "evidence_tier": "A",
+      "expected_citation_coverage": 1.0
+    }
+  ]
+}
