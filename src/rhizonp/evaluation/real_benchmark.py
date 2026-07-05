@@ -19,6 +19,8 @@ from rhizonp.evaluation.retrieval_metrics import (
     graded_mrr_at_k,
     graded_ndcg_at_k,
     graded_recall_at_k,
+    strict_graded_mrr_at_k,
+    strict_graded_recall_at_k,
 )
 from rhizonp.literature.embeddings import (
     HashingEmbeddingProvider,
@@ -213,6 +215,9 @@ def evaluate_real_retrieval_system(
             "recall_at_10": graded_recall_at_k(grades, retrieved_pmids, 10),
             "mrr_at_10": graded_mrr_at_k(grades, retrieved_pmids, 10),
             "ndcg_at_10": graded_ndcg_at_k(grades, retrieved_pmids, 10),
+            "strict_recall_at_5": strict_graded_recall_at_k(grades, retrieved_pmids, 5),
+            "strict_recall_at_10": strict_graded_recall_at_k(grades, retrieved_pmids, 10),
+            "strict_mrr_at_10": strict_graded_mrr_at_k(grades, retrieved_pmids, 10),
         }
         per_query[gold.query_id] = query_metrics
         recalls_5.append(query_metrics["recall_at_5"])

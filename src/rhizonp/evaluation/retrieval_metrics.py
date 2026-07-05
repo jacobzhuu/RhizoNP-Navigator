@@ -3,6 +3,12 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable, Mapping, Sequence
 
+# Primary relevance threshold for Recall@k and MRR@k on the real PubMed benchmark.
+PRIMARY_RELEVANCE_MIN_GRADE = 1
+
+# Strict sensitivity threshold: only grade 2 counts as relevant.
+STRICT_RELEVANCE_MIN_GRADE = 2
+
 
 def recall_at_k(relevant: set[str], retrieved: Sequence[str], k: int) -> float:
     if not relevant:
@@ -49,23 +55,56 @@ def aggregate_metric(values: Iterable[float]) -> float:
     return sum(values_list) / len(values_list)
 
 
-def _relevant_pmids(grades: Mapping[str, int], *, min_grade: int = 1) -> set[str]:
+def _relevant_pmids(
+    grades: Mapping[str, int],
+    *,
+    min_grade: int = PRIMARY_RELEVANCE_MIN_GRADE,
+) -> set[str]:
     return {pmid for pmid, grade in grades.items() if grade >= min_grade}
 
 
-def graded_recall_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
-    """Recall@k using paper-level PMIDs; grades >= 1 count as relevant."""
-    relevant = _relevant_pmids(grades)
+def graded_recall_at_k(
+    grades: Mapping[str, int],
+    retrieved: Sequence[str],
+    k: int,
+    *,
+    min_grade: int = PRIMARY_RELEVANCE_MIN_GRADE,
+) -> float:
+    """Recall@k using paper-level PMIDs.
+
+    Only PMIDs present in ``grades`` participate. Unjudged retrieved PMIDs are
+    ignored (not treated as irrelevant).
+    """
+    relevant = _relevant_pmids(grades, min_grade=min_grade)
     return recall_at_k(relevant, retrieved, k)
 
 
-def graded_mrr_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
-    relevant = _relevant_pmids(grades)
+def strict_graded_recall_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
+    """Recall@k where only grade 2 PMIDs count as relevant."""
+    return graded_recall_at_k(grades, retrieved, k, min_grade=STRICT_RELEVANCE_MIN_GRADE)
+
+
+def graded_mrr_at_k(
+    grades: Mapping[str, int],
+    retrieved: Sequence[str],
+    k: int,
+    *,
+    min_grade: int = PRIMARY_RELEVANCE_MIN_GRADE,
+) -> float:
+    relevant = _relevant_pmids(grades, min_grade=min_grade)
     return mrr_at_k(relevant, retrieved, k)
 
 
+def strict_graded_mrr_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
+    return graded_mrr_at_k(grades, retrieved, k, min_grade=STRICT_RELEVANCE_MIN_GRADE)
+
+
 def graded_ndcg_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
-    """nDCG@k with graded gains (0, 1, 2) for paper-level PMIDs."""
+    """nDCG@k with graded gains equal to label values (0, 1, 2).
+
+    Unjudged retrieved PMIDs contribute zero gain. Ideal DCG uses only judged
+    positive gains from ``grades``.
+    """
     if not grades:
         return 0.0
 

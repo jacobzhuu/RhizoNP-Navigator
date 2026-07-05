@@ -11,7 +11,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Export retrieval candidates for human relevance annotation.",
+        description="Export pooled retrieval candidates for blind human relevance annotation.",
     )
     parser.add_argument(
         "--benchmark",
@@ -26,32 +26,38 @@ def parse_args() -> argparse.Namespace:
         help="Corpus snapshot to ingest before export (offline).",
     )
     parser.add_argument(
-        "--output",
+        "--blind-output",
         type=Path,
-        default=PROJECT_ROOT / "data" / "eval" / "annotation" / "candidates.csv",
-        help="CSV export path for human review.",
+        default=PROJECT_ROOT / "data" / "eval" / "annotation" / "blind_reviewer_sheet.csv",
+        help="Blind reviewer CSV without retrieval provenance.",
     )
     parser.add_argument(
-        "--format",
-        choices=("csv", "json"),
-        default="csv",
-        help="Export format.",
+        "--provenance-output",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "eval" / "annotation" / "provenance_sidecar.csv",
+        help="Provenance sidecar CSV with system/rank/score.",
     )
     parser.add_argument(
-        "--retrieval-system",
-        default="hybrid_hash",
-        help="Label for the retrieval system used to generate candidates.",
-    )
-    parser.add_argument(
-        "--retrieval-mode",
-        default="hybrid",
-        help="Retrieval mode passed to search_paper_chunks.",
-    )
-    parser.add_argument(
-        "--top-k",
+        "--pool-depth",
         type=int,
         default=20,
-        help="Number of candidates per query.",
+        help="Top-k depth per retrieval system before union.",
+    )
+    parser.add_argument(
+        "--legacy-output",
+        type=Path,
+        default=None,
+        help="Optional legacy single-system CSV export path.",
+    )
+    parser.add_argument(
+        "--legacy-system",
+        default="hybrid_hash",
+        help="Legacy export system label when --legacy-output is set.",
+    )
+    parser.add_argument(
+        "--legacy-mode",
+        default="hybrid",
+        help="Legacy export retrieval mode when --legacy-output is set.",
     )
     return parser.parse_args()
 
@@ -60,8 +66,10 @@ def main() -> None:
     from rhizonp.domain.models import Base
     from rhizonp.evaluation.annotation import (
         export_annotation_candidates,
+        export_pooled_annotation_candidates,
         write_annotation_export_csv,
-        write_annotation_export_json,
+        write_blind_reviewer_sheet,
+        write_provenance_sidecar,
     )
     from rhizonp.evaluation.real_benchmark import load_real_benchmark
     from rhizonp.ingestion.corpus import load_corpus_snapshot, normalized_records_from_snapshot
@@ -82,20 +90,30 @@ def main() -> None:
     session_factory = create_session_factory(engine)
     with session_scope(session_factory) as session:
         ingest_literature_records(session, records)
-        candidates = export_annotation_candidates(
+        pooled = export_pooled_annotation_candidates(
             session,
             benchmark,
-            retrieval_system=args.retrieval_system,
-            retrieval_mode=args.retrieval_mode,
-            top_k=args.top_k,
+            pool_depth=args.pool_depth,
         )
 
-    if args.format == "json":
-        output_path = write_annotation_export_json(args.output, candidates)
-    else:
-        output_path = write_annotation_export_csv(args.output, candidates)
+    blind_path = write_blind_reviewer_sheet(args.blind_output, pooled)
+    provenance_path = write_provenance_sidecar(args.provenance_output, pooled)
+    print(
+        f"Exported {len(pooled)} pooled candidates -> blind={blind_path}, "
+        f"provenance={provenance_path}"
+    )
 
-    print(f"Exported {len(candidates)} annotation candidates -> {output_path}")
+    if args.legacy_output is not None:
+        with session_scope(session_factory) as session:
+            legacy = export_annotation_candidates(
+                session,
+                benchmark,
+                retrieval_system=args.legacy_system,
+                retrieval_mode=args.legacy_mode,
+                top_k=args.pool_depth,
+            )
+        legacy_path = write_annotation_export_csv(args.legacy_output, legacy)
+        print(f"Legacy single-system export -> {legacy_path}")
 
 
 if __name__ == "__main__":

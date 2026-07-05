@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit docker-test
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -59,6 +59,9 @@ import-annotation-labels:
 	@echo "Usage: make import-annotation-labels REVIEW=path/to/reviewed.csv"
 	@test -n "$(REVIEW)"
 	$(PYTHON) -m scripts.import_annotation_labels --review $(REVIEW)
+
+run-leakage-audit:
+	$(PYTHON) -m scripts.run_leakage_audit
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app
