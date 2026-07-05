@@ -191,6 +191,10 @@ class NaturalProductLinkResponse(BaseModel):
 
 class OwnDataPipelineRequest(BaseModel):
     data_dir: str | None = None
+    enable_literature_retrieval: bool = False
+    retrieval_mode: str = "hybrid_rerank"
+    top_k: int = 5
+    max_queries: int = 3
 
 
 class OwnDataPipelineResponse(BaseModel):

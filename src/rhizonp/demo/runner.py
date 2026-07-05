@@ -14,6 +14,7 @@ from rhizonp.domain.models import Base
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.literature.retrieval import SearchFilters, search_paper_chunks
 from rhizonp.omics.pipeline import (
+    OwnDataPipelineOptions,
     export_candidate_matrix_csv,
     export_pipeline_json,
     run_own_data_pipeline,
@@ -172,15 +173,55 @@ def run_demo_case_2_taxonomy_safety(output_dir: Path) -> DemoCaseResult:
 
 
 def run_demo_case_3_own_data_pipeline(output_dir: Path) -> DemoCaseResult:
-    pipeline_result = run_own_data_pipeline(PROJECT_ROOT / "data" / "fixtures" / "own_data_demo")
+    offline_result = run_own_data_pipeline(
+        PROJECT_ROOT / "data" / "fixtures" / "own_data_demo",
+        options=OwnDataPipelineOptions(enable_literature_retrieval=False),
+    )
+
+    session = _literature_session()
+    try:
+        pipeline_result = run_own_data_pipeline(
+            PROJECT_ROOT / "data" / "fixtures" / "own_data_demo",
+            session=session,
+            options=OwnDataPipelineOptions(
+                enable_literature_retrieval=True,
+                retrieval_mode="hybrid_rerank",
+                top_k=3,
+            ),
+        )
+    finally:
+        session.close()
+
     json_path = export_pipeline_json(pipeline_result, output_dir / "case3_own_data_pipeline.json")
     csv_path = export_candidate_matrix_csv(
         pipeline_result,
         output_dir / "case3_candidate_matrix.csv",
     )
     top_links = []
+    literature_traces = []
     for association_result in pipeline_result.association_results:
         matrix = association_result.candidate_matrix
+        literature = association_result.literature_retrieval
+        if literature.get("hits"):
+            top_hit = literature["hits"][0]
+            literature_traces.append(
+                {
+                    "association_id": association_result.association.association_id,
+                    "source_raw_label": association_result.association.source_raw_label,
+                    "target_raw_label": association_result.association.target_raw_label,
+                    "literature_status": literature.get("status"),
+                    "generated_queries": literature.get("queries", []),
+                    "top_hit": {
+                        "query_text": top_hit.get("query_text"),
+                        "retrieval_mode": top_hit.get("retrieval_mode"),
+                        "chunk_id": top_hit.get("chunk_id"),
+                        "paper_id": top_hit.get("paper_id"),
+                        "doi": top_hit.get("doi"),
+                        "source_url": top_hit.get("source_url"),
+                        "pmid": top_hit.get("pmid"),
+                    },
+                }
+            )
         if matrix.rows:
             top = matrix.rows[0]
             top_links.append(
@@ -225,19 +266,50 @@ def run_demo_case_3_own_data_pipeline(output_dir: Path) -> DemoCaseResult:
 
     payload = {
         "association_count": len(pipeline_result.association_results),
+        "offline_mode": {
+            "literature_retrieval_enabled": False,
+            "sample_status": offline_result.association_results[0].literature_retrieval.get("status")
+            if offline_result.association_results
+            else None,
+        },
+        "db_backed_literature_mode": {
+            "corpus": "phase2_literature_fixture",
+            "not_pubmed_wide": True,
+            "literature_traces": literature_traces,
+        },
         "top_links": top_links,
         "writer_answer": writer_answer,
     }
+    literature_lines = [
+        (
+            f"- {trace['association_id']} ({trace['source_raw_label']} -> "
+            f"{trace['target_raw_label']}): status={trace['literature_status']}, "
+            f"query=`{trace['top_hit']['query_text']}`, chunk={trace['top_hit']['chunk_id']}, "
+            f"paper={trace['top_hit']['paper_id']}, doi={trace['top_hit']['doi']}"
+        )
+        for trace in literature_traces
+    ] or ["- No literature hits returned."]
     md_path = output_dir / "case3_own_data_pipeline.md"
     md_path.write_text(
         "\n".join(
             [
                 "# Demo Case 3: Own-data-to-literature",
                 "",
-                "Synthetic 16S/LC-MS association fixture linked to natural-product candidates.",
+                "Synthetic 16S/LC-MS association fixture linked through:",
+                "1) literature retrieval (bounded Phase 2 fixture corpus when DB session is available),",
+                "2) taxonomy grading, and",
+                "3) natural-product candidate linking (fixture records).",
+                "",
+                "Default offline runs disable literature retrieval; this demo case also executes a",
+                "DB-backed literature pass against the local Phase 2 literature fixture corpus.",
+                "This is **not** PubMed-wide retrieval.",
                 "",
                 f"- Associations processed: {len(pipeline_result.association_results)}",
                 f"- Candidate matrix CSV: {csv_path.name}",
+                "",
+                "## Literature Traces (DB-backed fixture corpus)",
+                "",
+                *literature_lines,
                 "",
                 "## Top Candidate Links",
                 "",

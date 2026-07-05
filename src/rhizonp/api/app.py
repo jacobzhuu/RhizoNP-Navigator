@@ -330,13 +330,50 @@ def create_app() -> FastAPI:
     def run_own_data_to_literature(
         request: OwnDataPipelineRequest,
     ) -> OwnDataPipelineResponse:
+        from sqlalchemy import create_engine
+        from sqlalchemy.pool import StaticPool
+
         from rhizonp.config import PROJECT_ROOT
-        from rhizonp.omics.pipeline import run_own_data_pipeline
+        from rhizonp.domain.models import Base
+        from rhizonp.ingestion.literature import load_phase2_literature_fixture
+        from rhizonp.omics.pipeline import OwnDataPipelineOptions, run_own_data_pipeline
+        from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
 
         data_dir = request.data_dir or str(
             PROJECT_ROOT / "data" / "fixtures" / "own_data_demo"
         )
-        result = run_own_data_pipeline(data_dir)
+        literature_session = None
+        if request.enable_literature_retrieval:
+            try:
+                engine = create_engine_from_settings()
+            except RuntimeError:
+                engine = create_engine(
+                    "sqlite+pysqlite://",
+                    connect_args={"check_same_thread": False},
+                    poolclass=StaticPool,
+                    future=True,
+                )
+            Base.metadata.create_all(engine)
+            session_factory = create_session_factory(engine)
+            literature_session = session_factory()
+            load_phase2_literature_fixture(literature_session)
+            literature_session.commit()
+
+        try:
+            result = run_own_data_pipeline(
+                data_dir,
+                session=literature_session,
+                options=OwnDataPipelineOptions(
+                    enable_literature_retrieval=request.enable_literature_retrieval,
+                    retrieval_mode=request.retrieval_mode,
+                    top_k=request.top_k,
+                    max_queries=request.max_queries,
+                ),
+            )
+        finally:
+            if literature_session is not None:
+                literature_session.close()
+
         payload = result.to_dict()
         return OwnDataPipelineResponse(
             association_count=len(result.association_results),
