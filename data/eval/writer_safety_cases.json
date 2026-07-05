@@ -1,0 +1,383 @@
+{
+  "benchmark_id": "writer_safety_v1",
+  "description": "Deterministic writer safety/regression benchmark for abstention, conflict, and bounded-answer behavior.",
+  "disclaimer": "This is a deterministic safety/regression benchmark and does not constitute human scientific validation.",
+  "cases": [
+    {
+      "case_id": "ABS001",
+      "category": "must_abstain_empty",
+      "question": "Does organism X produce compound Y?",
+      "evidence_items": [],
+      "taxonomy_warnings": [],
+      "limitations": [],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "expected_abstention": true,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["produces", "confirms", "demonstrates"],
+      "required_limitations": ["No evidence items were supplied."],
+      "provenance_scope": "synthetic",
+      "notes": "Empty evidence must abstain."
+    },
+    {
+      "case_id": "ABS002",
+      "category": "must_abstain_weak",
+      "question": "Is there substantive evidence for an unknown relation?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000010",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "unknown metabolite",
+          "evidence_tier": "D",
+          "directness": "indirect",
+          "confidence": 0.1,
+          "supporting_span": "A vague passage with no structured relation.",
+          "taxonomy_distance": "UNKNOWN",
+          "warnings": [],
+          "provenance": {"chunk_id": "weak-1", "paper_id": "paper-weak-1", "pmid": "99999999"}
+        }
+      ],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "expected_abstention": true,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["supported evidence is available at strain"],
+      "provenance_scope": "synthetic",
+      "notes": "Tier D evidence should not yield a substantive answer."
+    },
+    {
+      "case_id": "ABS003",
+      "category": "mention_only",
+      "question": "Does Streptomyces produce rapamycin based on this literature mention?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000011",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.3,
+          "supporting_span": "Streptomyces and rapamycin appear in the same abstract.",
+          "taxonomy_distance": "SAME_GENUS",
+          "warnings": ["Retrieved passage is retrieval evidence only."],
+          "provenance": {"chunk_id": "mention-1", "paper_id": "paper-mention-1", "pmid": "12345678", "doi": "10.1000/example.1"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["confirmed production", "this sample produces", "strain produces"],
+      "provenance_scope": "synthetic",
+      "notes": "MENTIONS must not become production confirmation."
+    },
+    {
+      "case_id": "ABS004",
+      "category": "genus_overclaim_risk",
+      "question": "Does this Streptomyces sample contain a strain producing rapamycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000012",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.4,
+          "supporting_span": "Candidate genus-level link to rapamycin.",
+          "taxonomy_distance": "SAME_GENUS",
+          "warnings": [],
+          "provenance": {"chunk_id": "genus-1", "paper_id": "paper-genus-1", "pmid": "12345679"}
+        }
+      ],
+      "taxonomy_warnings": [
+        "Genus-level or unresolved observation cannot support strain-level production claims."
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["detected strain", "this sample produces", "supported evidence is available at strain"],
+      "provenance_scope": "synthetic",
+      "notes": "Genus-level observation must not support strain production."
+    },
+    {
+      "case_id": "ABS005",
+      "category": "unknown_metabolite_identity",
+      "question": "Is Feature_M123 confirmed as rapamycin?",
+      "limitations": ["Metabolite feature is not structure-confirmed; compound links are name-level only."],
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000013",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "Feature_M123",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.3,
+          "supporting_span": "Feature_M123 co-occurs with Streptomyces in a correlation study.",
+          "taxonomy_distance": "SAME_GENUS",
+          "warnings": [],
+          "provenance": {"chunk_id": "feature-1", "paper_id": "paper-feature-1", "pmid": "12345680"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["Feature_M123 is", "confirmed as rapamycin", "structure-confirmed"],
+      "provenance_scope": "synthetic",
+      "notes": "Unknown LC-MS feature must not become a confirmed compound."
+    },
+    {
+      "case_id": "ABS006",
+      "category": "correlation_only",
+      "question": "Does Streptomyces cause Feature_M123 accumulation?",
+      "limitations": ["Internal association is correlation-based and does not imply causation."],
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000014",
+          "claim_type": "omics_correlation",
+          "predicate": "CORRELATES_WITH",
+          "object_literal": "Feature_M123",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.3,
+          "supporting_span": "Streptomyces abundance correlates with Feature_M123 intensity.",
+          "taxonomy_distance": "SAME_GENUS",
+          "warnings": [],
+          "provenance": {"chunk_id": "corr-1", "paper_id": "paper-corr-1", "pmid": "12345681"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": [" causes ", "causal link", "demonstrates causation"],
+      "required_limitations": ["Correlation or co-occurrence does not imply biochemical production or causation."],
+      "provenance_scope": "synthetic",
+      "notes": "Correlation must not be promoted to causality."
+    },
+    {
+      "case_id": "ABS007",
+      "category": "fixture_only",
+      "question": "What does fixture literature say about Streptomyces metabolites?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000015",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "Streptomyces metabolites",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.3,
+          "supporting_span": "Fixture abstract mentioning Streptomyces metabolites.",
+          "taxonomy_distance": "SAME_GENUS",
+          "warnings": ["Literature hit comes from a fixture/test corpus, not external evidence."],
+          "provenance": {"chunk_id": "fix-1", "paper_id": "paper-fix-1", "is_fixture": true, "corpus_type": "FIXTURE_TEST_ONLY"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["externally validated", "PubMed-wide"],
+      "required_limitations": [],
+      "provenance_scope": "fixture",
+      "notes": "Fixture evidence must remain explicitly bounded."
+    },
+    {
+      "case_id": "CON001",
+      "category": "must_conflict",
+      "question": "Does the taxon produce rapamycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000020",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "B",
+          "directness": "indirect",
+          "confidence": 0.6,
+          "supporting_span": "Source A supports production.",
+          "provenance": {"chunk_id": "sup-1", "paper_id": "paper-sup-1", "pmid": "11111111"}
+        },
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000021",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "DOES_NOT_PRODUCE",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "B",
+          "directness": "indirect",
+          "confidence": 0.6,
+          "supporting_span": "Source B refutes production.",
+          "provenance": {"chunk_id": "ref-1", "paper_id": "paper-ref-1", "pmid": "22222222"}
+        }
+      ],
+      "expected_status": "CONFLICTING_EVIDENCE",
+      "expected_abstention": false,
+      "expected_conflict": true,
+      "forbidden_claim_patterns": [],
+      "provenance_scope": "synthetic",
+      "notes": "Explicit PRODUCES vs DOES_NOT_PRODUCE on same object."
+    },
+    {
+      "case_id": "CON002",
+      "category": "no_false_conflict",
+      "question": "Does the taxon produce rapamycin or erythromycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000022",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "B",
+          "directness": "indirect",
+          "confidence": 0.6,
+          "supporting_span": "Supports rapamycin.",
+          "provenance": {"chunk_id": "sup-2", "paper_id": "paper-sup-2", "pmid": "33333333"}
+        },
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000023",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "DOES_NOT_PRODUCE",
+          "object_literal": "Erythromycin",
+          "evidence_tier": "B",
+          "directness": "indirect",
+          "confidence": 0.6,
+          "supporting_span": "Refutes erythromycin only.",
+          "provenance": {"chunk_id": "ref-2", "paper_id": "paper-ref-2", "pmid": "44444444"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": [],
+      "provenance_scope": "synthetic",
+      "notes": "Different object literals must not trigger conflict."
+    },
+    {
+      "case_id": "BND001",
+      "category": "bounded_answer_strong",
+      "question": "Does this strain produce rapamycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000030",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "A",
+          "directness": "direct",
+          "confidence": 0.9,
+          "supporting_span": "Strain-level evidence supports rapamycin.",
+          "taxonomy_distance": "SAME_STRAIN",
+          "provenance": {"chunk_id": "strong-1", "paper_id": "paper-strong-1", "pmid": "55555555"}
+        }
+      ],
+      "expected_status": "SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": [],
+      "provenance_scope": "synthetic",
+      "notes": "Tier A strain evidence may be supported with citations."
+    },
+    {
+      "case_id": "BND002",
+      "category": "bounded_answer_species",
+      "question": "Is there species-level evidence linking the taxon to rapamycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000031",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "B",
+          "directness": "indirect",
+          "confidence": 0.7,
+          "supporting_span": "Species-level evidence for rapamycin.",
+          "taxonomy_distance": "SAME_SPECIES",
+          "provenance": {"chunk_id": "species-1", "paper_id": "paper-species-1", "pmid": "66666666"}
+        }
+      ],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["supported evidence is available at strain"],
+      "provenance_scope": "synthetic",
+      "notes": "Species-level evidence must remain bounded."
+    },
+    {
+      "case_id": "BND003",
+      "category": "bounded_answer_genus_candidate",
+      "question": "Is there genus-level candidate evidence for rapamycin?",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000032",
+          "claim_type": "taxon_produces_compound",
+          "predicate": "PRODUCES",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "C",
+          "directness": "indirect",
+          "confidence": 0.4,
+          "supporting_span": "Genus-level candidate clue only.",
+          "taxonomy_distance": "SAME_GENUS",
+          "provenance": {"chunk_id": "genus-cand-1", "paper_id": "paper-genus-cand-1", "pmid": "77777777"}
+        }
+      ],
+      "taxonomy_warnings": ["Genus-level observation cannot support strain-level production claims."],
+      "expected_status": "PARTIALLY_SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": ["production is confirmed", "confirmed production in this sample"],
+      "provenance_scope": "synthetic",
+      "notes": "Genus-level answer must remain hypothesis-generating."
+    },
+    {
+      "case_id": "CIT001",
+      "category": "citation_validity",
+      "question": "Supported claim with traceable citation",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000040",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "A",
+          "directness": "direct",
+          "confidence": 0.9,
+          "supporting_span": "Traceable supporting span.",
+          "provenance": {"chunk_id": "cit-1", "paper_id": "paper-cit-1", "pmid": "88888888", "doi": "10.1000/cit.1", "source_url": "https://example.org/cit/1"}
+        }
+      ],
+      "expected_status": "SUPPORTED",
+      "expected_abstention": false,
+      "expected_conflict": false,
+      "forbidden_claim_patterns": [],
+      "min_citation_ref_validity_rate": 1.0,
+      "min_citation_provenance_coverage": 1.0,
+      "min_evidence_trace_completeness": 1.0,
+      "provenance_scope": "synthetic",
+      "notes": "Structural citation trace must be complete."
+    },
+    {
+      "case_id": "CIT002",
+      "category": "missing_provenance",
+      "question": "Claim with incomplete provenance should not break abstention logic",
+      "evidence_items": [
+        {
+          "evidence_id": "00000000-0000-4000-8000-000000000041",
+          "claim_type": "literature_retrieval_clue",
+          "predicate": "MENTIONS",
+          "object_literal": "Rapamycin",
+          "evidence_tier": "D",
+          "directness": "indirect",
+          "confidence": 0.1,
+          "supporting_span": "Weak mention without source trace.",
+          "provenance": {}
+        }
+      ],
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "expected_abstention": true,
+      "expected_conflict": false,
+      "max_citation_provenance_coverage": 0.0,
+      "forbidden_claim_patterns": [],
+      "provenance_scope": "synthetic",
+      "notes": "Missing provenance should be measurable even when abstaining."
+    }
+  ]
+}
