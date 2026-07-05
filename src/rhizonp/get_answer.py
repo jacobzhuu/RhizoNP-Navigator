@@ -99,6 +99,9 @@ def get_llm() -> Any:
         "openai_api_key": settings.deepseek_api_key,
         "openai_api_base": settings.llm_api_base,
         "max_tokens": settings.llm_max_tokens,
+        "timeout": settings.llm_timeout_seconds,
+        "max_retries": settings.llm_max_retries,
+        "temperature": settings.llm_temperature,
     }
     return _ChatOpenAI(**llm_kwargs)
 

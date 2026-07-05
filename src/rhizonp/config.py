@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     llm_model: str = "deepseek-chat"
     llm_api_base: str = "https://api.deepseek.com"
     llm_max_tokens: int = 4096
+    llm_timeout_seconds: float = 60.0
+    llm_max_retries: int = 2
+    llm_temperature: float = 0.0
 
     embedding_model: str = "yangjhchs/acge_text_embedding"
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
