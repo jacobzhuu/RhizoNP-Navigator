@@ -22,7 +22,7 @@
 | Bounded PubMed metadata corpus workflow | **Met** | `scripts/build_domain_corpus.py`, versioned snapshots |
 | Offline synthetic benchmark | **Met** | `phase2_retrieval_gold.json`, `run_retrieval_eval.py` |
 | Real PubMed benchmark format (PMID, graded 0/1/2) | **Met** | `phase2_real_pubmed_benchmark.json` |
-| Human annotation export/import workflow | **Met** | `export_annotation_candidates.py`, `import_annotation_labels.py` |
+| Human annotation export/import workflow | **Met** | Pooled export, blind sheet + provenance sidecar, import validation |
 | Cross-platform + offline CI | **Met** | `make check`, 82 passed / 3 skipped |
 | Phase 3 not started | **Confirmed** | No taxonomy-aware grading code |
 
@@ -68,22 +68,28 @@ Provenance preserved per record: PMID, DOI (when available), source URL, fetch/q
 | Queries defined | 18 |
 | Queries labeled | 0 |
 | Annotation status | `pending` |
-| Export template | `data/eval/annotation/candidates_template.csv` (287 candidates, hybrid_hash, top-20) |
+| Pool export | `blind_reviewer_sheet.csv` (543 pooled candidates) + `provenance_sidecar.csv` |
+| Deprecated | Single-system `candidates_template.csv` removed (hybrid-only bias) |
 
 ### Workflow
+
+See `docs/ANNOTATION_POLICY.md` for grades, metric semantics, and unjudged-document policy.
 
 ```bash
 # 1. Ingest snapshot (offline)
 DATABASE_URL=sqlite+pysqlite:///./rhizonp.db make ingest-domain-corpus
 
-# 2. Export candidates for human review
+# 2. Export pooled blind candidates + provenance sidecar
 DATABASE_URL=sqlite+pysqlite:///./rhizonp.db make export-annotation-candidates
 
-# 3. Fill grade column (0/1/2) in CSV, then import
-DATABASE_URL=sqlite+pysqlite:///./rhizonp.db \
-  make import-annotation-labels REVIEW=data/eval/annotation/reviewed.csv
+# 3. Run corpus/benchmark leakage audit (lexical warnings only)
+make run-leakage-audit
 
-# 4. Run real benchmark evaluation (offline, after labels exist)
+# 4. Fill grade column (0/1/2) in blind sheet, then import
+DATABASE_URL=sqlite+pysqlite:///./rhizonp.db \
+  make import-annotation-labels REVIEW=data/eval/annotation/blind_reviewer_sheet.csv
+
+# 5. Run real benchmark evaluation (offline, after labels exist)
 DATABASE_URL=sqlite+pysqlite:///./rhizonp.db make eval-real-retrieval
 ```
 

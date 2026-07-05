@@ -122,6 +122,9 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] versioned real PubMed corpus snapshot with manifest/checksums（149 records）。
 - [x] real PubMed benchmark query template（18 queries, PMID-based, graded 0/1/2 schema）。
 - [x] human annotation export/import workflow。
+- [x] pooled multi-system candidate export + blind reviewer sheet + provenance sidecar。
+- [x] annotation policy documentation and metric semantics。
+- [x] corpus/benchmark query leakage audit。
 - [ ] human relevance labeling completed for real benchmark。
 - [ ] real-corpus retrieval evaluation with human labels。
 - [ ] Phase 2 完整 DoD 终验（含可选 FAISS 实装环境 parity 验证）。

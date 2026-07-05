@@ -132,7 +132,10 @@
 - offline Phase 2 retrieval benchmark：`data/eval/phase2_retrieval_gold.json` + `scripts/run_retrieval_eval.py`；metrics 为 Recall@5/10、MRR@10、nDCG@10；默认基于 synthetic fixture gold labels，不声称 production benchmark 质量。
 - real PubMed corpus snapshot：`data/snapshots/pubmed/rhizonp_domain_v1/`（149 deduplicated metadata records, manifest + checksums）。
 - real PubMed benchmark template：`data/eval/phase2_real_pubmed_benchmark.json`（18 queries, PMID labels 0/1/2 schema, annotation pending）。
-- human annotation workflow：`export_annotation_candidates.py` / `import_annotation_labels.py`；可导出/导入 auditable CSV labels。
+- human annotation workflow：`export_annotation_candidates.py`（pooled union across bm25/dense_hash/hybrid_hash/hybrid_rerank_lexical）、blind reviewer sheet + provenance sidecar、`import_annotation_labels.py`。
+- annotation policy：`docs/ANNOTATION_POLICY.md`；primary recall threshold grade≥1，strict threshold grade=2，unjudged excluded from qrels。
+- leakage audit：`scripts/run_leakage_audit.py`；17 corpus × 18 benchmark pairs，当前 0 automatic lexical flags。
+- snapshot public-repo audit：`docs/SNAPSHOT_PUBLIC_REPO_AUDIT.md`。
 - Phase 2 工程 DoD 已满足；empirical DoD 仍 blocked on human annotation，因此 Phase 2 仍是 in-progress。
 - Phase 3 的 taxonomy-aware evidence grading 未开始；本轮不实现 evidence tier policy 自动判定。
 

@@ -70,3 +70,5 @@
 - 新增 commits 待创建：corpus versioning、real benchmark workflow、live snapshot data、Phase 2 closure audit。
 - 完整验证：`make check` 82 passed / 3 skipped；Alembic head `0002_literature_provenance`；`docker compose config` 通过。
 - Phase 2 empirical DoD：human labels pending；不声明 Phase 2 complete。
+- 继续 Phase 2 methodology hardening：pooled judging（4 systems, depth 20）、blind reviewer sheet + provenance sidecar、leakage audit（0 lexical flags）、annotation policy docs。
+- 验证：`make check` 96 passed / 3 skipped；pooled export 543 candidates vs prior 287 hybrid-only。
