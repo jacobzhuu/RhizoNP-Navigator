@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from rhizonp.config import PROJECT_ROOT
+from rhizonp.ingestion.npatlas_bioactivity import derive_npatlas_bioactivity_fields
 from rhizonp.literature.http_client import HttpClient, UrllibHttpClient
 
 NPATLAS_API_BASE = "https://www.npatlas.org/api/v1"
@@ -51,6 +52,8 @@ class NormalizedNPAtlasRecord:
     mol_formula: str | None = None
     origin_reference: dict[str, Any] = field(default_factory=dict)
     origin_organism: dict[str, Any] = field(default_factory=dict)
+    bioactivity: dict[str, Any] | None = None
+    bioactivity_summary: str | None = None
     provenance: dict[str, Any] = field(default_factory=dict)
 
 
@@ -99,6 +102,12 @@ def normalize_npatlas_record(record: RawNPAtlasRecord) -> NormalizedNPAtlasRecor
         "origin_reference": dict(record.origin_reference),
         "origin_organism": dict(record.origin_organism),
     }
+    source_url = str(provenance["source_url"])
+    bioactivity, bioactivity_summary = derive_npatlas_bioactivity_fields(
+        npaid=record.npaid,
+        origin_reference=record.origin_reference,
+        source_url=source_url,
+    )
     return NormalizedNPAtlasRecord(
         npaid=record.npaid,
         compound_name=record.compound_name,
@@ -110,6 +119,8 @@ def normalize_npatlas_record(record: RawNPAtlasRecord) -> NormalizedNPAtlasRecor
         mol_formula=record.mol_formula,
         origin_reference=dict(record.origin_reference),
         origin_organism=dict(record.origin_organism),
+        bioactivity=bioactivity,
+        bioactivity_summary=bioactivity_summary,
         provenance=provenance,
     )
 
@@ -266,6 +277,8 @@ def snapshot_from_records(
                 "mol_formula": record.mol_formula,
                 "origin_reference": dict(record.origin_reference),
                 "origin_organism": dict(record.origin_organism),
+                "bioactivity": dict(record.bioactivity) if record.bioactivity else None,
+                "bioactivity_summary": record.bioactivity_summary,
                 "provenance": {
                     **dict(record.provenance),
                     "fetched_at_utc": fetched_at,

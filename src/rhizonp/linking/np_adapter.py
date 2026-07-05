@@ -96,15 +96,30 @@ def resolve_natural_product_source_details(
     )
 
 
+def _bioactivity_from_normalized(record: NormalizedNPAtlasRecord) -> BioactivityRecord | None:
+    payload = record.bioactivity
+    if not isinstance(payload, dict):
+        return None
+    return BioactivityRecord(
+        activity_type=str(payload["activity_type"]),
+        target=payload.get("target"),
+        evidence_level=str(payload.get("evidence_level", "reported")),
+        provenance=dict(payload.get("provenance", {})),
+    )
+
+
 def _normalized_to_fixture_record(record: NormalizedNPAtlasRecord) -> NaturalProductFixtureRecord:
+    provenance = dict(record.provenance)
+    if record.bioactivity_summary:
+        provenance["bioactivity_summary"] = record.bioactivity_summary
     return NaturalProductFixtureRecord(
         key=f"npatlas_{record.npaid.lower()}",
         compound_name=record.compound_name,
         producer_taxon=record.producer_taxon,
         source_database=record.source_database,
         external_record_id=record.external_record_id,
-        bioactivity=None,
-        provenance=dict(record.provenance),
+        bioactivity=_bioactivity_from_normalized(record),
+        provenance=provenance,
     )
 
 
