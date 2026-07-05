@@ -5,11 +5,13 @@
 #   ./scripts/test_api_integration.sh
 #   ./scripts/test_api_integration.sh --base-url http://127.0.0.1:8000
 #   ./scripts/test_api_integration.sh --full   # also require DB-backed endpoints
+#   ./scripts/test_api_integration.sh --verbose  # dump full JSON responses
 
 set -euo pipefail
 
 BASE_URL="http://127.0.0.1:8000"
 FULL=0
+VERBOSE=0
 PASS=0
 FAIL=0
 SKIP=0
@@ -24,6 +26,10 @@ while [[ $# -gt 0 ]]; do
       FULL=1
       shift
       ;;
+    --verbose|-v)
+      VERBOSE=1
+      shift
+      ;;
     *)
       echo "Unknown argument: $1" >&2
       exit 2
@@ -33,17 +39,57 @@ done
 
 pass() {
   PASS=$((PASS + 1))
-  printf '  [PASS] %s\n' "$1"
+  printf '  ✓ %s\n' "$1"
 }
 
 fail() {
   FAIL=$((FAIL + 1))
-  printf '  [FAIL] %s\n' "$1" >&2
+  printf '  ✗ %s\n' "$1" >&2
 }
 
 skip() {
   SKIP=$((SKIP + 1))
-  printf '  [SKIP] %s\n' "$1"
+  printf '  ~ %s\n' "$1"
+}
+
+summarize_response() {
+  local label="$1"
+  local file="$2"
+  python - "$label" "$file" <<'PY'
+import json
+import sys
+
+label, path = sys.argv[1], sys.argv[2]
+with open(path, encoding="utf-8") as handle:
+    payload = json.load(handle)
+
+if label == "health":
+    print(f"status={payload.get('status', '?')}")
+elif label == "taxonomy grade":
+    print(
+        f"distance={payload.get('taxonomy_distance', '?')}, "
+        f"tier={payload.get('evidence_tier', '?')}, "
+        f"claim={payload.get('max_supported_claim', '?')}"
+    )
+elif label == "natural product link":
+    rows = payload.get("rows") or []
+    top = rows[0] if rows else {}
+    print(
+        f"rows={len(rows)}, top={top.get('compound_name', '?')} "
+        f"({top.get('status', '?')})"
+    )
+elif label == "own-data pipeline":
+    print(f"associations={payload.get('association_count', '?')}")
+elif label == "writer answer":
+    print(f"status={payload.get('status', '?')}")
+elif label == "taxon lookup":
+    print(f"taxon={payload.get('canonical_name', '?')}, rank={payload.get('rank', '?')}")
+elif label == "literature search":
+    results = payload.get("results") or []
+    print(f"results={len(results)}, mode={payload.get('retrieval_mode', '?')}")
+else:
+    print("ok")
+PY
 }
 
 request() {
@@ -66,18 +112,25 @@ request() {
   fi
 
   if [[ "${code}" == "${expected}" ]]; then
-    pass "${label} (${code})"
-    cat "${tmp}"
+    local detail
+    detail="$(summarize_response "${label}" "${tmp}" 2>/dev/null || echo "ok")"
+    pass "${label} (${code}) — ${detail}"
+    if [[ "${VERBOSE}" -eq 1 ]]; then
+      cat "${tmp}"
+      echo
+    fi
   else
     fail "${label} (expected ${expected}, got ${code})"
+    echo "--- response ---" >&2
     cat "${tmp}" >&2
+    echo >&2
     rm -f "${tmp}"
     return 1
   fi
   rm -f "${tmp}"
 }
 
-echo "[rhizonp] API integration test -> ${BASE_URL}"
+printf '[rhizonp] API checks → %s\n' "${BASE_URL}"
 
 request GET /api/v1/health "" 200 "health"
 
@@ -105,19 +158,20 @@ if [[ "${FULL}" -eq 1 ]]; then
 else
   tmp="$(mktemp)"
   code="$(curl -sS -o "${tmp}" -w '%{http_code}' "${BASE_URL}/api/v1/taxa/Streptomyces")"
-  rm -f "${tmp}"
   if [[ "${code}" == "200" ]]; then
-    pass "taxon lookup (${code})"
+    detail="$(summarize_response "taxon lookup" "${tmp}" 2>/dev/null || echo "ok")"
+    pass "taxon lookup (${code}) — ${detail}"
+    rm -f "${tmp}"
     request POST /api/v1/search \
       '{"query":"Streptomyces Feature_M123","top_k":2,"filters":{"sections":["results"],"source_types":["paper"],"dois":["10.0000/rhizonp.fixture.lit.001"],"journals":["fixture"],"taxa":["Streptomyces"],"compounds":["FixturePolyketide-A"],"host":["Synthetic plant"]}}' \
       200 "literature search"
   else
-    skip "DB-backed endpoints (taxon/search) — start PostgreSQL with './scripts/start.sh db' or './scripts/start.sh db && ./scripts/start.sh test-api --full'"
+    rm -f "${tmp}"
+    skip "DB endpoints (taxon/search) — run './scripts/start.sh db' first"
   fi
 fi
 
-echo
-echo "[rhizonp] Summary: pass=${PASS} fail=${FAIL} skip=${SKIP}"
+printf '\n[rhizonp] Done: %d passed, %d failed, %d skipped\n' "${PASS}" "${FAIL}" "${SKIP}"
 if [[ "${FAIL}" -gt 0 ]]; then
   exit 1
 fi
