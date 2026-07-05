@@ -167,7 +167,7 @@ def test_versioned_corpus_snapshot_manifest_and_checksum(tmp_path: Path) -> None
         snapshot,
         tmp_path / "rhizonp_domain_v1",
         query_config_path=query_config,
-    )
+    )[:2]
     manifest = verify_corpus_snapshot_directory(corpus_path.parent)
     assert manifest["metadata_only"] is True
     assert manifest["full_text"] is False

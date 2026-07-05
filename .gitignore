@@ -67,6 +67,9 @@ data/private/
 data/raw/
 uploads/
 
+# ── PubMed corpus snapshots (regenerate locally; see docs/SNAPSHOT_PUBLIC_REPO_AUDIT.md)
+data/snapshots/pubmed/*/corpus.json
+
 # ── Database files ──────────────────────────────────────
 *.db
 *.sqlite

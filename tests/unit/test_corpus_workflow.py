@@ -125,7 +125,7 @@ def test_versioned_snapshot_roundtrip(tmp_path: Path) -> None:
     corpus_path, manifest_path = save_versioned_corpus_snapshot(
         snapshot,
         tmp_path / "test_snapshot",
-    )
+    )[:2]
     manifest = verify_corpus_snapshot_directory(corpus_path.parent)
     assert manifest["paper_count"] == metadata["record_count"]
     assert manifest["deduplication_rules"]["key"] == "pmid"

@@ -209,7 +209,7 @@ def save_versioned_corpus_snapshot(
     query_config_path: str | Path | None = None,
     corpus_filename: str = "corpus.json",
     manifest_filename: str = "manifest.json",
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     """Persist an immutable versioned corpus directory with manifest and checksums."""
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -232,7 +232,28 @@ def save_versioned_corpus_snapshot(
     )
     manifest_path = directory / manifest_filename
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
-    return corpus_path, manifest_path
+    pmid_list_path = save_pmid_list(snapshot, directory / "pmids.json")
+    return corpus_path, manifest_path, pmid_list_path
+
+
+def build_pmid_list(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    metadata = dict(snapshot.get("metadata", {}))
+    pmids = [str(entry.get("pmid") or entry.get("source_id")) for entry in snapshot.get("records", [])]
+    return {
+        "corpus_id": metadata.get("corpus_id") or metadata.get("corpus_name"),
+        "corpus_name": metadata.get("corpus_name"),
+        "record_count": len(pmids),
+        "metadata_only": metadata.get("metadata_only", True),
+        "full_text": metadata.get("full_text", False),
+        "pmids": pmids,
+    }
+
+
+def save_pmid_list(snapshot: Mapping[str, Any], output_path: str | Path) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(build_pmid_list(snapshot), indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def load_corpus_manifest(path: str | Path) -> dict[str, Any]:

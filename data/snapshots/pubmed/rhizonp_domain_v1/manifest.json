@@ -13,11 +13,22 @@
     "corpus.json": {
       "checksum_sha256": "218f376184263451fb524db780bb9389a5c072cbadf02a2690f28e3c89fe95d7",
       "record_count": 149
+    },
+    "pmids.json": {
+      "checksum_sha256": "08c20a93708edb13ad155b736679ae1f5d229f58bccd7e8db1cfecd58c21ed62",
+      "record_count": 149
     }
   },
   "full_text": false,
+  "local_only_files": {
+    "corpus.json": {
+      "checksum_sha256": "218f376184263451fb524db780bb9389a5c072cbadf02a2690f28e3c89fe95d7",
+      "description": "Metadata snapshot with titles/abstracts; regenerate via make fetch-domain-corpus"
+    }
+  },
   "metadata_only": true,
   "paper_count": 149,
+  "public_repository_policy": "commit_manifest_query_config_and_pmids_only",
   "query_config": {
     "checksum_sha256": "1f2441490f4fffb255cc8f88dfdd911ecfc613c2d089feabfa89332b3fc79a95",
     "path": "/Users/zzy/Projects/RhizoNP-Navigator/data/eval/domain_corpus_queries.json"

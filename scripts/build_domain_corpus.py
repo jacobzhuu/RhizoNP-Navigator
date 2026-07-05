@@ -91,7 +91,7 @@ def main() -> None:
         records, metadata = fetch_domain_corpus(adapter, config)
         snapshot = corpus_snapshot_from_records(records, metadata=metadata)
 
-        corpus_path, manifest_path = save_versioned_corpus_snapshot(
+        corpus_path, manifest_path, pmid_list_path = save_versioned_corpus_snapshot(
             snapshot,
             args.snapshot_dir,
             query_config_path=args.queries,
@@ -106,6 +106,7 @@ def main() -> None:
             f"{metadata['record_count']} records -> {corpus_path}"
         )
         print(f"Manifest: {manifest_path}")
+        print(f"PMID list: {pmid_list_path}")
         return
 
     corpus_path = _resolve_corpus_path(args)
