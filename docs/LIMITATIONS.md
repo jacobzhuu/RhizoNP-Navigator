@@ -2,7 +2,8 @@
 
 ## Current MVP scope
 
-- Natural product records come from **local synthetic fixtures**, not NPAtlas, MIBiG, Crossref, or OpenAlex.
+- Natural product records prefer a **bounded NPAtlas snapshot** (`auto`) when present, with synthetic fixture fallback; full NPAtlas/MIBiG/Crossref/OpenAlex coverage is not implemented.
+- Taxonomy normalization prefers a **bounded NCBI cache** (`auto`, 6 taxa) with local alias fixture fallback; this is not a complete NCBI Taxonomy mirror or universal strain resolver.
 - Literature retrieval uses synthetic fixtures for offline demos and a **bounded real PubMed corpus** (`rhizonp_domain_v1`, ~149 records) for DB-backed integration validation; this is not production-scale or PubMed-wide indexing.
 - Dense retrieval defaults to deterministic hashing embeddings unless optional model-backed providers are configured.
 - LLM writer mode is optional and falls back to deterministic synthesis in offline/demo paths.

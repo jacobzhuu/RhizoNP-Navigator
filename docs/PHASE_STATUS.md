@@ -5,8 +5,8 @@
 | Phase 0 | COMPLETE | Baseline engineering, CI, secret scan, legacy wrappers |
 | Phase 1 | COMPLETE | Domain schema, repositories, read-only API |
 | Phase 2 | **ENGINEERING_COMPLETE / EMPIRICAL_VALIDATION_PENDING** | Retrieval stack implemented; 543-item human labeling pending |
-| Phase 3 | COMPLETE (MVP) | Taxonomy normalization, distance, evidence tier, overclaim prevention |
-| Phase 4 | COMPLETE (MVP) | Fixture-backed natural product candidate linking |
+| Phase 3 | **TAXONOMY-AWARE GRADING IMPLEMENTED / NCBI BOUNDED AUTHORITY RESOLUTION INTEGRATED** | AUTO resolver prefers bounded NCBI cache (6 taxa) with explicit fixture fallback; full taxonomy coverage not claimed |
+| Phase 4 | COMPLETE (MVP) | NPAtlas bounded AUTO on main path + fixture fallback for offline demos |
 | Phase 5 | **OWN-DATA-TO-LITERATURE BRIDGE IMPLEMENTED / REAL BOUNDED PUBMED CORPUS VALIDATED** | CSV ingest + literature retrieval bridge + NP linking; bounded `rhizonp_domain_v1` PubMed integration validated (SQLite/PostgreSQL); real applicant omics validation pending |
 | Phase 6 | COMPLETE (MVP) | Deterministic grounded writer with abstention/conflict states |
 | Phase 7 | COMPLETE (MVP) | Offline end-to-end evaluation with JSON/Markdown reports |
@@ -29,6 +29,15 @@ make validate-real-pubmed-bridge
 ```
 
 Reports are written to `data/eval/reports/latest/real_pubmed_corpus_validation.{json,md}` (gitignored). Fixture literature remains `FIXTURE_TEST_ONLY`; real corpus hits use `corpus_type=REAL_BOUNDED_PUBMED`.
+
+## Phase 3 bounded NCBI taxonomy authority
+
+Taxonomy grading uses **`taxonomy_source=auto` by default**: prefer the offline bounded NCBI cache (`ncbi_bounded_v1`, 6 query labels) when a match exists, otherwise fall back to the local alias fixture with explicit `requested_source` / `resolved_source` / `fallback_reason` metadata. This is **not** full NCBI Taxonomy coverage or production-scale normalization.
+
+```bash
+make validate-ncbi-taxonomy-resolver
+make fetch-ncbi-taxonomy-cache   # optional network rebuild
+```
 
 ## Deferred work
 

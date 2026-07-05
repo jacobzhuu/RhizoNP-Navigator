@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 4 — NPAtlas main-path integration)  
+**Last updated:** 2026-07-05 (loop iteration 5 — NCBI bounded taxonomy AUTO authority)  
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -23,8 +23,8 @@
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
 | MVP Engineering | 80% | **83%** | 86% |
-| Full Plan Functional | 58% | **63%** | 66% |
-| Empirical / Scientific Validation | 19% | **27%** | 34% |
+| Full Plan Functional | 59% | **65%** | 68% |
+| Empirical / Scientific Validation | 20% | **29%** | 36% |
 
 Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 moved **O08** and **N02** from NOT_STARTED toward IMPLEMENTED_MVP.
 
@@ -87,12 +87,12 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
-| T01 | §13.1 | Taxonomy normalization | IMPLEMENTED_MVP | `ncbi_resolver.py`, bounded cache (4 taxa), `resolver_mode=ncbi_cached` | Default still fixture; not full NCBI coverage | **P0** | — |
-| T02 | §13.1 | Strain/species/genus parsing | IMPLEMENTED_MVP | NormalizedTaxon + fixture strain labels | Strain labels absent from NCBI cache | P2 | — |
+| T01 | §13.1 | Taxonomy normalization | IMPLEMENTED_MVP | `AUTO` default; bounded NCBI cache (6 taxa); explicit resolution metadata | Full NCBI coverage; production mirror | P1 | — |
+| T02 | §13.1 | Strain/species/genus parsing | IMPLEMENTED_MVP | NormalizedTaxon + fixture strain labels; NCBI species/genus ranks | Strain labels absent from NCBI cache | P2 | — |
 | T03 | §13.2 | Rank-aware distance | FULLY_IMPLEMENTED | `taxonomy/distance.py` | — | — | — |
 | T04 | §8.1 | Evidence tier A–D | FULLY_IMPLEMENTED | `taxonomy/policy.py` | Standalone policy doc | P3 | — |
-| T05 | §13.1 | External taxonomy IDs | IMPLEMENTED_MVP | Real `ncbi_taxid` in bounded cache entries | Full resolver default + live fetch | P1 | — |
-| T06 | §13.1 | Synonym resolution (production) | IMPLEMENTED_MVP | NCBI cache synonyms + fixture aliases | DB synonym tables | P2 | — |
+| T05 | §13.1 | External taxonomy IDs | IMPLEMENTED_MVP | Real `ncbi_taxid` + lineage in bounded cache; AUTO/API/pipeline wired | Universal resolver; live fetch default | P1 | — |
+| T06 | §13.1 | Synonym resolution (production) | IMPLEMENTED_MVP | NCBI cache synonym lookup (e.g. Chainia→1883) + fixture aliases | DB synonym tables | P2 | — |
 | T07 | §10.3 | UNRESOLVED handling | FULLY_IMPLEMENTED | normalization + linking | — | — | — |
 | T08 | §18.4 | Scientific safety tests | FULLY_IMPLEMENTED | taxonomy/writer tests | Broader case set | P2 | — |
 | T09 | §8 | docs/EVIDENCE_POLICY.md | NOT_STARTED | Policy in code/tests | Standalone doc | P3 | — |
@@ -176,11 +176,11 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT  
 2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
-3. **NCBI taxonomy as default resolver** (T01, T05) — bounded cache exists; default `taxonomy_resolver=fixture`  
-4. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-5. **Evaluated LLM writer + faithfulness** (W03, V08)  
-6. **100-query benchmark scale** (R15, V01)  
-7. **NPAtlas scale + bioactivity** (N02, N05) — main path wired; still 12-record bounded corpus  
+3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
+4. **Evaluated LLM writer + faithfulness** (W03, V08)  
+5. **100-query benchmark scale** (R15, V01)  
+6. **NPAtlas scale + bioactivity** (N02, N05) — main path wired; still 12-record bounded corpus  
+7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache only; not production mirror  
 8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
@@ -192,6 +192,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | 2 | Own-data DB persistence (SQLite-tested) | 60% → 61% (O07 code; PG unvalidated) |
 | 3 | NCBI Taxonomy bounded resolver + cache | 61% → **62%** (T01/T05 partial) |
 | 4 | NPAtlas AUTO on own-data/API main path | 62% → **63%** (N02 main path; still bounded) |
+| 5 | NCBI bounded taxonomy AUTO authority + resolution metadata | 63% → **65%** (T01/T05/T06 partial) |
 
 ---
 

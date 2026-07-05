@@ -33,7 +33,7 @@ Evaluation + demo package (Phase 7/8)
 |---|---|
 | `rhizonp.domain` | SQLAlchemy schema |
 | `rhizonp.literature` | Chunking, retrieval, provenance |
-| `rhizonp.taxonomy` | Normalization, distance, evidence tier policy |
+| `rhizonp.taxonomy` | Bounded NCBI cache + fixture normalization, rank-aware distance, evidence tier policy |
 | `rhizonp.linking` | Natural product candidate matrix |
 | `rhizonp.omics` | Own-data CSV ingestion, literature query bridge, pipeline |
 | `rhizonp.writer` | Deterministic grounded answer synthesis |
@@ -62,6 +62,16 @@ Literature hits carry explicit corpus identity:
 | `UNKNOWN` | Unclassified stored paper |
 
 Own-data bridge retrieval states (`DISABLED`, `RETRIEVED`, `NO_RESULTS`, `RETRIEVAL_UNAVAILABLE`, `FIXTURE_TEST_ONLY`) are unchanged; real corpus hits add `corpus_type` and `corpus_id` rather than implying PubMed-wide retrieval.
+
+## Taxonomy authority (Phase 3)
+
+| Source | Meaning |
+|---|---|
+| `ncbi_bounded` | Match from offline bounded NCBI cache (`data/snapshots/taxonomy/ncbi_bounded_v1/`) |
+| `fixture` | Local alias fixture (`data/fixtures/taxonomy_mapping.json`) |
+| `auto` | Prefer `ncbi_bounded` when cache file and label match exist; explicit fixture fallback otherwise |
+
+Resolution metadata (`requested_source`, `resolved_source`, `fallback_reason`, `cache_id`) is attached to normalized taxa and grading provenance. Live NCBI network lookup is opt-in (`ncbi_live`), not the default.
 
 ## Design principles
 

@@ -18,7 +18,7 @@ Plant–microbe and rhizosphere studies often produce:
 
 RhizoNP Navigator helps connect those **internal observations** to **external literature and structured candidate records** while enforcing:
 
-- taxonomy distance (strain / species / genus / higher),
+- taxonomy distance (strain / species / genus / higher) via bounded NCBI cache or local fixture (`taxonomy_source=auto` default),
 - evidence tiers (A / B / C / D),
 - explicit limitations and refusal states,
 - provenance from chunk → paper → source.
@@ -131,6 +131,12 @@ More detail: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
 
 ```bash
 python -m scripts.grade_taxonomy_evidence "Streptomyces" "Streptomyces hygroscopicus OS-2"
+
+Bounded NCBI taxonomy cache validation (offline):
+
+```bash
+make validate-ncbi-taxonomy-resolver
+```
 python -m scripts.run_own_data_pipeline
 python -m scripts.run_end_to_end_eval
 python -m scripts.run_demo
