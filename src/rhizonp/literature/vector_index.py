@@ -8,13 +8,9 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from rhizonp.domain.models import PaperChunk
+from rhizonp.literature.embeddings import LiteratureEmbeddingProvider
 
-
-class TextEmbeddingProvider(Protocol):
-    provider_name: str
-
-    def embed(self, text: str) -> list[float]:
-        ...
+TextEmbeddingProvider = LiteratureEmbeddingProvider
 
 
 @dataclass(frozen=True)

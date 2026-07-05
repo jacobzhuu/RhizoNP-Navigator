@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import math
 import re
 from collections import Counter
@@ -12,6 +11,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk, RetrievalResult, RetrievalRun
+from rhizonp.literature.embeddings import (
+    HashingEmbeddingProvider,
+    LiteratureEmbeddingProvider,
+)
 from rhizonp.literature.vector_index import InMemoryLiteratureVectorIndex, LiteratureVectorIndex
 
 
@@ -78,33 +81,12 @@ class SearchResult:
         }
 
 
-class TextEmbeddingProvider(Protocol):
-    provider_name: str
-
-    def embed(self, text: str) -> list[float]:
-        ...
+TextEmbeddingProvider = LiteratureEmbeddingProvider
 
 
 class SearchReranker(Protocol):
     def score(self, query: str, passages: list[str]) -> list[float]:
         ...
-
-
-class HashingEmbeddingProvider:
-    provider_name = "hashing"
-
-    def __init__(self, *, dimensions: int = 128) -> None:
-        if dimensions <= 0:
-            raise ValueError("dimensions must be positive")
-        self.dimensions = dimensions
-
-    def embed(self, text: str) -> list[float]:
-        vector = [0.0] * self.dimensions
-        for token in tokenize(text):
-            digest = hashlib.sha256(token.encode()).hexdigest()
-            index = int(digest[:8], 16) % self.dimensions
-            vector[index] += 1.0
-        return vector
 
 
 class LexicalOverlapReranker:

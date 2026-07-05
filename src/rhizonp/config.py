@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     top_k_embedding_docs: int = 50
     top_k_rerank_docs: int = 10
 
+    literature_embedding_provider: str = "hashing"
+    literature_hashing_dimensions: int = 128
+    literature_vector_index_backend: str = "in_memory"
+    literature_reranker: str = "lexical"
+
 
 @lru_cache
 def get_settings() -> Settings:

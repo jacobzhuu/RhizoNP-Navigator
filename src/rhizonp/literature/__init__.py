@@ -7,8 +7,13 @@ from rhizonp.literature.adapters import (
     SyntheticLiteratureAdapter,
 )
 from rhizonp.literature.chunking import StructuredChunk, structured_chunk_record
-from rhizonp.literature.retrieval import (
+from rhizonp.literature.embeddings import (
     HashingEmbeddingProvider,
+    HuggingFaceLiteratureEmbeddingProvider,
+    LiteratureEmbeddingProvider,
+    create_literature_embedding_provider,
+)
+from rhizonp.literature.retrieval import (
     HybridWeights,
     LexicalOverlapReranker,
     SearchFilters,
@@ -30,9 +35,11 @@ from rhizonp.literature.vector_index import (
 
 __all__ = [
     "HashingEmbeddingProvider",
+    "HuggingFaceLiteratureEmbeddingProvider",
     "HybridWeights",
     "InMemoryLiteratureVectorIndex",
     "LexicalOverlapReranker",
+    "LiteratureEmbeddingProvider",
     "LiteratureVectorIndex",
     "NormalizedLiteratureRecord",
     "RawLiteratureRecord",
@@ -44,6 +51,7 @@ __all__ = [
     "VectorIndexEntry",
     "VectorIndexHit",
     "bm25_search",
+    "create_literature_embedding_provider",
     "dense_search",
     "hybrid_search",
     "indexed_dense_search",
