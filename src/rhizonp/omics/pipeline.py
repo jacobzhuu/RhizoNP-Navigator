@@ -23,6 +23,7 @@ from rhizonp.omics.literature_bridge import (
     OwnDataLiteratureRetriever,
     retrieve_literature_for_association,
 )
+from rhizonp.omics.persistence import persist_own_data_bundle
 from rhizonp.omics.query_builder import build_query_context
 from rhizonp.taxonomy.grading import EvidenceGradingResult, grade_evidence
 
@@ -30,6 +31,7 @@ from rhizonp.taxonomy.grading import EvidenceGradingResult, grade_evidence
 @dataclass(frozen=True)
 class OwnDataPipelineOptions:
     enable_literature_retrieval: bool = False
+    persist_to_database: bool = False
     retrieval_mode: str = "hybrid_rerank"
     top_k: int = 5
     max_queries: int = 3
@@ -117,6 +119,12 @@ def run_own_data_pipeline(
 ) -> OwnDataPipelineResult:
     resolved_options = options or OwnDataPipelineOptions()
     bundle = load_own_data_bundle(data_dir)
+    persistence_info: dict[str, Any] | None = None
+    if session is not None and resolved_options.persist_to_database:
+        persistence_result = persist_own_data_bundle(session, bundle, data_dir=data_dir)
+        session.commit()
+        persistence_info = persistence_result.to_dict()
+
     taxa_by_id = {item.observation_id: item for item in bundle.taxa}
     metabolites_by_id = {item.observation_id: item for item in bundle.metabolites}
 
@@ -193,6 +201,8 @@ def run_own_data_pipeline(
             "fixture": True,
             "literature_retrieval_enabled": resolved_options.enable_literature_retrieval,
             "literature_retrieval_mode": resolved_options.retrieval_mode,
+            "persist_to_database": resolved_options.persist_to_database,
+            "database_persistence": persistence_info,
         },
     )
 

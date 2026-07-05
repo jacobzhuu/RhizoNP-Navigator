@@ -23,7 +23,7 @@
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
 | MVP Engineering | 80% | **83%** | 86% |
-| Full Plan Functional | 57% | **60%** | 63% |
+| Full Plan Functional | 57% | **61%** | 64% |
 | Empirical / Scientific Validation | 19% | **26%** | 33% |
 
 Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 moved **O08** and **N02** from NOT_STARTED toward IMPLEMENTED_MVP.
@@ -119,7 +119,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | O04 | §10 | 16S observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | De-sensitized real 16S | P1 | Applicant data |
 | O05 | §10 | LC-MS observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | Real LC-MS validation | P1 | Applicant data |
 | O06 | §8.2 | Chemical ID tier policy | IMPLEMENTED_MVP | C4 limitations in pipeline | Full C1–C4 enforcement | P2 | — |
-| O07 | §10.2 | Association import to PostgreSQL | NOT_STARTED | In-memory pipeline | Persist associations | P1 | — |
+| O07 | §10.2 | Association import to PostgreSQL | IMPLEMENTED_MVP | `omics/persistence.py`, opt-in `persist_to_database` | API flag; entity resolution IDs null | P1 | — |
 | O08 | §10 / Phase 5 | Own-data → literature search | IMPLEMENTED_MVP | `literature_bridge.py`, `search_paper_chunks`, Phase 5.2 validation | Default disabled; not PubMed-wide quality eval | P1 | R16 for quality |
 | O09 | §10.4 | Candidate matrix + paper counts | IMPLEMENTED_MVP | CSV has literature_status/hit_count | Richer paper-level matrix | P2 | — |
 | O10 | §10.4 | Validation suggestions | IMPLEMENTED_MVP | limitations lists | Evidence-driven from papers | P2 | — |
@@ -189,6 +189,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 |---|---|---|
 | 0 | Baseline audit + matrix creation | 59% → 60% (O08 verified; matrix live) |
 | 1 | NPAtlas bounded adapter + snapshot | 59% → **60%** (N02 partial) |
+| 2 | Own-data PostgreSQL persistence (opt-in) | 60% → **61%** (O07 partial) |
 
 ---
 
