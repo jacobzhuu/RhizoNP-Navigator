@@ -39,6 +39,7 @@ class OwnDataPipelineOptions:
     max_queries: int = 3
     corpus_id: str | None = None
     corpus_type: str | None = None
+    enable_grounded_writer: bool = False
 
 
 @dataclass(frozen=True)
@@ -50,9 +51,10 @@ class AssociationLinkResult:
     taxonomy_grading: EvidenceGradingResult | None
     candidate_matrix: CandidateMatrix
     limitations: list[str] = field(default_factory=list)
+    grounded_writer: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "association_id": self.association.association_id,
             "source_raw_label": self.association.source_raw_label,
             "target_raw_label": self.association.target_raw_label,
@@ -66,6 +68,9 @@ class AssociationLinkResult:
             "candidate_links": self.candidate_matrix.to_dict(),
             "limitations": list(self.limitations),
         }
+        if self.grounded_writer is not None:
+            payload["grounded_writer"] = dict(self.grounded_writer)
+        return payload
 
 
 @dataclass(frozen=True)
@@ -185,6 +190,25 @@ def run_own_data_pipeline(
             )
             limitations.extend(grading.limitations)
 
+        grounded_writer_payload: dict[str, Any] | None = None
+        if resolved_options.enable_grounded_writer:
+            from rhizonp.writer.retrieval_writer import (
+                write_grounded_answer_from_literature_retrieval,
+            )
+
+            writer_question = (
+                f"What literature evidence relates {taxon.raw_label} to {metabolite.raw_label}?"
+            )
+            writer_result = write_grounded_answer_from_literature_retrieval(
+                writer_question,
+                literature_retrieval,
+                limitations=list(limitations),
+                taxonomy_warnings=(
+                    grading.warnings if grading is not None else []
+                ),
+            )
+            grounded_writer_payload = writer_result.to_dict()
+
         results.append(
             AssociationLinkResult(
                 association=association,
@@ -194,6 +218,7 @@ def run_own_data_pipeline(
                 taxonomy_grading=grading,
                 candidate_matrix=candidate_matrix,
                 limitations=list(dict.fromkeys(limitations)),
+                grounded_writer=grounded_writer_payload,
             )
         )
 
@@ -209,6 +234,7 @@ def run_own_data_pipeline(
             "persist_to_database": resolved_options.persist_to_database,
             "natural_product_source": resolved_options.natural_product_source,
             "taxonomy_source": resolved_options.taxonomy_source,
+            "enable_grounded_writer": resolved_options.enable_grounded_writer,
             "database_persistence": persistence_info,
         },
     )

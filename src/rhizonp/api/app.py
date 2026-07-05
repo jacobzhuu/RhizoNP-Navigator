@@ -373,6 +373,7 @@ def create_app() -> FastAPI:
                     max_queries=request.max_queries,
                     natural_product_source=request.natural_product_source,
                     taxonomy_source=request.taxonomy_source,
+                    enable_grounded_writer=request.enable_grounded_writer,
                 ),
             )
         finally:
@@ -391,16 +392,68 @@ def create_app() -> FastAPI:
 
     @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
     def write_answer(request: GroundedAnswerRequest) -> GroundedAnswerResponse:
+        from sqlalchemy import create_engine
+        from sqlalchemy.pool import StaticPool
+
+        from rhizonp.domain.models import Base
+        from rhizonp.ingestion.literature import load_phase2_literature_fixture
+        from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
         from rhizonp.writer.models import EvidenceInput, WriterRequest
+        from rhizonp.writer.retrieval_service import retrieve_literature_evidence_hits
+        from rhizonp.writer.retrieval_writer import write_grounded_answer_from_literature_hits
         from rhizonp.writer.service import write_grounded_answer
 
-        writer_request = WriterRequest(
-            question=request.question,
-            evidence_items=[EvidenceInput(**item.model_dump()) for item in request.evidence_items],
-            taxonomy_warnings=request.taxonomy_warnings,
-            limitations=request.limitations,
-        )
-        answer = write_grounded_answer(writer_request, use_llm=request.use_llm)
+        citation_validation: dict[str, object] | None = None
+        faithfulness_diagnostics: list[dict[str, object]] = []
+
+        if request.retrieve_evidence:
+            query = request.retrieval_query or request.question
+            literature_session = None
+            try:
+                try:
+                    engine = create_engine_from_settings()
+                except RuntimeError:
+                    engine = create_engine(
+                        "sqlite+pysqlite://",
+                        connect_args={"check_same_thread": False},
+                        poolclass=StaticPool,
+                        future=True,
+                    )
+                Base.metadata.create_all(engine)
+                session_factory = create_session_factory(engine)
+                literature_session = session_factory()
+                load_phase2_literature_fixture(literature_session)
+                literature_session.commit()
+                hits = retrieve_literature_evidence_hits(
+                    literature_session,
+                    query,
+                    query_taxon=request.query_taxon or query,
+                    observation_method=request.observation_method,
+                    retrieval_mode=request.retrieval_mode,
+                    top_k=request.top_k,
+                )
+                writer_result = write_grounded_answer_from_literature_hits(
+                    request.question,
+                    hits,
+                    limitations=request.limitations,
+                    taxonomy_warnings=request.taxonomy_warnings,
+                    retrieval_status="RETRIEVED" if hits else "NO_RESULTS",
+                    use_llm=request.use_llm,
+                )
+                answer = writer_result.answer
+                citation_validation = writer_result.citation_validation.to_dict()
+                faithfulness_diagnostics = list(writer_result.faithfulness_diagnostics)
+            finally:
+                if literature_session is not None:
+                    literature_session.close()
+        else:
+            writer_request = WriterRequest(
+                question=request.question,
+                evidence_items=[EvidenceInput(**item.model_dump()) for item in request.evidence_items],
+                taxonomy_warnings=request.taxonomy_warnings,
+                limitations=request.limitations,
+            )
+            answer = write_grounded_answer(writer_request, use_llm=request.use_llm)
         return GroundedAnswerResponse(
             status=answer.status.value,
             answer=answer.answer,
@@ -417,6 +470,8 @@ def create_app() -> FastAPI:
             suggested_validations=answer.suggested_validations,
             writer_mode=answer.writer_mode,
             provenance=answer.provenance,
+            citation_validation=citation_validation,
+            faithfulness_diagnostics=faithfulness_diagnostics,
         )
 
     @api.post("/api/v1/search", response_model=SearchResponse, tags=[TAGS_LITERATURE])

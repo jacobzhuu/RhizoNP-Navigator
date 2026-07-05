@@ -200,6 +200,7 @@ class OwnDataPipelineRequest(BaseModel):
     max_queries: int = 3
     natural_product_source: str = "auto"
     taxonomy_source: str = "auto"
+    enable_grounded_writer: bool = False
 
 
 class OwnDataPipelineResponse(BaseModel):
@@ -230,10 +231,16 @@ class WriterClaimResponse(BaseModel):
 
 class GroundedAnswerRequest(BaseModel):
     question: str
-    evidence_items: list[WriterEvidenceInputRequest]
+    evidence_items: list[WriterEvidenceInputRequest] = Field(default_factory=list)
     taxonomy_warnings: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
     use_llm: bool = False
+    retrieve_evidence: bool = False
+    retrieval_query: str | None = None
+    retrieval_mode: str = "bm25"
+    top_k: int = 5
+    query_taxon: str | None = None
+    observation_method: str | None = None
 
 
 class GroundedAnswerResponse(BaseModel):
@@ -245,3 +252,5 @@ class GroundedAnswerResponse(BaseModel):
     suggested_validations: list[str]
     writer_mode: str
     provenance: dict[str, Any]
+    citation_validation: dict[str, Any] | None = None
+    faithfulness_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
