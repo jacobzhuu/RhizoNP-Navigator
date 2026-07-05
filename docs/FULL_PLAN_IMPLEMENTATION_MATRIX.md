@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
-**Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 7 — deterministic writer safety benchmark)  
+**Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)
+**Last updated:** 2026-07-05 (loop iteration 8 — bounded NPAtlas origin-reference bioactivity)
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -22,8 +22,8 @@
 
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
-| MVP Engineering | 82% | **85%** | 87% |
-| Full Plan Functional | 61% | **68%** | 71% |
+| MVP Engineering | 83% | **86%** | 88% |
+| Full Plan Functional | 62% | **69%** | 72% |
 | Empirical / Scientific Validation | 18% | **27%** | 32% |
 
 Scoring uses 72 requirements below with equal weight unless noted. **Empirical validation excludes** unit tests, integration traces, bounded cache fetches, and source-provenance wiring unless they involve human judgments, real applicant omics, expert adjudication, or labeled benchmark evaluation. Iteration 5 incorrectly bumped empirical score; corrected here.
@@ -102,10 +102,10 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
 | N01 | §Phase 4 | Candidate linking engine | IMPLEMENTED_MVP | `candidate_engine.py`; default `record_source=auto` | Full NP corpus scale | P1 | — |
-| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_MVP | AUTO main path + API; 12-record bounded snapshot; real NPAID/URL provenance | Bioactivity fields; scale beyond bounded snapshot | P1 | CC-BY-NC scope |
+| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_MVP | AUTO main path + 12-record snapshot + origin-reference bioactivity derivation | Assay-validated bioactivity API fields; scale beyond bounded snapshot | P1 | CC-BY-NC scope |
 | N03 | §9.3 | MIBiG adapter (interface) | NOT_STARTED | Plan defers full integration | Stub `MibigAdapter` | P3 | DEFERRED_BY_PLAN |
 | N04 | §13.3 | Compound normalization | IMPLEMENTED_MVP | alias file + InChIKey in NPAtlas records | Structure search | P2 | — |
-| N05 | §7 | Bioactivity DB records | SYNTHETIC_FIXTURE_ONLY | fixture JSON fields | `bioactivities` table | P2 | — |
+| N05 | §7 | Bioactivity DB records | IMPLEMENTED_MVP | origin-reference-derived `BioactivityRecord` on NPAtlas path + validation harness | PostgreSQL `bioactivities` table | P2 | — |
 | N06 | §Phase 4 | Producer taxon + provenance | IMPLEMENTED_MVP | NPAtlas snapshot has DOI/PMID/NPAID URLs | DB-backed NP records | P1 | — |
 | N07 | §14.5 | Linker-level conflict engine | IMPLEMENTED_MVP | Writer conflict only | Evidence linker conflicts | P2 | — |
 
@@ -172,15 +172,15 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 
 ---
 
-## Top remaining gaps (re-ranked after iteration 7)
+## Top remaining gaps (re-ranked after iteration 8)
 
-1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)  
-2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
-3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only; writer safety benchmark does not substitute  
-5. **Evaluated LLM writer** (W03) — disabled placeholder  
-6. **NPAtlas scale + bioactivity** (N02, N05) — bounded 12-record corpus  
-7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache  
+1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)
+2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**
+3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT
+4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only
+5. **Evaluated LLM writer** (W03) — disabled placeholder
+6. **NPAtlas scale + assay bioactivity** (N02) — bounded 12-record corpus; title-derived activity only
+7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache
 8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
@@ -195,6 +195,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | 5 | NCBI bounded taxonomy AUTO authority | 65% / **27%** (empirical held; iter 5 +2 error corrected) |
 | 6 | Retrieval-grounded writer + citation validity harness | **67%** / **27%** (real bounded trace; no human faithfulness) |
 | 7 | Deterministic writer safety benchmark (abstain/conflict/bounded-answer) | **68%** / **27%** (safety regression only; empirical held) |
+| 8 | Bounded NPAtlas origin-reference bioactivity on linking path | **69%** / **27%** (title-derived metadata; no assay validation) |
 
 ---
 

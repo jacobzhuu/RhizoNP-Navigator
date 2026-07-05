@@ -81,6 +81,27 @@ Acceptable wording:
 
 ---
 
+## NPAtlas Bounded Bioactivity (origin-reference derived)
+
+- **Snapshot:** `data/snapshots/npatlas/rhizonp_domain_v1/` (12 compounds, CC-BY-NC-4.0)
+- **Bioactivity source:** conservative keyword extraction from NPAtlas `origin_reference.title` text
+- **Command:** `make validate-npatlas-bioactivity`
+
+The NPAtlas compound API does **not** expose structured assay bioactivity records in the current OpenAPI surface. Derived fields are literature-reported metadata only and do **not** affect candidate ranking scores.
+
+Do **not** describe derived bioactivity as:
+
+- assay-validated activity
+- empirical proof of compound efficacy
+- equivalent to a populated PostgreSQL `bioactivities` table
+
+Acceptable wording:
+
+- “origin-reference-derived bioactivity metadata on bounded NPAtlas snapshot (n=12)”
+- “title-keyword extraction with explicit provenance limitations”
+
+---
+
 ## Related Documents
 
 - `docs/ANNOTATION_POLICY.md` — grades, metrics, pooling, blind export
