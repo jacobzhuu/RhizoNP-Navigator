@@ -2,10 +2,12 @@
   "metadata": {
     "cache_id": "ncbi_bounded_v1",
     "source_name": "ncbi_taxonomy",
-    "entry_count": 4,
+    "entry_count": 6,
     "real_bounded_ncbi_taxonomy": true,
     "not_synthetic_fixture": true,
-    "license": "NCBI public domain"
+    "license": "NCBI public domain",
+    "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00",
+    "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/"
   },
   "entries": {
     "streptomyces": {
@@ -66,10 +68,12 @@
       "family": "Streptomycetaceae",
       "provenance": {
         "source": "ncbi_taxonomy",
-        "api": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-        "license": "NCBI public domain (https://www.ncbi.nlm.nih.gov/home/about/policies/)",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
         "real_bounded_cache": true,
-        "not_synthetic_fixture": true
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
       }
     },
     "streptomyces hygroscopicus": {
@@ -134,10 +138,138 @@
       "family": "Streptomycetaceae",
       "provenance": {
         "source": "ncbi_taxonomy",
-        "api": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-        "license": "NCBI public domain (https://www.ncbi.nlm.nih.gov/home/about/policies/)",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
         "real_bounded_cache": true,
-        "not_synthetic_fixture": true
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
+      }
+    },
+    "streptomyces avermitilis": {
+      "query_label": "Streptomyces avermitilis",
+      "taxid": "33903",
+      "scientific_name": "Streptomyces avermitilis",
+      "rank": "species",
+      "lineage": "cellular organisms; Bacteria; Bacillati; Actinomycetota; Actinomycetes; Kitasatosporales; Streptomycetaceae; Streptomyces",
+      "lineage_ex": [
+        {
+          "taxid": "131567",
+          "scientific_name": "cellular organisms",
+          "rank": "cellular root"
+        },
+        {
+          "taxid": "2",
+          "scientific_name": "Bacteria",
+          "rank": "domain"
+        },
+        {
+          "taxid": "1783272",
+          "scientific_name": "Bacillati",
+          "rank": "kingdom"
+        },
+        {
+          "taxid": "201174",
+          "scientific_name": "Actinomycetota",
+          "rank": "phylum"
+        },
+        {
+          "taxid": "1760",
+          "scientific_name": "Actinomycetes",
+          "rank": "class"
+        },
+        {
+          "taxid": "85011",
+          "scientific_name": "Kitasatosporales",
+          "rank": "order"
+        },
+        {
+          "taxid": "2062",
+          "scientific_name": "Streptomycetaceae",
+          "rank": "family"
+        },
+        {
+          "taxid": "1883",
+          "scientific_name": "Streptomyces",
+          "rank": "genus"
+        }
+      ],
+      "synonyms": [
+        "Streptomyces avermectinius"
+      ],
+      "genus": "Streptomyces",
+      "species": "Streptomyces avermitilis",
+      "family": "Streptomycetaceae",
+      "provenance": {
+        "source": "ncbi_taxonomy",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
+        "real_bounded_cache": true,
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
+      }
+    },
+    "streptomyces nodosus": {
+      "query_label": "Streptomyces nodosus",
+      "taxid": "40318",
+      "scientific_name": "Streptomyces nodosus",
+      "rank": "species",
+      "lineage": "cellular organisms; Bacteria; Bacillati; Actinomycetota; Actinomycetes; Kitasatosporales; Streptomycetaceae; Streptomyces",
+      "lineage_ex": [
+        {
+          "taxid": "131567",
+          "scientific_name": "cellular organisms",
+          "rank": "cellular root"
+        },
+        {
+          "taxid": "2",
+          "scientific_name": "Bacteria",
+          "rank": "domain"
+        },
+        {
+          "taxid": "1783272",
+          "scientific_name": "Bacillati",
+          "rank": "kingdom"
+        },
+        {
+          "taxid": "201174",
+          "scientific_name": "Actinomycetota",
+          "rank": "phylum"
+        },
+        {
+          "taxid": "1760",
+          "scientific_name": "Actinomycetes",
+          "rank": "class"
+        },
+        {
+          "taxid": "85011",
+          "scientific_name": "Kitasatosporales",
+          "rank": "order"
+        },
+        {
+          "taxid": "2062",
+          "scientific_name": "Streptomycetaceae",
+          "rank": "family"
+        },
+        {
+          "taxid": "1883",
+          "scientific_name": "Streptomyces",
+          "rank": "genus"
+        }
+      ],
+      "synonyms": [],
+      "genus": "Streptomyces",
+      "species": "Streptomyces nodosus",
+      "family": "Streptomycetaceae",
+      "provenance": {
+        "source": "ncbi_taxonomy",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
+        "real_bounded_cache": true,
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
       }
     },
     "bacillus subtilis": {
@@ -203,18 +335,20 @@
       "family": "Bacillaceae",
       "provenance": {
         "source": "ncbi_taxonomy",
-        "api": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-        "license": "NCBI public domain (https://www.ncbi.nlm.nih.gov/home/about/policies/)",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
         "real_bounded_cache": true,
-        "not_synthetic_fixture": true
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
       }
     },
     "bacillus": {
       "query_label": "Bacillus",
-      "taxid": "55087",
+      "taxid": "1386",
       "scientific_name": "Bacillus",
       "rank": "genus",
-      "lineage": "cellular organisms; Eukaryota; Opisthokonta; Metazoa; Eumetazoa; Bilateria; Protostomia; Ecdysozoa; Panarthropoda; Arthropoda; Mandibulata; Pancrustacea; Altocrustacea; Allotriocarida; Hexapoda; Insecta; Dicondylia; Pterygota; Neoptera; Polyneoptera; Phasmatodea; Verophasmatodea; Areolatae; Bacilloidea; Bacillidae; Bacillinae; Bacillini",
+      "lineage": "cellular organisms; Bacteria; Bacillati; Bacillota; Bacilli; Caryophanales; Bacillaceae",
       "lineage_ex": [
         {
           "taxid": "131567",
@@ -222,146 +356,48 @@
           "rank": "cellular root"
         },
         {
-          "taxid": "2759",
-          "scientific_name": "Eukaryota",
+          "taxid": "2",
+          "scientific_name": "Bacteria",
           "rank": "domain"
         },
         {
-          "taxid": "33154",
-          "scientific_name": "Opisthokonta",
-          "rank": "clade"
-        },
-        {
-          "taxid": "33208",
-          "scientific_name": "Metazoa",
+          "taxid": "1783272",
+          "scientific_name": "Bacillati",
           "rank": "kingdom"
         },
         {
-          "taxid": "6072",
-          "scientific_name": "Eumetazoa",
-          "rank": "clade"
-        },
-        {
-          "taxid": "33213",
-          "scientific_name": "Bilateria",
-          "rank": "clade"
-        },
-        {
-          "taxid": "33317",
-          "scientific_name": "Protostomia",
-          "rank": "clade"
-        },
-        {
-          "taxid": "1206794",
-          "scientific_name": "Ecdysozoa",
-          "rank": "clade"
-        },
-        {
-          "taxid": "88770",
-          "scientific_name": "Panarthropoda",
-          "rank": "clade"
-        },
-        {
-          "taxid": "6656",
-          "scientific_name": "Arthropoda",
+          "taxid": "1239",
+          "scientific_name": "Bacillota",
           "rank": "phylum"
         },
         {
-          "taxid": "197563",
-          "scientific_name": "Mandibulata",
-          "rank": "clade"
-        },
-        {
-          "taxid": "197562",
-          "scientific_name": "Pancrustacea",
-          "rank": "clade"
-        },
-        {
-          "taxid": "3701028",
-          "scientific_name": "Altocrustacea",
-          "rank": "clade"
-        },
-        {
-          "taxid": "3701030",
-          "scientific_name": "Allotriocarida",
-          "rank": "clade"
-        },
-        {
-          "taxid": "6960",
-          "scientific_name": "Hexapoda",
-          "rank": "subphylum"
-        },
-        {
-          "taxid": "50557",
-          "scientific_name": "Insecta",
+          "taxid": "91061",
+          "scientific_name": "Bacilli",
           "rank": "class"
         },
         {
-          "taxid": "85512",
-          "scientific_name": "Dicondylia",
-          "rank": "clade"
-        },
-        {
-          "taxid": "7496",
-          "scientific_name": "Pterygota",
-          "rank": "subclass"
-        },
-        {
-          "taxid": "33340",
-          "scientific_name": "Neoptera",
-          "rank": "infraclass"
-        },
-        {
-          "taxid": "33341",
-          "scientific_name": "Polyneoptera",
-          "rank": "cohort"
-        },
-        {
-          "taxid": "7020",
-          "scientific_name": "Phasmatodea",
+          "taxid": "1385",
+          "scientific_name": "Caryophanales",
           "rank": "order"
         },
         {
-          "taxid": "213547",
-          "scientific_name": "Verophasmatodea",
-          "rank": "suborder"
-        },
-        {
-          "taxid": "523721",
-          "scientific_name": "Areolatae",
-          "rank": "infraorder"
-        },
-        {
-          "taxid": "523864",
-          "scientific_name": "Bacilloidea",
-          "rank": "superfamily"
-        },
-        {
-          "taxid": "55086",
-          "scientific_name": "Bacillidae",
+          "taxid": "186817",
+          "scientific_name": "Bacillaceae",
           "rank": "family"
-        },
-        {
-          "taxid": "524420",
-          "scientific_name": "Bacillinae",
-          "rank": "subfamily"
-        },
-        {
-          "taxid": "262150",
-          "scientific_name": "Bacillini",
-          "rank": "tribe"
         }
       ],
       "synonyms": [],
       "genus": "Bacillus",
       "species": null,
-      "family": "Bacillidae",
+      "family": "Bacillaceae",
       "provenance": {
         "source": "ncbi_taxonomy",
-        "api": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-        "license": "NCBI public domain (https://www.ncbi.nlm.nih.gov/home/about/policies/)",
+        "api_base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+        "license": "NCBI public domain",
+        "policy_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
         "real_bounded_cache": true,
-        "not_synthetic_fixture": true
+        "not_synthetic_fixture": true,
+        "fetched_at_utc": "2026-07-05T08:50:46.478207+00:00"
       }
     }
   }

@@ -147,6 +147,7 @@ class EvidenceGradingRequest(BaseModel):
     query_taxon: str
     literature_taxon: str
     observation_method: str | None = None
+    taxonomy_source: str | None = None
 
 
 class EvidenceGradingResponse(BaseModel):
@@ -198,6 +199,7 @@ class OwnDataPipelineRequest(BaseModel):
     top_k: int = 5
     max_queries: int = 3
     natural_product_source: str = "auto"
+    taxonomy_source: str = "auto"
 
 
 class OwnDataPipelineResponse(BaseModel):

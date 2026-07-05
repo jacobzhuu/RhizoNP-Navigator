@@ -1,9 +1,11 @@
 {
   "cache_id": "ncbi_bounded_v1",
-  "entry_count": 4,
+  "entry_count": 6,
+  "source_name": "ncbi_taxonomy",
   "files": {
     "cache.json": {
-      "entry_count": 4
+      "entry_count": 6
     }
-  }
+  },
+  "license": "NCBI public domain"
 }

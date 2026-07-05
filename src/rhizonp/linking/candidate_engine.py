@@ -9,7 +9,7 @@ from rhizonp.linking.models import NaturalProductFixtureRecord
 from rhizonp.linking.np_adapter import (
     NaturalProductSource,
     load_natural_product_records,
-    resolve_natural_product_source,
+    resolve_natural_product_source_details,
 )
 from rhizonp.taxonomy.grading import grade_evidence
 from rhizonp.taxonomy.models import EvidenceTier
@@ -57,14 +57,20 @@ class CandidateMatrix:
     metabolite_name: str | None
     rows: list[CandidateMatrixRow] = field(default_factory=list)
     natural_product_source: str = NaturalProductSource.FIXTURE.value
+    natural_product_source_resolution: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "query_taxon": self.query_taxon,
             "metabolite_name": self.metabolite_name,
             "natural_product_source": self.natural_product_source,
             "rows": [row.to_dict() for row in self.rows],
         }
+        if self.natural_product_source_resolution:
+            payload["natural_product_source_resolution"] = dict(
+                self.natural_product_source_resolution
+            )
+        return payload
 
 
 def _tier_score(tier: EvidenceTier) -> float:
@@ -115,11 +121,13 @@ def link_natural_product_candidates(
     fixture_path: str | None = None,
     record_source: NaturalProductSource | str = NaturalProductSource.AUTO,
     snapshot_path: str | None = None,
+    taxonomy_source: str | None = None,
 ) -> CandidateMatrix:
-    resolved_source = resolve_natural_product_source(
+    source_resolution = resolve_natural_product_source_details(
         record_source,
         snapshot_path=snapshot_path or DEFAULT_NPATLAS_SNAPSHOT_PATH,
     )
+    resolved_source = source_resolution.resolved_enum()
     load_kwargs: dict[str, Any] = {"source": resolved_source}
     if fixture_path is not None:
         load_kwargs["fixture_path"] = fixture_path
@@ -141,6 +149,7 @@ def link_natural_product_candidates(
             record=record,
             normalized_metabolite=normalized_metabolite,
             observation_method=observation_method,
+            taxonomy_source=taxonomy_source,
         )
         scored_rows.append((row.score, row))
 
@@ -170,6 +179,7 @@ def link_natural_product_candidates(
         metabolite_name=metabolite_name,
         rows=ranked_rows,
         natural_product_source=resolved_source.value,
+        natural_product_source_resolution=source_resolution.to_dict(),
     )
 
 
@@ -179,11 +189,16 @@ def _build_row(
     record: NaturalProductFixtureRecord,
     normalized_metabolite: str | None,
     observation_method: str | None,
+    taxonomy_source: str | None = None,
 ) -> CandidateMatrixRow:
+    grade_kwargs: dict[str, Any] = {}
+    if taxonomy_source is not None:
+        grade_kwargs["taxonomy_source"] = taxonomy_source
     grading = grade_evidence(
         query_taxon,
         record.producer_taxon,
         observation_method=observation_method,
+        **grade_kwargs,
     )
     compound_match = (
         normalized_metabolite is not None

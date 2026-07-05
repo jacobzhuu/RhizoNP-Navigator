@@ -282,6 +282,7 @@ def create_app() -> FastAPI:
             request.query_taxon,
             request.literature_taxon,
             observation_method=request.observation_method,
+            taxonomy_source=request.taxonomy_source,
         )
 
         def _normalized_response(taxon: object) -> NormalizedTaxonResponse:
@@ -371,6 +372,7 @@ def create_app() -> FastAPI:
                     top_k=request.top_k,
                     max_queries=request.max_queries,
                     natural_product_source=request.natural_product_source,
+                    taxonomy_source=request.taxonomy_source,
                 ),
             )
         finally:

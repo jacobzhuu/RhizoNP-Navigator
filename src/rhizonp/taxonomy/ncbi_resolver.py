@@ -22,6 +22,8 @@ DEFAULT_NCBI_TAXONOMY_CACHE_PATH = (
 DEFAULT_BOUNDED_TAXONOMY_QUERIES = (
     "Streptomyces",
     "Streptomyces hygroscopicus",
+    "Streptomyces avermitilis",
+    "Streptomyces nodosus",
     "Bacillus subtilis",
     "Bacillus",
 )
@@ -49,6 +51,12 @@ class NCBITaxonomyRecord:
 def normalize_taxonomy_key(label: str) -> str:
     cleaned = re.sub(r"\s+", " ", label.strip().lower())
     return cleaned.replace("spp.", "sp.")
+
+
+# Ambiguous labels that require explicit taxid selection (e.g. Bacillus insect genus).
+BOUNDED_TAXONOMY_TAXID_OVERRIDES: dict[str, str] = {
+    normalize_taxonomy_key("Bacillus"): "1386",
+}
 
 
 def _rank_to_fields(record: NCBITaxonomyRecord) -> dict[str, str | None]:
@@ -180,13 +188,41 @@ def load_ncbi_taxonomy_cache(
     return records
 
 
+def get_ncbi_cache_metadata(
+    cache_path: str | Path = DEFAULT_NCBI_TAXONOMY_CACHE_PATH,
+) -> dict[str, Any]:
+    path = Path(cache_path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    metadata = dict(payload.get("metadata") or {})
+    if not metadata.get("real_bounded_ncbi_taxonomy"):
+        raise ValueError(f"NCBI taxonomy cache at {path} is not marked as a real bounded cache.")
+    return metadata
+
+
+def _find_cached_record(
+    label: str,
+    cache: dict[str, NCBITaxonomyRecord],
+) -> NCBITaxonomyRecord | None:
+    key = normalize_taxonomy_key(label)
+    direct = cache.get(key)
+    if direct is not None:
+        return direct
+    for record in cache.values():
+        if normalize_taxonomy_key(record.scientific_name) == key:
+            return record
+        for synonym in record.synonyms:
+            if normalize_taxonomy_key(synonym) == key:
+                return record
+    return None
+
+
 def lookup_cached_ncbi_taxonomy(
     label: str,
     *,
     cache_path: str | Path = DEFAULT_NCBI_TAXONOMY_CACHE_PATH,
 ) -> NormalizedTaxon | None:
     cache = load_ncbi_taxonomy_cache(cache_path)
-    record = cache.get(normalize_taxonomy_key(label))
+    record = _find_cached_record(label, cache)
     if record is None:
         return None
     return ncbi_record_to_normalized_taxon(record)
@@ -257,6 +293,10 @@ def fetch_bounded_ncbi_taxonomy_records(
 ) -> dict[str, NCBITaxonomyRecord]:
     taxid_by_query: dict[str, str] = {}
     for query in queries:
+        override = BOUNDED_TAXONOMY_TAXID_OVERRIDES.get(normalize_taxonomy_key(query))
+        if override:
+            taxid_by_query[query] = override
+            continue
         taxid = client.search_taxid(query)
         if taxid:
             taxid_by_query[query] = taxid

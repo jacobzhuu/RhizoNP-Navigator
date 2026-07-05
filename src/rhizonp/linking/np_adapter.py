@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -24,17 +25,75 @@ class NaturalProductSource(str, Enum):
     AUTO = "auto"
 
 
+@dataclass(frozen=True)
+class NaturalProductSourceResolution:
+    requested_source: str
+    resolved_source: str
+    fallback_reason: str | None = None
+    snapshot_id: str | None = None
+    record_count: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "requested_source": self.requested_source,
+            "resolved_source": self.resolved_source,
+        }
+        if self.fallback_reason is not None:
+            payload["fallback_reason"] = self.fallback_reason
+        if self.snapshot_id is not None:
+            payload["snapshot_id"] = self.snapshot_id
+        if self.record_count is not None:
+            payload["record_count"] = self.record_count
+        return payload
+
+    def resolved_enum(self) -> NaturalProductSource:
+        return NaturalProductSource(self.resolved_source)
+
+
+def _load_npatlas_snapshot_metadata(snapshot_path: Path) -> dict[str, Any]:
+    payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    return dict(payload.get("metadata") or {})
+
+
 def resolve_natural_product_source(
     source: NaturalProductSource | str,
     *,
     snapshot_path: str | Path = DEFAULT_NPATLAS_SNAPSHOT_PATH,
 ) -> NaturalProductSource:
+    return resolve_natural_product_source_details(
+        source,
+        snapshot_path=snapshot_path,
+    ).resolved_enum()
+
+
+def resolve_natural_product_source_details(
+    source: NaturalProductSource | str,
+    *,
+    snapshot_path: str | Path = DEFAULT_NPATLAS_SNAPSHOT_PATH,
+) -> NaturalProductSourceResolution:
     resolved = source if isinstance(source, NaturalProductSource) else NaturalProductSource(source)
+    requested = resolved.value
     if resolved is not NaturalProductSource.AUTO:
-        return resolved
-    if Path(snapshot_path).is_file():
-        return NaturalProductSource.NPATLAS_BOUNDED
-    return NaturalProductSource.FIXTURE
+        return NaturalProductSourceResolution(
+            requested_source=requested,
+            resolved_source=requested,
+        )
+
+    snap_path = Path(snapshot_path)
+    if snap_path.is_file():
+        metadata = _load_npatlas_snapshot_metadata(snap_path)
+        return NaturalProductSourceResolution(
+            requested_source=NaturalProductSource.AUTO.value,
+            resolved_source=NaturalProductSource.NPATLAS_BOUNDED.value,
+            snapshot_id=str(metadata.get("snapshot_id") or snap_path.parent.name),
+            record_count=int(metadata.get("record_count") or 0) or None,
+        )
+
+    return NaturalProductSourceResolution(
+        requested_source=NaturalProductSource.AUTO.value,
+        resolved_source=NaturalProductSource.FIXTURE.value,
+        fallback_reason="NPAtlas bounded snapshot unavailable",
+    )
 
 
 def _normalized_to_fixture_record(record: NormalizedNPAtlasRecord) -> NaturalProductFixtureRecord:

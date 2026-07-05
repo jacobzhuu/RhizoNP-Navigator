@@ -44,6 +44,19 @@ def compute_taxonomy_distance(
     lit_genus = _resolved_genus(literature_taxon)
     query_family = _norm(query_taxon.family)
     lit_family = _norm(literature_taxon.family)
+    query_taxid = query_taxon.external_ids.get("ncbi_taxid")
+    lit_taxid = literature_taxon.external_ids.get("ncbi_taxid")
+
+    if query_taxid and lit_taxid and str(query_taxid) == str(lit_taxid):
+        rank = (query_taxon.rank or literature_taxon.rank or "").lower()
+        if rank in {"strain", "isolate"}:
+            if query_strain and lit_strain and query_strain == lit_strain:
+                if query_species and lit_species and query_species == lit_species:
+                    return TaxonomyDistance.SAME_STRAIN
+        if rank in _SPECIES_LEVEL_RANKS or rank == "species":
+            return TaxonomyDistance.SAME_SPECIES
+        if rank == "genus":
+            return TaxonomyDistance.SAME_GENUS
 
     if query_strain and lit_strain and query_strain == lit_strain:
         if query_species and lit_species and query_species == lit_species:

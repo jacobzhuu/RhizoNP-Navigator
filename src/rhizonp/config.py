@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     ncbi_api_key: str = ""
     ncbi_request_timeout: float = 30.0
 
-    taxonomy_resolver: str = "fixture"
+    taxonomy_resolver: str = "auto"
     ncbi_max_results: int = 20
 
 

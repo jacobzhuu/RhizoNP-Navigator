@@ -21,6 +21,28 @@ class EvidenceTier(str, Enum):
 
 
 @dataclass(frozen=True)
+class TaxonomyResolutionMetadata:
+    requested_source: str
+    resolved_source: str
+    fallback_reason: str | None = None
+    cache_id: str | None = None
+    snapshot_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "requested_source": self.requested_source,
+            "resolved_source": self.resolved_source,
+        }
+        if self.fallback_reason is not None:
+            payload["fallback_reason"] = self.fallback_reason
+        if self.cache_id is not None:
+            payload["cache_id"] = self.cache_id
+        if self.snapshot_id is not None:
+            payload["snapshot_id"] = self.snapshot_id
+        return payload
+
+
+@dataclass(frozen=True)
 class NormalizedTaxon:
     canonical_name: str
     rank: str | None = None
@@ -31,6 +53,7 @@ class NormalizedTaxon:
     external_ids: dict[str, Any] = field(default_factory=dict)
     normalization_status: str = "unresolved"
     confidence: float = 0.0
+    resolution: TaxonomyResolutionMetadata | None = None
 
     @classmethod
     def from_domain_taxon(cls, taxon: Any) -> NormalizedTaxon:

@@ -9,6 +9,23 @@ from rhizonp.taxonomy.normalization import normalize_taxon
 from rhizonp.taxonomy.policy import check_overclaim_prevention, max_supported_claim
 
 
+def _taxon_dict(taxon: NormalizedTaxon) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "canonical_name": taxon.canonical_name,
+        "rank": taxon.rank,
+        "strain": taxon.strain,
+        "species": taxon.species,
+        "genus": taxon.genus,
+        "normalization_status": taxon.normalization_status,
+        "confidence": taxon.confidence,
+    }
+    if taxon.external_ids:
+        payload["external_ids"] = dict(taxon.external_ids)
+    if taxon.resolution is not None:
+        payload["resolution"] = taxon.resolution.to_dict()
+    return payload
+
+
 @dataclass(frozen=True)
 class EvidenceGradingResult:
     query_taxon: NormalizedTaxon
@@ -22,24 +39,8 @@ class EvidenceGradingResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "query_taxon": {
-                "canonical_name": self.query_taxon.canonical_name,
-                "rank": self.query_taxon.rank,
-                "strain": self.query_taxon.strain,
-                "species": self.query_taxon.species,
-                "genus": self.query_taxon.genus,
-                "normalization_status": self.query_taxon.normalization_status,
-                "confidence": self.query_taxon.confidence,
-            },
-            "literature_taxon": {
-                "canonical_name": self.literature_taxon.canonical_name,
-                "rank": self.literature_taxon.rank,
-                "strain": self.literature_taxon.strain,
-                "species": self.literature_taxon.species,
-                "genus": self.literature_taxon.genus,
-                "normalization_status": self.literature_taxon.normalization_status,
-                "confidence": self.literature_taxon.confidence,
-            },
+            "query_taxon": _taxon_dict(self.query_taxon),
+            "literature_taxon": _taxon_dict(self.literature_taxon),
             "taxonomy_distance": self.taxonomy_distance.value,
             "evidence_tier": self.evidence_tier.value,
             "warnings": list(self.warnings),
@@ -49,19 +50,21 @@ class EvidenceGradingResult:
         }
 
 
-def     grade_evidence(
+def grade_evidence(
     query_label: str | Any,
     literature_label: str | Any,
     *,
     observation_method: str | None = None,
     mapping_path: str | None = None,
     resolver_mode: str | None = None,
+    taxonomy_source: str | None = None,
 ) -> EvidenceGradingResult:
     kwargs: dict[str, Any] = {}
     if mapping_path is not None:
         kwargs["mapping_path"] = mapping_path
-    if resolver_mode is not None:
-        kwargs["resolver_mode"] = resolver_mode
+    resolved_mode = taxonomy_source if taxonomy_source is not None else resolver_mode
+    if resolved_mode is not None:
+        kwargs["resolver_mode"] = resolved_mode
 
     query_taxon = normalize_taxon(query_label, **kwargs)
     literature_taxon = normalize_taxon(literature_label, **kwargs)
@@ -81,6 +84,16 @@ def     grade_evidence(
     if literature_taxon.normalization_status == "unresolved":
         limitations.append("Literature taxon normalization unresolved; using conservative fallback.")
 
+    provenance: dict[str, Any] = {
+        "grading_engine": "rhizonp.taxonomy.grading",
+        "observation_method": observation_method,
+        "taxonomy_source": resolved_mode or "settings_default",
+    }
+    if query_taxon.resolution is not None:
+        provenance["query_resolution"] = query_taxon.resolution.to_dict()
+    if literature_taxon.resolution is not None:
+        provenance["literature_resolution"] = literature_taxon.resolution.to_dict()
+
     return EvidenceGradingResult(
         query_taxon=query_taxon,
         literature_taxon=literature_taxon,
@@ -89,9 +102,5 @@ def     grade_evidence(
         warnings=warnings,
         limitations=limitations,
         max_supported_claim=max_supported_claim(tier),
-        provenance={
-            "grading_engine": "rhizonp.taxonomy.grading",
-            "observation_method": observation_method,
-            "fixture_mapping": True,
-        },
+        provenance=provenance,
     )
