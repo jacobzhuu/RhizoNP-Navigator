@@ -80,9 +80,9 @@ def test_delete_file_removes_all_matching_chunks(monkeypatch, tmp_path: Path) ->
         load_local=lambda **_kwargs: fake_vector_db,
     )
 
-    monkeypatch.setattr(make_vector_db, "FAISS", fake_faiss)
-    monkeypatch.setattr(make_vector_db, "CSVLoader", object())
-    monkeypatch.setattr(make_vector_db, "RecursiveCharacterTextSplitter", object())
+    monkeypatch.setattr(make_vector_db, "_FAISS", fake_faiss)
+    monkeypatch.setattr(make_vector_db, "_CSVLoader", object())
+    monkeypatch.setattr(make_vector_db, "_RecursiveCharacterTextSplitter", object())
     monkeypatch.setattr(make_vector_db, "get_embeddings", lambda: object())
 
     make_vector_db.delete_file_from_knowledge_vector_db(db_path, source)

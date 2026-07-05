@@ -7,10 +7,13 @@ from typing import Any, Protocol
 from rhizonp.config import Settings, get_settings
 from rhizonp.embedding import resolve_embedding_model
 
+_HuggingFaceEmbeddings: Any = None
 try:
-    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings as _ImportedHuggingFaceEmbeddings
+
+    _HuggingFaceEmbeddings = _ImportedHuggingFaceEmbeddings
 except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    HuggingFaceEmbeddings = None
+    pass
 
 
 class LiteratureEmbeddingProvider(Protocol):
@@ -68,12 +71,12 @@ class HuggingFaceLiteratureEmbeddingProvider:
 
 
 def _default_huggingface_embedder_factory(model_name: str) -> Any:
-    if HuggingFaceEmbeddings is None:
+    if _HuggingFaceEmbeddings is None:
         raise RuntimeError(
             "langchain-huggingface is required for model-backed literature embeddings. "
             "Install project dependencies or use the hashing provider for offline tests."
         )
-    return HuggingFaceEmbeddings(model_name=model_name, multi_process=False)
+    return _HuggingFaceEmbeddings(model_name=model_name, multi_process=False)
 
 
 def _tokenize(text: str) -> list[str]:

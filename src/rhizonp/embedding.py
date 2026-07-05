@@ -3,10 +3,13 @@ from typing import Any
 
 from .config import get_settings
 
+_HuggingFaceEmbeddings: Any = None
 try:
-    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings as _ImportedHuggingFaceEmbeddings
+
+    _HuggingFaceEmbeddings = _ImportedHuggingFaceEmbeddings
 except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    HuggingFaceEmbeddings = None
+    pass
 
 
 embedding_model_dict = {
@@ -25,12 +28,12 @@ def resolve_embedding_model(model_name: str | None = None) -> str:
 
 @lru_cache
 def get_embeddings(model_name: str | None = None) -> Any:
-    if HuggingFaceEmbeddings is None:
+    if _HuggingFaceEmbeddings is None:
         raise RuntimeError(
             "langchain-huggingface is required for local embeddings. "
             "Install project dependencies before building or loading FAISS indexes."
         )
-    return HuggingFaceEmbeddings(
+    return _HuggingFaceEmbeddings(
         model_name=resolve_embedding_model(model_name),
         multi_process=False,
     )

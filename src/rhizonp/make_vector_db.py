@@ -2,19 +2,24 @@ import re
 import shutil
 from datetime import datetime
 from pathlib import Path, PureWindowsPath
-from typing import Any
+from typing import Any, cast
 
 from .config import PROJECT_ROOT
 from .embedding import get_embeddings
 
+_RecursiveCharacterTextSplitter: Any = None
+_CSVLoader: Any = None
+_FAISS: Any = None
 try:
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
-    from langchain_community.document_loaders import CSVLoader
-    from langchain_community.vectorstores import FAISS
+    from langchain.text_splitter import RecursiveCharacterTextSplitter as _ImportedTextSplitter
+    from langchain_community.document_loaders import CSVLoader as _ImportedCSVLoader
+    from langchain_community.vectorstores import FAISS as _ImportedFAISS
+
+    _RecursiveCharacterTextSplitter = _ImportedTextSplitter
+    _CSVLoader = _ImportedCSVLoader
+    _FAISS = _ImportedFAISS
 except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    RecursiveCharacterTextSplitter = None
-    CSVLoader = None
-    FAISS = None
+    pass
 
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -61,9 +66,9 @@ def _require_vector_dependencies() -> None:
     missing = [
         name
         for name, dependency in {
-            "langchain": RecursiveCharacterTextSplitter,
-            "langchain-community": CSVLoader,
-            "FAISS": FAISS,
+            "langchain": _RecursiveCharacterTextSplitter,
+            "langchain-community": _CSVLoader,
+            "FAISS": _FAISS,
         }.items()
         if dependency is None
     ]
@@ -79,8 +84,8 @@ def load_file(filepath: str | Path) -> list[Any]:
     _require_vector_dependencies()
     abs_filepath = resolve_data_file_path(filepath)
 
-    loader = CSVLoader(file_path=str(abs_filepath), encoding="gbk")
-    textsplitter = RecursiveCharacterTextSplitter(
+    loader = _CSVLoader(file_path=str(abs_filepath), encoding="gbk")
+    textsplitter = _RecursiveCharacterTextSplitter(
         chunk_size=1024,
         chunk_overlap=100,
         length_function=len,
@@ -119,7 +124,7 @@ def init_knowledge_vector_db(
 
     try:
         docs = load_file(source_file)
-        vector_db = FAISS.from_documents(docs, get_embeddings())
+        vector_db = _FAISS.from_documents(docs, get_embeddings())
         vector_db.save_local(str(target_path))
         return vector_db
     except Exception as exc:
@@ -139,7 +144,7 @@ def add_to_knowledge_vector_db(vector_db_path: str | Path, file_path: str | Path
             raise FileExistsError(f"文件 {source_file} 已经存在于 {files_folder} 中")
 
         docs = load_file(source_file)
-        vector_db = FAISS.load_local(
+        vector_db = _FAISS.load_local(
             folder_path=str(db_path),
             embeddings=get_embeddings(),
             allow_dangerous_deserialization=True,
@@ -169,12 +174,12 @@ def delete_file_from_knowledge_vector_db(
         if not target_file_path.exists():
             raise FileNotFoundError(f"文件 {file_name} 未存在于 {files_folder} 中")
 
-        vector_db = FAISS.load_local(
+        vector_db = _FAISS.load_local(
             folder_path=str(db_path),
             embeddings=get_embeddings(),
             allow_dangerous_deserialization=True,
         )
-        docstore_dict = vector_db.docstore._dict
+        docstore_dict = cast(Any, vector_db.docstore)._dict
         matching_ids = find_document_ids_by_source(docstore_dict, source_file)
 
         if not matching_ids:

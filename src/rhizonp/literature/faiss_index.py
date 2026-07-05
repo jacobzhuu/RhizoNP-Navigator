@@ -53,7 +53,8 @@ class FaissLiteratureVectorIndex:
         embedding_provider_name: str | None = None,
     ) -> None:
         faiss = _require_faiss()
-        self.entries = list(entries)
+        # Canonicalize entry order so FAISS vector positions stay aligned with save/load.
+        self.entries = sorted(list(entries), key=lambda entry: entry.chunk_id)
         self.embedding_provider_name = embedding_provider_name
         dimensions = {len(entry.vector) for entry in self.entries}
         if len(dimensions) > 1:

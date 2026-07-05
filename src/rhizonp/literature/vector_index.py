@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from rhizonp.domain.models import PaperChunk
+from rhizonp.domain.models import Paper, PaperChunk
 from rhizonp.literature.embeddings import LiteratureEmbeddingProvider
 
 TextEmbeddingProvider = LiteratureEmbeddingProvider
@@ -22,15 +22,49 @@ class VectorIndexEntry:
     vector: list[float]
 
 
+def _loaded_paper(chunk: PaperChunk) -> Paper | None:
+    """Return an already-loaded paper without triggering detached lazy loads."""
+    from sqlalchemy.orm import object_session
+    from sqlalchemy.orm.attributes import instance_state
+
+    state = instance_state(chunk)
+    if "paper" in state.dict:
+        loaded = state.dict["paper"]
+        return loaded if isinstance(loaded, Paper) else None
+    if object_session(chunk) is not None:
+        return chunk.paper
+    return None
+
+
+def _paper_provenance_fields(chunk: PaperChunk) -> dict[str, Any]:
+    chunk_metadata = dict(chunk.chunk_metadata)
+    paper = _loaded_paper(chunk)
+    if paper is not None:
+        return {
+            "doi": paper.doi,
+            "source_url": paper.source_url,
+            "title": paper.title,
+            "year": paper.year,
+            "journal": paper.journal,
+        }
+    return {
+        "doi": chunk_metadata.get("doi"),
+        "source_url": chunk_metadata.get("source_url"),
+        "title": chunk_metadata.get("title"),
+        "year": chunk_metadata.get("year"),
+        "journal": chunk_metadata.get("journal"),
+    }
+
+
 def _build_vector_index_entries(
     chunks: Iterable[PaperChunk],
     embedding_provider: LiteratureEmbeddingProvider,
 ) -> list[VectorIndexEntry]:
     entries: list[VectorIndexEntry] = []
     for chunk in chunks:
-        paper = chunk.paper
         metadata = {
             **dict(chunk.chunk_metadata),
+            **_paper_provenance_fields(chunk),
             "chunk_id": str(chunk.chunk_id),
             "paper_id": str(chunk.paper_id),
             "section": chunk.section,
@@ -38,11 +72,6 @@ def _build_vector_index_entries(
             "char_start": chunk.char_start,
             "char_end": chunk.char_end,
             "source_hash": chunk.source_hash,
-            "doi": paper.doi if paper is not None else None,
-            "source_url": paper.source_url if paper is not None else None,
-            "title": paper.title if paper is not None else None,
-            "year": paper.year if paper is not None else None,
-            "journal": paper.journal if paper is not None else None,
         }
         entries.append(
             VectorIndexEntry(

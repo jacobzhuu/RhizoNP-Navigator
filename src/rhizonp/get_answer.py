@@ -14,20 +14,29 @@ except ImportError:  # pragma: no cover - exercised only in incomplete envs
     psycopg2 = None
     sql = None
 
+_FlagReranker: Any = None
 try:
-    from FlagEmbedding import FlagReranker
-except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    FlagReranker = None
+    from FlagEmbedding import FlagReranker as _ImportedFlagReranker
 
-try:
-    from langchain_community.vectorstores import FAISS
+    _FlagReranker = _ImportedFlagReranker
 except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    FAISS = None
+    pass
 
+_FAISS: Any = None
 try:
-    from langchain_openai import ChatOpenAI
+    from langchain_community.vectorstores import FAISS as _ImportedFAISS
+
+    _FAISS = _ImportedFAISS
 except ImportError:  # pragma: no cover - exercised only in incomplete envs
-    ChatOpenAI = None
+    pass
+
+_ChatOpenAI: Any = None
+try:
+    from langchain_openai import ChatOpenAI as _ImportedChatOpenAI
+
+    _ChatOpenAI = _ImportedChatOpenAI
+except ImportError:  # pragma: no cover - exercised only in incomplete envs
+    pass
 
 
 class RerankerProtocol(Protocol):
@@ -50,7 +59,7 @@ class BGEReranker:
         use_fp16: bool = True,
         model_factory: Callable[..., Any] | None = None,
     ) -> None:
-        factory = model_factory or FlagReranker
+        factory = model_factory or _FlagReranker
         if factory is None:
             raise RuntimeError(
                 "FlagEmbedding is required for reranking. Install project dependencies "
@@ -78,20 +87,20 @@ def get_reranker() -> RerankerProtocol:
 @lru_cache
 def get_llm() -> Any:
     settings = get_settings()
-    if ChatOpenAI is None:
+    if _ChatOpenAI is None:
         raise RuntimeError("langchain-openai is required for LLM analysis.")
     if not settings.deepseek_api_key:
         raise RuntimeError(
             "DEEPSEEK_API_KEY is not configured. Create a .env file from .env.example "
             "or set the environment variable before calling LLM functions."
         )
-    llm_kwargs = {
+    llm_kwargs: dict[str, Any] = {
         "model": settings.llm_model,
         "openai_api_key": settings.deepseek_api_key,
         "openai_api_base": settings.llm_api_base,
         "max_tokens": settings.llm_max_tokens,
     }
-    return ChatOpenAI(**llm_kwargs)
+    return _ChatOpenAI(**llm_kwargs)
 
 
 def convert_str_to_list(input_str: str) -> list[str]:
@@ -116,11 +125,11 @@ def get_knowledge_based_answer(
     top_k_rerank_docs: int,
     reranker: RerankerProtocol | None = None,
 ) -> str:
-    if FAISS is None:
+    if _FAISS is None:
         raise RuntimeError("langchain-community is required for FAISS vector search.")
 
     top_rerank_knowledge_content: list[str] = []
-    vector_db = FAISS.load_local(
+    vector_db = _FAISS.load_local(
         folder_path=vector_db_path,
         embeddings=embeddings,
         allow_dangerous_deserialization=True,

@@ -66,7 +66,12 @@ def test_create_literature_embedding_provider_rejects_unknown_provider() -> None
         create_literature_embedding_provider(provider="unknown-backend")
 
 
-def test_huggingface_provider_requires_dependency_without_factory() -> None:
+def test_huggingface_provider_requires_dependency_without_factory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import rhizonp.literature.embeddings as embeddings_module
+
+    monkeypatch.setattr(embeddings_module, "_HuggingFaceEmbeddings", None)
     provider = HuggingFaceLiteratureEmbeddingProvider("example/model")
 
     with pytest.raises(RuntimeError, match="langchain-huggingface"):
