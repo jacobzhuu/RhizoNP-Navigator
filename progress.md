@@ -62,10 +62,7 @@
 - 定向验证结果：`python -m pytest tests/unit/test_literature_vector_index.py tests/unit/test_literature_retrieval.py -q` 通过，9 passed；相关 Ruff 和 mypy 均通过。
 - 完整验证结果：`make check` 通过，42 tests passed；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；PostgreSQL offline SQL 生成通过；SQLite literature fixture CLI 导入通过；`python -m compileall src tests scripts migrations` 通过；`git diff --check` 与 `git diff --cached --check` 通过；`docker compose config` 通过。
 - 创建 Phase 2 vector index boundary 本地提交；远端 push 仍需 GitHub HTTPS/gh 凭据。
-- 继续 Phase 2 adapter boundaries：新增 literature embedding adapter、optional FAISS index、literature reranker adapter、source adapter 文档与 contract tests。
-- 定向验证结果：`make check` 通过，59 passed / 3 skipped（FAISS parity tests skip when faiss-cpu unavailable）。
-- 新增本地 commits：
-  - `feat: add literature embedding adapter boundary`
-  - `feat: add optional FAISS literature vector index`
-  - `feat: add literature reranker adapter boundary`
+- 继续 Phase 2 external source + eval：新增 PubMed E-utilities adapter、bounded domain corpus workflow、offline retrieval benchmark framework。
+- 定向验证：`make check` 通过，70 passed / 3 skipped（FAISS parity tests skip when faiss-cpu unavailable）。
+- 新增本地 commits：`feat: add PubMed E-utilities literature source adapter`、`feat: add bounded PubMed domain corpus workflow`、`feat: add Phase 2 offline retrieval benchmark framework`、`docs: document PubMed adapter, corpus, and retrieval eval`。
 - push 仍未执行：GitHub HTTPS 凭据不可用。

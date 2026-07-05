@@ -127,7 +127,10 @@
 - 迁移方案 Phase 2 目标是带 provenance 的文献检索；DoD 是搜索结果可追溯 `chunk -> paper -> DOI/source`。
 - 当前实现选择 Phase 2 provenance/retrieval baseline：schema、synthetic adapter、structured chunking、BM25 本地检索、deterministic dense/hybrid/rerank baseline、vector index abstraction 和 persisted source trace。
 - 未接入真实外部文献源，因此不需要也不能声称 PubMed/Crossref/OpenAlex/full-text integration 已完成。
-- 生产级 model-backed embedding、FAISS-backed literature index adapter、外部 cross-encoder/BGE reranker 的**适配器边界**已实现；真实外部 source fetch/integration 与 benchmark 仍未完成，因此 Phase 2 仍是 in-progress。
+- PubMed/NCBI E-utilities metadata adapter 已实现：`PubMedEutilitiesAdapter` 支持 injectable HTTP、metadata-only provenance、PMID/DOI/source URL 映射；不含 full-text。
+- bounded domain corpus workflow：`data/eval/domain_corpus_queries.json` + `scripts/build_domain_corpus.py`（`--fetch` / `--ingest` 分离）。
+- offline Phase 2 retrieval benchmark：`data/eval/phase2_retrieval_gold.json` + `scripts/run_retrieval_eval.py`；metrics 为 Recall@5/10、MRR@10、nDCG@10；默认基于 synthetic fixture gold labels，不声称 production benchmark 质量。
+- 生产级 live PubMed corpus benchmark 与 model-backed 系统评估仍未完成，因此 Phase 2 仍是 in-progress。
 - Phase 3 的 taxonomy-aware evidence grading 未开始；本轮不实现 evidence tier policy 自动判定。
 
 ## Phase 2 provenance baseline 验证

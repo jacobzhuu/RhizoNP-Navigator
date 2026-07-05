@@ -14,7 +14,7 @@ Phase 2: 文献 provenance baseline 与本地检索。
 | --- | --- | --- |
 | Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
 | Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
-| Phase 2 | in_progress | embedding/FAISS/reranker adapter boundaries 已完成；真实外部 source adapter 与 benchmark 仍待 |
+| Phase 2 | in_progress | PubMed adapter, corpus workflow, offline retrieval eval added; production benchmark on live corpus still pending |
 | Phase 3 | pending | taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
 | Phase 5 | pending | own-data-to-literature |
@@ -116,8 +116,10 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] optional FAISS literature vector index adapter。
 - [x] literature reranker adapter boundary（none / lexical / optional BGE）。
 - [x] source adapter 边界文档与 synthetic adapter contract tests。
-- [ ] 真实外部 source adapter 及许可/API rate-limit 实装。
-- [ ] 生产环境 model-backed embedding/reranker 质量评估与 benchmark。
+- [x] 真实外部 PubMed/NCBI E-utilities source adapter（metadata-only）。
+- [x] bounded domain corpus fetch/ingest workflow。
+- [x] offline Phase 2 retrieval benchmark framework（explicit synthetic gold labels）。
+- [ ] 基于 live PubMed corpus 的 production retrieval benchmark 与 model-backed 系统评估。
 - [ ] Phase 2 完整 DoD 终验（含可选 FAISS 实装环境 parity 验证）。
 - [ ] push 到 origin/main；当前环境缺 GitHub HTTPS 凭据。
 
