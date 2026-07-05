@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from rhizonp.domain.models import CandidateLink, Compound, EvidenceItem, OmicsAssociation, Taxon
 from rhizonp.literature.retrieval import (
+    HybridWeights,
     SearchFilters,
     SearchResult,
-    bm25_search,
     persist_retrieval_results,
+    search_paper_chunks,
 )
 from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
 from rhizonp.storage.repositories import (
@@ -246,13 +247,33 @@ def create_app() -> FastAPI:
             sections=tuple(request.filters.sections),
             taxa=tuple(request.filters.taxa),
         )
-        results = bm25_search(session, request.query, top_k=request.top_k, filters=filters)
+        try:
+            results = search_paper_chunks(
+                session,
+                request.query,
+                top_k=request.top_k,
+                filters=filters,
+                retrieval_mode=request.retrieval_mode,
+                hybrid_weights=HybridWeights(
+                    bm25=request.bm25_weight,
+                    dense=request.dense_weight,
+                ),
+                reranker_weight=request.reranker_weight,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         run = persist_retrieval_results(
             session,
             query=request.query,
             results=results,
             filters=filters,
-            parameters={"top_k": request.top_k},
+            retrieval_mode=request.retrieval_mode,
+            parameters={
+                "top_k": request.top_k,
+                "bm25_weight": request.bm25_weight,
+                "dense_weight": request.dense_weight,
+                "reranker_weight": request.reranker_weight,
+            },
         )
         session.commit()
         return SearchResponse(

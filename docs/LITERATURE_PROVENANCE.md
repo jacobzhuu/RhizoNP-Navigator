@@ -9,6 +9,9 @@ Phase 2 currently provides a local, synthetic, test-backed provenance baseline f
 - `SourceAdapter` protocol and `SyntheticLiteratureAdapter` fixture adapter.
 - Structured chunking for title, abstract, methods, results, discussion, and additional sections.
 - Local BM25 lexical search over persisted `paper_chunks`.
+- Deterministic hashing-vector dense retrieval baseline.
+- Hybrid BM25 + dense fusion with configurable weights.
+- Local lexical-overlap reranker through the same `score(query, passages)` protocol shape used by the existing reranker adapter.
 - `POST /api/v1/search` returning traceable results.
 
 Each search result is traceable through:
@@ -20,11 +23,22 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 ## Not Implemented Yet
 
 - Real external literature adapters.
-- Dense vector retrieval over literature chunks.
-- Hybrid dense + BM25 fusion.
-- Reranker integration for literature results.
+- Production model-backed literature embeddings.
+- FAISS-backed literature vector index.
+- External cross-encoder or BGE reranker integration for literature results.
 - License-aware full-text download.
 - Taxonomy-aware evidence grading, which belongs to Phase 3.
+
+## Search Modes
+
+`POST /api/v1/search` supports:
+
+- `bm25`: local lexical retrieval.
+- `dense`: deterministic hashing-vector retrieval, intended for reproducible tests and interface validation.
+- `hybrid`: weighted BM25 + deterministic dense fusion.
+- `hybrid_rerank`: hybrid retrieval followed by local lexical-overlap reranking.
+
+These modes are intentionally deterministic. They are not benchmarks and do not claim model-level semantic retrieval quality.
 
 ## Fixture Boundary
 

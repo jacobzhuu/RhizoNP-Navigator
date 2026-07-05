@@ -153,3 +153,38 @@ def test_api_search_returns_traceable_literature_chunks() -> None:
     assert top_result["trace"]["source_url"] == "https://example.org/rhizonp/fixture-literature-001"
     assert top_result["trace"]["section"] == "results"
     assert "streptomyces" in top_result["matched_terms"]
+
+
+def test_api_search_supports_hybrid_rerank_mode() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.post(
+        "/api/v1/search",
+        json={
+            "query": "Streptomyces Feature_M123 causality",
+            "top_k": 2,
+            "retrieval_mode": "hybrid_rerank",
+            "reranker_weight": 0.5,
+            "filters": {"taxa": ["Streptomyces"]},
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["retrieval_mode"] == "hybrid_rerank"
+    assert payload["results"]
+    assert "pre_rerank_score" in payload["results"][0]["score_components"]
+    assert "reranker" in payload["results"][0]["score_components"]
+    assert payload["results"][0]["trace"]["doi"] == "10.0000/rhizonp.fixture.lit.001"
+
+
+def test_api_search_rejects_unsupported_retrieval_mode() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.post(
+        "/api/v1/search",
+        json={"query": "Streptomyces", "retrieval_mode": "unsupported"},
+    )
+
+    assert response.status_code == 400
+    assert "Unsupported retrieval_mode" in response.json()["detail"]

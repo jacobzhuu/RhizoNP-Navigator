@@ -96,6 +96,10 @@ class SearchRequest(BaseModel):
     query: str
     filters: SearchFiltersRequest = Field(default_factory=SearchFiltersRequest)
     top_k: int = 10
+    retrieval_mode: str = "bm25"
+    bm25_weight: float = 0.5
+    dense_weight: float = 0.5
+    reranker_weight: float = 1.0
 
 
 class SearchTraceResponse(BaseModel):

@@ -249,7 +249,7 @@ from rhizonp.api import app
 
 ### 3.7 Phase 2 literature provenance baseline
 
-Phase 2 当前只实现本地 provenance baseline：synthetic literature fixture、结构化 paper chunks、BM25 lexical search、retrieval run/result 记录和 search trace。它不接入 PubMed、Crossref、OpenAlex 或真实全文，不加载 embedding 模型，也不声明 dense/hybrid/reranker 已完成。
+Phase 2 当前实现本地 provenance/retrieval baseline：synthetic literature fixture、结构化 paper chunks、BM25 lexical search、deterministic dense-vector baseline、hybrid fusion、local rerank、retrieval run/result 记录和 search trace。它不接入 PubMed、Crossref、OpenAlex 或真实全文，也不声明已完成生产级 embedding/FAISS 文献索引或外部 reranker 模型集成。
 
 导入 synthetic literature fixture：
 
@@ -261,6 +261,13 @@ make load-literature-fixtures
 最小 search API：
 
 - `POST /api/v1/search`
+
+`retrieval_mode` 可选：
+
+- `bm25`
+- `dense`
+- `hybrid`
+- `hybrid_rerank`
 
 响应中的每条结果都包含：
 

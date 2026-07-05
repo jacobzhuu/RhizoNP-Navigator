@@ -48,3 +48,8 @@
 - 新增 `POST /api/v1/search`，返回每条结果的 chunk/paper/DOI/source trace 并记录 retrieval run/result。
 - 定向验证结果：新增/相关 14 个测试通过；Phase 2 相关 Ruff 和 mypy 均通过。
 - 完整验证结果：`make check` 通过，32 tests passed；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；SQLite Phase 2 literature fixture CLI 导入通过；PostgreSQL offline SQL 生成通过；`docker compose config` 通过；Phase 1 + Phase 2 fixtures 在同一 migrated SQLite DB 中连续导入通过；`python -m compileall src tests scripts migrations` 通过。
+- 继续 Phase 2 retrieval baseline：新增 deterministic hashing-vector dense retrieval、BM25+dense hybrid fusion、local lexical-overlap reranker 和 `search_paper_chunks()` mode dispatcher。
+- 更新 `POST /api/v1/search` 支持 `retrieval_mode`：`bm25`、`dense`、`hybrid`、`hybrid_rerank`。
+- 定向验证结果：`tests/unit/test_literature_retrieval.py` 和 `tests/unit/test_api_readonly.py` 共 11 个测试通过；相关 Ruff 和 mypy 均通过。
+- 完整验证结果：`make check` 通过，37 tests passed；`git diff --check` 通过；`python -m compileall src tests scripts migrations` 通过；SQLite `alembic upgrade head` / `current` 到 `0002_literature_provenance` 通过；`docker compose config` 通过。
+- 补充 API 边界：不支持的 `retrieval_mode` 返回 HTTP 400，并有单元测试覆盖。

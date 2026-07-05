@@ -50,7 +50,7 @@ The API lives in `rhizonp.api` and exposes a minimal query layer over the migrat
 
 The API depends on `DATABASE_URL` for real database sessions. Tests override the session dependency with in-memory SQLite databases loaded from synthetic fixtures, so the query layer is covered without requiring a running PostgreSQL service.
 
-`POST /api/v1/search` currently uses local BM25 over persisted `paper_chunks`. It records `retrieval_runs` and `retrieval_results`; it does not call external literature APIs or dense embedding models.
+`POST /api/v1/search` currently supports local `bm25`, `dense`, `hybrid`, and `hybrid_rerank` modes over persisted `paper_chunks`. It records `retrieval_runs` and `retrieval_results`; it does not call external literature APIs, model-backed embedding services, or external reranker services.
 
 ## Scientific Boundaries
 

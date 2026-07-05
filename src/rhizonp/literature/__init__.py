@@ -8,13 +8,23 @@ from rhizonp.literature.adapters import (
 )
 from rhizonp.literature.chunking import StructuredChunk, structured_chunk_record
 from rhizonp.literature.retrieval import (
+    HashingEmbeddingProvider,
+    HybridWeights,
+    LexicalOverlapReranker,
     SearchFilters,
     SearchResult,
     bm25_search,
+    dense_search,
+    hybrid_search,
     persist_retrieval_results,
+    rerank_search_results,
+    search_paper_chunks,
 )
 
 __all__ = [
+    "HashingEmbeddingProvider",
+    "HybridWeights",
+    "LexicalOverlapReranker",
     "NormalizedLiteratureRecord",
     "RawLiteratureRecord",
     "SearchFilters",
@@ -23,6 +33,10 @@ __all__ = [
     "StructuredChunk",
     "SyntheticLiteratureAdapter",
     "bm25_search",
+    "dense_search",
+    "hybrid_search",
     "persist_retrieval_results",
+    "rerank_search_results",
+    "search_paper_chunks",
     "structured_chunk_record",
 ]

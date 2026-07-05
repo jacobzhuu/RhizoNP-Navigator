@@ -136,4 +136,9 @@
 - `retrieval_runs` / `retrieval_results` 记录 query、filters、parameters、rank、score、matched terms 和 trace provenance。
 - Synthetic literature fixture 导入 1 个 paper 和 6 个 chunks；fixture 明确 `not_real_literature`。
 - BM25 search 可以按 year、section、taxa 过滤，并返回 DOI/source URL trace。
-- `POST /api/v1/search` 使用本地 BM25，不调用外部 API 或 embedding 模型。
+- `POST /api/v1/search` 支持本地 `bm25`、`dense`、`hybrid` 和 `hybrid_rerank` 模式。
+- Dense baseline 使用 deterministic hashing vector，只用于可复现接口和测试；不声称具备生产级语义检索质量。
+- Hybrid baseline 记录 BM25、dense、normalized score 和 weights。
+- Rerank baseline 使用本地 lexical-overlap reranker，并保持与现有 `score(query, passages)` reranker protocol 兼容。
+- 当前仍不调用外部 API、embedding 模型或 cross-encoder reranker。
+- 本地 baseline 不替代后续 model-backed embedding、FAISS literature index 或 BGE/cross-encoder literature reranker；这些仍需要单独实现和评估。

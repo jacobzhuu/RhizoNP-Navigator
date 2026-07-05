@@ -2,7 +2,16 @@ from sqlalchemy import create_engine
 
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
-from rhizonp.literature.retrieval import SearchFilters, bm25_search, persist_retrieval_results
+from rhizonp.literature.retrieval import (
+    HashingEmbeddingProvider,
+    LexicalOverlapReranker,
+    SearchFilters,
+    bm25_search,
+    dense_search,
+    hybrid_search,
+    persist_retrieval_results,
+    search_paper_chunks,
+)
 from rhizonp.storage.postgres import create_session_factory, session_scope
 from rhizonp.storage.repositories import RetrievalResultRepository
 
@@ -66,3 +75,69 @@ def test_bm25_search_respects_metadata_filters() -> None:
 
     assert blocked_by_year == []
     assert blocked_by_taxon == []
+
+
+def test_dense_search_uses_deterministic_vectors_and_trace() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    with session_scope(session_factory) as session:
+        load_phase2_literature_fixture(session)
+        results = dense_search(
+            session,
+            "genus-level strain production",
+            filters=SearchFilters(sections=("discussion",)),
+            embedding_provider=HashingEmbeddingProvider(dimensions=64),
+        )
+
+    assert results
+    assert results[0].section == "discussion"
+    assert results[0].score_components["embedding_provider"] == "hashing"
+    assert results[0].trace["doi"] == "10.0000/rhizonp.fixture.lit.001"
+
+
+def test_hybrid_search_records_bm25_and_dense_components() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    with session_scope(session_factory) as session:
+        load_phase2_literature_fixture(session)
+        results = hybrid_search(
+            session,
+            "Streptomyces Feature_M123",
+            filters=SearchFilters(sections=("results",), taxa=("Streptomyces",)),
+            embedding_provider=HashingEmbeddingProvider(dimensions=64),
+        )
+
+    assert results
+    assert results[0].score_components["hybrid"] == results[0].score
+    assert results[0].score_components["bm25"] > 0
+    assert results[0].score_components["dense"] > 0
+    assert results[0].trace["source_url"] == "https://example.org/rhizonp/fixture-literature-001"
+
+
+def test_hybrid_rerank_search_records_reranker_component() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    with session_scope(session_factory) as session:
+        load_phase2_literature_fixture(session)
+        results = search_paper_chunks(
+            session,
+            "Streptomyces Feature_M123 causality",
+            top_k=2,
+            filters=SearchFilters(taxa=("Streptomyces",)),
+            retrieval_mode="hybrid_rerank",
+            embedding_provider=HashingEmbeddingProvider(dimensions=64),
+            reranker=LexicalOverlapReranker(),
+            reranker_weight=0.5,
+        )
+
+    assert results
+    assert results[0].rank == 1
+    assert "pre_rerank_score" in results[0].score_components
+    assert "reranker" in results[0].score_components
+    assert results[0].trace["doi"] == "10.0000/rhizonp.fixture.lit.001"
