@@ -1,0 +1,21 @@
+{
+  "audit_type": "corpus_benchmark_query_leakage",
+  "benchmark_query_count": 18,
+  "corpus_query_count": 17,
+  "flagged_pairs": [],
+  "methodology": {
+    "exact_match": "Raw string equality after strip().",
+    "human_review_required": "Automatic flags are lexical warnings only; they do not prove benchmark leakage.",
+    "normalized_match": "Lowercase alphanumeric token stream equality.",
+    "sequence_similarity": "difflib.SequenceMatcher ratio on normalized strings.",
+    "token_jaccard": "Intersection over union of [a-z0-9]+ tokens."
+  },
+  "pair_count": 306,
+  "summary": {
+    "exact_duplicates": 0,
+    "flagged_pairs": 0,
+    "high_sequence_similarity": 0,
+    "high_token_overlap": 0,
+    "normalized_duplicates": 0
+  }
+}
