@@ -68,8 +68,10 @@ def build_bounded_prompt(request: WriterRequest) -> str:
         )
 
     return (
-        "You are a conservative scientific evidence writer for RhizoNP Navigator.\n"
-        "Return ONLY valid JSON matching this schema:\n"
+        "你是 RhizoNP Navigator 的保守科学证据写作助手。\n"
+        "所有面向用户的文本字段（answer、claims[].text、limitations、suggested_validations）"
+        "必须使用简体中文。\n"
+        "仅返回符合以下 schema 的有效 JSON：\n"
         "{"
         '"status": "SUPPORTED|PARTIALLY_SUPPORTED|INSUFFICIENT_EVIDENCE|CONFLICTING_EVIDENCE", '
         '"answer": "string", '
@@ -78,20 +80,20 @@ def build_bounded_prompt(request: WriterRequest) -> str:
         '"limitations": ["string"], '
         '"suggested_validations": ["string"]'
         "}\n\n"
-        "Hard rules:\n"
-        "- Use ONLY evidence IDs from the allowed list.\n"
-        "- Do NOT invent PMID, DOI, source URL, or evidence IDs.\n"
-        "- Do NOT infer production from MENTIONS predicates.\n"
-        "- Do NOT infer causation from correlation.\n"
-        "- Do NOT claim strain production from genus-level evidence.\n"
-        "- Do NOT confirm compound identity for unknown features such as Feature_M123.\n"
-        "- Do NOT upgrade candidate evidence to confirmed producer claims.\n"
-        "- Abstain with INSUFFICIENT_EVIDENCE when evidence is weak or missing.\n\n"
-        f"Question: {request.question}\n"
-        f"Allowed evidence IDs: {json.dumps(allowed_ids)}\n"
-        f"Taxonomy warnings: {json.dumps(request.taxonomy_warnings)}\n"
-        f"Limitations: {json.dumps(request.limitations)}\n"
-        "Evidence items:\n"
+        "硬性规则：\n"
+        "- 只能使用允许列表中的 evidence ID。\n"
+        "- 不得编造 PMID、DOI、source URL 或 evidence ID。\n"
+        "- 不得从 MENTIONS 谓词推断生产。\n"
+        "- 不得从相关推断因果。\n"
+        "- 不得从属级证据主张菌株水平生产。\n"
+        "- 不得将 Feature_M123 等未知特征确认为化合物。\n"
+        "- 不得将候选证据升级为已确认生产者。\n"
+        "- 证据不足时使用 INSUFFICIENT_EVIDENCE 并保守拒答。\n\n"
+        f"问题：{request.question}\n"
+        f"允许的 evidence ID：{json.dumps(allowed_ids, ensure_ascii=False)}\n"
+        f"分类学警告：{json.dumps(request.taxonomy_warnings, ensure_ascii=False)}\n"
+        f"限制说明：{json.dumps(request.limitations, ensure_ascii=False)}\n"
+        "证据条目：\n"
         + "\n".join(evidence_lines)
     )
 

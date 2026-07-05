@@ -42,8 +42,8 @@ def build_writer_request_from_literature_hits(
 ) -> WriterRequest:
     evidence_items = literature_hits_to_evidence_items(hits)
     merged_limitations = [
-        "Retrieved literature passages are retrieval clues only; relevance is not guaranteed.",
-        "Co-occurrence in text does not imply biochemical production or causation.",
+        "检索到的文献片段仅作检索线索，相关性不作保证。",
+        "文本共现并不等同于生物化学意义上的生产或因果关系。",
     ]
     if limitations:
         merged_limitations.extend(limitations)

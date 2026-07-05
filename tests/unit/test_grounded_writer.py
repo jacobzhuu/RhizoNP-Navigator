@@ -53,7 +53,7 @@ def test_genus_warning_prevents_strain_claim() -> None:
     )
     answer = write_grounded_answer(request)
     assert answer.status == AnswerStatus.PARTIALLY_SUPPORTED
-    assert "strain-level production is not supported" in answer.claims[0].text
+    assert "不支持菌株水平生产" in answer.claims[0].text
 
 
 def test_insufficient_evidence_when_empty() -> None:
@@ -80,4 +80,4 @@ def test_limitations_include_causality_guardrail() -> None:
         evidence_items=[_evidence(tier="C")],
     )
     answer = write_grounded_answer(request)
-    assert any("causation" in limitation.lower() for limitation in answer.limitations)
+    assert any("因果" in limitation for limitation in answer.limitations)

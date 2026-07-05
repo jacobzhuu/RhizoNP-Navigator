@@ -11,6 +11,8 @@ from rhizonp.writer.models import (
     WriterRequest,
 )
 
+_CAUSALITY_LIMITATION = "相关性或共现并不等同于生物化学意义上的生产或因果关系。"
+
 
 def _tier_rank(tier: str) -> int:
     normalized = tier.upper().replace("TIER ", "")
@@ -48,8 +50,8 @@ def _build_claims(
             claims.append(
                 Claim(
                     text=(
-                        f"Conflicting evidence indicates the proposed relation may not hold "
-                        f"for {item.object_literal or 'the target entity'}."
+                        f"冲突证据表明，针对 {item.object_literal or '目标实体'} 的"
+                        f"相关关系可能不成立。"
                     ),
                     evidence_refs=[item.evidence_id],
                     claim_level="conflict",
@@ -61,18 +63,18 @@ def _build_claims(
             continue
 
         claim_text = item.supporting_span or (
-            f"Evidence ({item.evidence_tier}) supports {item.claim_type.replace('_', ' ')} "
-            f"with {item.directness} directness."
+            f"证据（{item.evidence_tier}）以 {item.directness} 直接性"
+            f"支持 {item.claim_type.replace('_', ' ')}。"
         )
         if not allow_strain_claim and tier_allows_strain_claim(item.evidence_tier) is False:
             claim_text = (
-                f"Candidate-level evidence ({item.evidence_tier}) relates to "
-                f"{item.object_literal or 'a related entity'}; strain-level production is not supported."
+                f"候选级证据（{item.evidence_tier}）与 "
+                f"{item.object_literal or '相关实体'} 相关；不支持菌株水平生产主张。"
             )
         elif not allow_species_claim:
             claim_text = (
-                f"Only weak taxonomy evidence ({item.evidence_tier}) is available for "
-                f"{item.object_literal or 'the target entity'}."
+                f"针对 {item.object_literal or '目标实体'} 仅有较弱分类学证据"
+                f"（{item.evidence_tier}）。"
             )
 
         claims.append(
@@ -89,12 +91,12 @@ def write_fallback_answer(request: WriterRequest) -> GroundedAnswer:
     if not request.evidence_items:
         return GroundedAnswer(
             status=AnswerStatus.INSUFFICIENT_EVIDENCE,
-            answer="Insufficient evidence was found to answer the question conservatively.",
+            answer="现有证据不足以保守地回答该问题。",
             claims=[],
             evidence_refs=[],
-            limitations=list(request.limitations) + ["No evidence items were supplied."],
+            limitations=list(request.limitations) + ["未提供任何证据条目。"],
             suggested_validations=[
-                "Expand literature retrieval or add structured database records.",
+                "请扩展文献检索或补充结构化数据库记录。",
             ],
             writer_mode="fallback",
             provenance={"writer": "rhizonp.writer.fallback_writer"},
@@ -104,13 +106,11 @@ def write_fallback_answer(request: WriterRequest) -> GroundedAnswer:
         refs = [item.evidence_id for item in request.evidence_items]
         return GroundedAnswer(
             status=AnswerStatus.CONFLICTING_EVIDENCE,
-            answer=(
-                "Conflicting evidence was found; the system cannot select a single supported conclusion."
-            ),
+            answer="发现相互冲突的证据，系统无法选定单一支持性结论。",
             claims=_build_claims(request, allow_strain_claim=False, allow_species_claim=False),
             evidence_refs=refs,
             limitations=list(request.limitations) + list(request.taxonomy_warnings),
-            suggested_validations=["Review primary sources and reconcile conflicting records."],
+            suggested_validations=["请查阅原始来源并协调冲突记录。"],
             writer_mode="fallback",
             provenance={"writer": "rhizonp.writer.fallback_writer"},
         )
@@ -129,29 +129,29 @@ def write_fallback_answer(request: WriterRequest) -> GroundedAnswer:
     for item in request.evidence_items:
         limitations.extend(item.warnings)
     limitations = list(dict.fromkeys(limitations))
-    limitations.append("Correlation or co-occurrence does not imply biochemical production or causation.")
+    limitations.append(_CAUSALITY_LIMITATION)
 
     if allow_strain:
         status = AnswerStatus.SUPPORTED
         answer = (
-            "Supported evidence is available at strain or stronger taxonomy resolution, "
-            "with explicit citations attached to each claim."
+            "在菌株或更强分类学分辨率下存在支持性证据，"
+            "每条主张均附有明确引用。"
         )
     elif allow_species:
         status = AnswerStatus.PARTIALLY_SUPPORTED
         answer = (
-            "Partially supported evidence is available at species level; strain-level production "
-            "should be treated as unverified for the current sample."
+            "在物种水平存在部分支持性证据；"
+            "当前样本的菌株水平生产应视为未验证。"
         )
     elif _tier_rank(strongest_tier) >= _tier_rank("C"):
         status = AnswerStatus.PARTIALLY_SUPPORTED
         answer = (
-            "Only genus-level or weaker candidate evidence is available; conclusions must remain "
-            "hypothesis-generating rather than production-confirmed."
+            "仅有属级或更弱的候选证据；"
+            "结论应保持在假设生成层面，而非已确认生产。"
         )
     else:
         status = AnswerStatus.INSUFFICIENT_EVIDENCE
-        answer = "Available evidence is too weak to support a substantive answer."
+        answer = "现有证据过弱，无法给出实质性回答。"
 
     return GroundedAnswer(
         status=status,
@@ -160,8 +160,8 @@ def write_fallback_answer(request: WriterRequest) -> GroundedAnswer:
         evidence_refs=refs,
         limitations=limitations,
         suggested_validations=[
-            "Validate taxonomy resolution for the query organism.",
-            "Confirm metabolite identity with orthogonal analytical methods.",
+            "请验证查询生物的分类学解析。",
+            "请用正交分析方法确认代谢物身份。",
         ],
         writer_mode="fallback",
         provenance={"writer": "rhizonp.writer.fallback_writer", "strongest_tier": strongest_tier},

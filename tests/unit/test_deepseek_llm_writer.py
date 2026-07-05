@@ -39,7 +39,9 @@ def _request(**overrides: object) -> WriterRequest:
     return WriterRequest.model_validate(payload)
 
 
-def test_check_llm_configuration_without_api_key() -> None:
+def test_check_llm_configuration_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "")
+    monkeypatch.setenv("QWEN_API_KEY", "")
     get_settings.cache_clear()
     report = check_llm_configuration()
     assert report["api_key_present"] is False
@@ -47,7 +49,11 @@ def test_check_llm_configuration_without_api_key() -> None:
     assert report["status"] == "READY_FOR_USER_CONFIGURATION"
 
 
-def test_write_deepseek_answer_without_api_key_uses_offline_fallback() -> None:
+def test_write_deepseek_answer_without_api_key_uses_offline_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "")
+    monkeypatch.setenv("QWEN_API_KEY", "")
     get_settings.cache_clear()
     result = write_deepseek_answer(_request())
     assert result.writer_mode == "deterministic_offline"
@@ -173,7 +179,9 @@ def test_deterministic_fallback_preserved_for_use_llm_false() -> None:
     assert answer.writer_mode == "fallback"
 
 
-def test_write_llm_answer_reports_accurate_mode_without_key() -> None:
+def test_write_llm_answer_reports_accurate_mode_without_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "")
+    monkeypatch.setenv("QWEN_API_KEY", "")
     get_settings.cache_clear()
     answer = write_llm_answer(_request())
     assert answer.writer_mode == "fallback"
@@ -182,7 +190,9 @@ def test_write_llm_answer_reports_accurate_mode_without_key() -> None:
 
 def test_bounded_prompt_prohibits_invented_ids() -> None:
     prompt = build_bounded_prompt(_request())
-    assert "Do NOT invent PMID" in prompt
+    assert "Do NOT invent PMID" not in prompt
+    assert "不得编造 PMID" in prompt
+    assert "简体中文" in prompt
     assert "Feature_M123" in prompt
 
 

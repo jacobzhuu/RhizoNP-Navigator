@@ -405,7 +405,7 @@ def run_own_data_feature_m123_dynamic_case() -> WriterSafetyCaseResult:
         missing = _missing_required_limitations(
             answer_payload.get("answer", ""),
             [str(item) for item in limitations],
-            ["Correlation or co-occurrence does not imply biochemical production or causation."],
+            ["相关性或共现并不等同于生物化学意义上的生产或因果关系。"],
         )
         lit = assoc.literature_retrieval
         top_hit = (lit.get("hits") or [{}])[0]

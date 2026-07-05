@@ -14,7 +14,7 @@
       "expected_abstention": true,
       "expected_conflict": false,
       "forbidden_claim_patterns": ["produces", "confirms", "demonstrates"],
-      "required_limitations": ["No evidence items were supplied."],
+      "required_limitations": ["未提供任何证据条目。"],
       "provenance_scope": "synthetic",
       "notes": "Empty evidence must abstain."
     },
@@ -150,7 +150,7 @@
       "expected_abstention": false,
       "expected_conflict": false,
       "forbidden_claim_patterns": [" causes ", "causal link", "demonstrates causation"],
-      "required_limitations": ["Correlation or co-occurrence does not imply biochemical production or causation."],
+      "required_limitations": ["相关性或共现并不等同于生物化学意义上的生产或因果关系。"],
       "provenance_scope": "synthetic",
       "notes": "Correlation must not be promoted to causality."
     },

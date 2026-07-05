@@ -11,7 +11,7 @@ import { ErrorPanel, InfoPanel, LimitationsPanel, WarningPanel } from '../compon
 import { ProvenanceBlock } from '../components/ProvenanceBlock'
 
 const DEMO_REQUEST: GroundedAnswerRequest = {
-  question: 'What is supported by the evidence?',
+  question: '现有证据支持哪些保守结论？',
   evidence_items: [
     {
       evidence_id: '00000000-0000-4000-8000-000000000001',
@@ -21,13 +21,13 @@ const DEMO_REQUEST: GroundedAnswerRequest = {
       evidence_tier: 'same_genus',
       directness: 'indirect',
       confidence: 0.6,
-      supporting_span: 'genus-level correlation only',
+      supporting_span: '仅属级相关，不能支持菌株水平生产主张。',
       provenance: { fixture: true },
     },
   ],
-  taxonomy_warnings: ['Genus-level 16S cannot support strain-level production claims.'],
-  limitations: ['Correlation is not causation.'],
-  use_llm: false,
+  taxonomy_warnings: ['属级 16S 观测不能支持菌株水平生产主张。'],
+  limitations: ['相关不等于因果。'],
+  use_llm: true,
 }
 
 function statusVariant(status: string): 'supported' | 'partial' | 'insufficient' | 'mode' {
@@ -62,11 +62,11 @@ export function GroundedReportPage() {
       setResult(data)
     } catch (err) {
       if (err instanceof SyntaxError) {
-        setError({ message: 'Invalid JSON input', detail: err.message })
+        setError({ message: 'JSON 格式无效', detail: err.message })
       } else if (err instanceof BackendUnavailableError || err instanceof ApiError) {
         setError({ message: err.message, detail: err instanceof ApiError ? err.detail : undefined })
       } else {
-        setError({ message: 'Unexpected error', detail: String(err) })
+        setError({ message: '意外错误', detail: String(err) })
       }
     } finally {
       setLoading(false)
@@ -76,17 +76,18 @@ export function GroundedReportPage() {
   return (
     <>
       <header className="page-header">
-        <h1>Grounded Report</h1>
-        <p className="subtitle">Evidence-bound scientific answers with claim tracing</p>
+        <h1>证据报告</h1>
+        <p className="subtitle">有证据边界约束的科学回答，含主张溯源</p>
       </header>
 
       <InfoPanel>
-        Writer uses deterministic fallback in MVP (<code>use_llm: false</code>). Remote LLM calls are disabled.
+        默认启用 DeepSeek 写作器（<code>use_llm: true</code>），需本地 <code>.env</code> 已配置{' '}
+        <code>DEEPSEEK_API_KEY</code>。未配置或门控失败时自动回退确定性写作器。
       </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="json">Request JSON</label>
+          <label htmlFor="json">请求 JSON</label>
           <textarea
             id="json"
             value={jsonInput}
@@ -97,37 +98,37 @@ export function GroundedReportPage() {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="submit" className="btn" disabled={loading}>
-            {loading ? 'Generating…' : 'Generate Report'}
+            {loading ? '生成中…' : '生成报告'}
           </button>
           <button type="button" className="btn btn-secondary" onClick={loadDemo}>
-            Load Demo Example
+            加载演示示例
           </button>
         </div>
       </form>
 
-      {loading && <p className="loading">Writing grounded answer…</p>}
+      {loading && <p className="loading">正在生成证据约束回答…</p>}
       {error && <ErrorPanel message={error.message} detail={error.detail} />}
 
       {result && (
         <div className="card">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
             <Badge label={result.status} variant={statusVariant(result.status)} />
-            <Badge label={`Writer: ${result.writer_mode}`} variant="mode" />
+            <Badge label={`写作器：${result.writer_mode}`} variant="mode" />
           </div>
 
-          <h3>Answer</h3>
+          <h3>回答</h3>
           <p>{result.answer}</p>
 
           {result.claims.length > 0 && (
             <>
-              <h3>Claims</h3>
+              <h3>主张</h3>
               <ul>
                 {result.claims.map((claim, i) => (
                   <li key={i} style={{ marginBottom: '0.5rem' }}>
                     <Badge label={claim.claim_level} variant={tierBadgeVariant(claim.claim_level)} />
                     {' '}{claim.text}
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                      Evidence refs: {claim.evidence_refs.join(', ')}
+                      证据引用：{claim.evidence_refs.join(', ')}
                     </div>
                   </li>
                 ))}
@@ -137,16 +138,16 @@ export function GroundedReportPage() {
 
           {result.evidence_refs.length > 0 && (
             <p style={{ fontSize: '0.875rem' }}>
-              <strong>Evidence refs:</strong> {result.evidence_refs.join(', ')}
+              <strong>证据引用：</strong> {result.evidence_refs.join(', ')}
             </p>
           )}
 
-          <WarningPanel title="Taxonomy Warnings" items={lastWarnings} />
+          <WarningPanel title="分类学警告" items={lastWarnings} />
           <LimitationsPanel items={result.limitations} />
 
           {result.suggested_validations.length > 0 && (
             <>
-              <h3>Suggested Validations</h3>
+              <h3>建议验证</h3>
               <ul>
                 {result.suggested_validations.map((v, i) => (
                   <li key={i}>{v}</li>
