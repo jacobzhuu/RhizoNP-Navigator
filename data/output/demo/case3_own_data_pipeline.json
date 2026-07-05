@@ -1,0 +1,306 @@
+{
+  "bundle_provenance": {
+    "fixture": true,
+    "data_dir": "/Users/zzy/Projects/RhizoNP-Navigator/data/fixtures/own_data_demo",
+    "not_real_experiment": true
+  },
+  "pipeline_provenance": {
+    "pipeline": "rhizonp.omics.pipeline",
+    "data_dir": "/Users/zzy/Projects/RhizoNP-Navigator/data/fixtures/own_data_demo",
+    "fixture": true
+  },
+  "association_results": [
+    {
+      "association_id": "assoc_001",
+      "source_raw_label": "Streptomyces",
+      "target_raw_label": "Feature_M123",
+      "score": 0.72,
+      "adjusted_p": 0.003,
+      "method": "synthetic_sPLS_fixture",
+      "taxonomy_grading": {
+        "query_taxon": {
+          "canonical_name": "Streptomyces",
+          "rank": "genus",
+          "strain": null,
+          "species": null,
+          "genus": "Streptomyces",
+          "normalization_status": "resolved_exact",
+          "confidence": 1.0
+        },
+        "literature_taxon": {
+          "canonical_name": "Streptomyces",
+          "rank": "genus",
+          "strain": null,
+          "species": null,
+          "genus": "Streptomyces",
+          "normalization_status": "resolved_exact",
+          "confidence": 1.0
+        },
+        "taxonomy_distance": "SAME_SPECIES",
+        "evidence_tier": "B",
+        "warnings": [],
+        "limitations": [],
+        "max_supported_claim": "species_level_production",
+        "provenance": {
+          "grading_engine": "rhizonp.taxonomy.grading",
+          "observation_method": "synthetic_16S_fixture",
+          "fixture_mapping": true
+        }
+      },
+      "candidate_links": {
+        "query_taxon": "Streptomyces",
+        "metabolite_name": "Feature_M123",
+        "rows": [
+          {
+            "rank": 1,
+            "query_taxon": "Streptomyces",
+            "compound_name": "FixturePolyketide-A",
+            "producer_taxon": "Streptomyces",
+            "taxonomy_distance": "SAME_SPECIES",
+            "evidence_tier": "B",
+            "compound_match": false,
+            "evidence_count": 1,
+            "score": 0.5,
+            "status": "SUPPORTED",
+            "bioactivity": {
+              "activity_type": "antimicrobial",
+              "target": "bacteria",
+              "evidence_level": "candidate"
+            },
+            "warnings": [],
+            "limitations": [],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_001",
+              "record_key": "np_fixture_polyketide_genus",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          },
+          {
+            "rank": 2,
+            "query_taxon": "Streptomyces",
+            "compound_name": "Rapamycin",
+            "producer_taxon": "Streptomyces hygroscopicus OS-2",
+            "taxonomy_distance": "SAME_GENUS",
+            "evidence_tier": "C",
+            "compound_match": false,
+            "evidence_count": 1,
+            "score": 0.29,
+            "status": "PARTIALLY_SUPPORTED",
+            "bioactivity": {
+              "activity_type": "antifungal",
+              "target": "plant pathogen",
+              "evidence_level": "reported"
+            },
+            "warnings": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "limitations": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_RAP_001",
+              "record_key": "np_rapamycin_os2",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          },
+          {
+            "rank": 3,
+            "query_taxon": "Streptomyces",
+            "compound_name": "Avermectin",
+            "producer_taxon": "Streptomyces avermitilis",
+            "taxonomy_distance": "SAME_GENUS",
+            "evidence_tier": "C",
+            "compound_match": false,
+            "evidence_count": 1,
+            "score": 0.29,
+            "status": "PARTIALLY_SUPPORTED",
+            "bioactivity": {
+              "activity_type": "anthelmintic",
+              "target": "nematode",
+              "evidence_level": "reported"
+            },
+            "warnings": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "limitations": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound.",
+              "Literature taxon normalization unresolved; using conservative fallback."
+            ],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_AVE_001",
+              "record_key": "np_avermectin_species",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          }
+        ]
+      },
+      "limitations": [
+        "Internal association is correlation-based and does not imply causation.",
+        "Metabolite feature is not structure-confirmed; compound links are name-level only."
+      ]
+    },
+    {
+      "association_id": "assoc_002",
+      "source_raw_label": "Streptomyces",
+      "target_raw_label": "rapamycin",
+      "score": 0.55,
+      "adjusted_p": 0.018,
+      "method": "synthetic_sPLS_fixture",
+      "taxonomy_grading": {
+        "query_taxon": {
+          "canonical_name": "Streptomyces",
+          "rank": "genus",
+          "strain": null,
+          "species": null,
+          "genus": "Streptomyces",
+          "normalization_status": "resolved_exact",
+          "confidence": 1.0
+        },
+        "literature_taxon": {
+          "canonical_name": "Streptomyces hygroscopicus OS-2",
+          "rank": "strain",
+          "strain": "OS-2",
+          "species": "Streptomyces hygroscopicus",
+          "genus": "Streptomyces",
+          "normalization_status": "resolved_exact",
+          "confidence": 1.0
+        },
+        "taxonomy_distance": "SAME_GENUS",
+        "evidence_tier": "C",
+        "warnings": [
+          "Genus-level or unresolved observation cannot support strain-level production claims.",
+          "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+          "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+        ],
+        "limitations": [
+          "Genus-level or unresolved observation cannot support strain-level production claims.",
+          "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+          "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+        ],
+        "max_supported_claim": "genus_level_candidate",
+        "provenance": {
+          "grading_engine": "rhizonp.taxonomy.grading",
+          "observation_method": "synthetic_16S_fixture",
+          "fixture_mapping": true
+        }
+      },
+      "candidate_links": {
+        "query_taxon": "Streptomyces",
+        "metabolite_name": "rapamycin",
+        "rows": [
+          {
+            "rank": 1,
+            "query_taxon": "Streptomyces",
+            "compound_name": "Rapamycin",
+            "producer_taxon": "Streptomyces hygroscopicus OS-2",
+            "taxonomy_distance": "SAME_GENUS",
+            "evidence_tier": "C",
+            "compound_match": true,
+            "evidence_count": 1,
+            "score": 0.54,
+            "status": "PARTIALLY_SUPPORTED",
+            "bioactivity": {
+              "activity_type": "antifungal",
+              "target": "plant pathogen",
+              "evidence_level": "reported"
+            },
+            "warnings": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "limitations": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_RAP_001",
+              "record_key": "np_rapamycin_os2",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          },
+          {
+            "rank": 2,
+            "query_taxon": "Streptomyces",
+            "compound_name": "FixturePolyketide-A",
+            "producer_taxon": "Streptomyces",
+            "taxonomy_distance": "SAME_SPECIES",
+            "evidence_tier": "B",
+            "compound_match": false,
+            "evidence_count": 1,
+            "score": 0.5,
+            "status": "SUPPORTED",
+            "bioactivity": {
+              "activity_type": "antimicrobial",
+              "target": "bacteria",
+              "evidence_level": "candidate"
+            },
+            "warnings": [],
+            "limitations": [],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_001",
+              "record_key": "np_fixture_polyketide_genus",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          },
+          {
+            "rank": 3,
+            "query_taxon": "Streptomyces",
+            "compound_name": "Avermectin",
+            "producer_taxon": "Streptomyces avermitilis",
+            "taxonomy_distance": "SAME_GENUS",
+            "evidence_tier": "C",
+            "compound_match": false,
+            "evidence_count": 1,
+            "score": 0.29,
+            "status": "PARTIALLY_SUPPORTED",
+            "bioactivity": {
+              "activity_type": "anthelmintic",
+              "target": "nematode",
+              "evidence_level": "reported"
+            },
+            "warnings": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+            ],
+            "limitations": [
+              "Genus-level or unresolved observation cannot support strain-level production claims.",
+              "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound.",
+              "Literature taxon normalization unresolved; using conservative fallback."
+            ],
+            "provenance": {
+              "source_database": "synthetic_fixture",
+              "external_record_id": "NP_FIXTURE_AVE_001",
+              "record_key": "np_avermectin_species",
+              "fixture": true,
+              "not_real_database_record": true
+            }
+          }
+        ]
+      },
+      "limitations": [
+        "Internal association is correlation-based and does not imply causation.",
+        "Genus-level or unresolved observation cannot support strain-level production claims.",
+        "16S genus-level observation must not be promoted to strain-level production based on literature from a different strain.",
+        "Same-genus evidence is candidate-level only; it does not prove this sample produces the compound."
+      ]
+    }
+  ]
+}

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rhizonp.config import PROJECT_ROOT
 from rhizonp.demo.runner import run_all_demos, run_smoke_checks
 
 

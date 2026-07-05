@@ -13,7 +13,6 @@ from rhizonp.config import PROJECT_ROOT
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.literature.retrieval import SearchFilters, search_paper_chunks
-from rhizonp.linking.candidate_engine import link_natural_product_candidates
 from rhizonp.omics.pipeline import (
     export_candidate_matrix_csv,
     export_pipeline_json,

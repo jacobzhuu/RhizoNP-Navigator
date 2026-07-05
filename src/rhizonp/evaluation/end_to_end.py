@@ -21,7 +21,7 @@ from rhizonp.evaluation.retrieval_metrics import aggregate_metric
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.linking.candidate_engine import link_natural_product_candidates
 from rhizonp.omics.pipeline import run_own_data_pipeline
-from rhizonp.storage.postgres import create_session_factory, session_scope
+from rhizonp.storage.postgres import create_session_factory
 from rhizonp.taxonomy.grading import grade_evidence
 from rhizonp.taxonomy.policy import tier_allows_strain_claim
 from rhizonp.writer.models import EvidenceInput, WriterRequest

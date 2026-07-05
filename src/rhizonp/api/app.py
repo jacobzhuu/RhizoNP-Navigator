@@ -45,6 +45,7 @@ from .schemas import (
     SearchResultResponse,
     SearchTraceResponse,
     TaxonResponse,
+    WriterClaimResponse,
 )
 
 
@@ -337,11 +338,11 @@ def create_app() -> FastAPI:
             status=answer.status.value,
             answer=answer.answer,
             claims=[
-                {
-                    "text": claim.text,
-                    "evidence_refs": claim.evidence_refs,
-                    "claim_level": claim.claim_level,
-                }
+                WriterClaimResponse(
+                    text=claim.text,
+                    evidence_refs=claim.evidence_refs,
+                    claim_level=claim.claim_level,
+                )
                 for claim in answer.claims
             ],
             evidence_refs=answer.evidence_refs,

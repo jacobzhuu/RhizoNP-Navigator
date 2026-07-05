@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from rhizonp.taxonomy.models import EvidenceTier, NormalizedTaxon, TaxonomyDistance
 
-
 GENUS_LEVEL_RANKS = frozenset({"genus", "family", "order", "class", "phylum", "kingdom"})
 STRAIN_LEVEL_RANKS = frozenset({"strain", "isolate"})
 
