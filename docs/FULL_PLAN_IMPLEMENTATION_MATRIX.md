@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 6 — retrieval-grounded writer + score discipline correction)  
+**Last updated:** 2026-07-05 (loop iteration 7 — deterministic writer safety benchmark)  
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -22,8 +22,8 @@
 
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
-| MVP Engineering | 81% | **84%** | 86% |
-| Full Plan Functional | 60% | **67%** | 70% |
+| MVP Engineering | 82% | **85%** | 87% |
+| Full Plan Functional | 61% | **68%** | 71% |
 | Empirical / Scientific Validation | 18% | **27%** | 32% |
 
 Scoring uses 72 requirements below with equal weight unless noted. **Empirical validation excludes** unit tests, integration traces, bounded cache fetches, and source-provenance wiring unless they involve human judgments, real applicant omics, expert adjudication, or labeled benchmark evaluation. Iteration 5 incorrectly bumped empirical score; corrected here.
@@ -134,9 +134,9 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | W03 | §15 | LLM grounded writer | INTERFACE_ONLY | `writer/service.py` disabled | Constrained LLM path | P1 | API keys + eval |
 | W04 | §14 | Scientific constraint validator | IMPLEMENTED_MVP | taxonomy + writer logic | Unified evidence module | P2 | — |
 | W05 | §15.2 | Claim-level citations | IMPLEMENTED_MVP | retrieval-grounded writer + structural citation validation | Human faithfulness adjudication | P1 | V02 |
-| W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | explicit predicate conflict rule (`PRODUCES` vs `DOES_NOT_PRODUCE`) | Literature-derived semantic conflicts | P2 | — |
+| W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | explicit predicate conflict rule + writer safety benchmark (`CON001`/`CON002`) | Literature-derived semantic conflicts | P2 | — |
 | W07 | §20 | Audit view UI | IMPLEMENTED_MVP | `GroundedReport.tsx` (WIP uncommitted) | E2E browser validation | P3 | — |
-| W08 | §17.5 | Hallucination control (evaluated) | IMPLEMENTED_NOT_VALIDATED | structural validity + heuristic diagnostics only | Human faithfulness eval | P1 | V02 |
+| W08 | §17.5 | Hallucination control (evaluated) | IMPLEMENTED_NOT_VALIDATED | structural validity + heuristic forbidden-claim diagnostics (`claim_safety.py`, writer safety benchmark) | Human faithfulness eval | P1 | V02 |
 
 ## Phase 7 — Evaluation
 
@@ -147,10 +147,10 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | V03 | §17.3 | Retrieval metrics | FULLY_IMPLEMENTED | metric code | Labeled benchmark reports | P1 | V02 |
 | V04 | §17.4 | Multi-system comparison | IMPLEMENTED_MVP | synthetic gold runs | Real labeled comparison | P1 | V02 |
 | V05 | §17.4 | Ablation report artifacts | IMPLEMENTED_MVP | JSON reports | Plan CSV/MD paths | P2 | V02 |
-| V06 | §17.5 | Citation precision | IMPLEMENTED_NOT_VALIDATED | structural `citation_ref_validity_rate` harness | Human adjudication | P1 | V02 |
+| V06 | §17.5 | Citation precision | IMPLEMENTED_NOT_VALIDATED | structural `citation_ref_validity_rate` in writer safety + retrieval-grounded harness | Human adjudication | P1 | V02 |
 | V07 | §17.5 | Citation coverage | IMPLEMENTED_MVP | provenance/trace completeness metrics | Scaled labeled eval | P2 | V02 |
 | V08 | §17.5 | Faithfulness metric | IMPLEMENTED_NOT_VALIDATED | heuristic overlap diagnostic only (`human_faithfulness_pending`) | Human faithfulness labels | P1 | V02 |
-| V09 | §17.5 | Abstention accuracy | IMPLEMENTED_NOT_VALIDATED | writer regression + metrics hook | Must-abstain benchmark set | P1 | — |
+| V09 | §17.5 | Abstention accuracy | IMPLEMENTED_MVP | `writer_safety_cases.json` (16 cases) + `make eval-writer-safety` | Human-labeled abstention adjudication | P1 | V02 |
 | V10 | §17.5 | Taxonomy safety accuracy | IMPLEMENTED_NOT_VALIDATED | 2 replay cases | Real query eval | P1 | V02 |
 | V11 | §18.2 | PG integration test chain | NOT_STARTED | SQLite unit tests only; **Docker unavailable in loop env** | Docker PG E2E per Option A checklist | P1 | Docker daemon |
 | V12 | §Phase 7 | Eval reports directory | FULLY_IMPLEMENTED | `data/eval/reports/latest/` | — | — | — |
@@ -172,12 +172,12 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 
 ---
 
-## Top remaining gaps (re-ranked after iteration 6)
+## Top remaining gaps (re-ranked after iteration 7)
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)  
 2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
 3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only  
+4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only; writer safety benchmark does not substitute  
 5. **Evaluated LLM writer** (W03) — disabled placeholder  
 6. **NPAtlas scale + bioactivity** (N02, N05) — bounded 12-record corpus  
 7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache  
@@ -194,6 +194,7 @@ Scoring uses 72 requirements below with equal weight unless noted. **Empirical v
 | 4 | NPAtlas AUTO on own-data/API main path | 63% / 27% |
 | 5 | NCBI bounded taxonomy AUTO authority | 65% / **27%** (empirical held; iter 5 +2 error corrected) |
 | 6 | Retrieval-grounded writer + citation validity harness | **67%** / **27%** (real bounded trace; no human faithfulness) |
+| 7 | Deterministic writer safety benchmark (abstain/conflict/bounded-answer) | **68%** / **27%** (safety regression only; empirical held) |
 
 ---
 

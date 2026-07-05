@@ -59,6 +59,28 @@ Unjudged retrieved papers are excluded from qrels (see `docs/ANNOTATION_POLICY.m
 
 ---
 
+## Writer Safety Benchmark (deterministic regression)
+
+- **Benchmark ID:** `writer_safety_v1`
+- **Cases:** 16 static + dynamic fixtures in `data/eval/writer_safety_cases.json` (plus own-data and real bounded PubMed dynamic paths at runtime)
+- **Labels:** Built-in expected writer status, forbidden claim patterns, and required limitations — **not human scientific adjudication**
+- **Command:** `make eval-writer-safety`
+
+This benchmark evaluates abstention, explicit conflict reporting, bounded candidate-level answers, heuristic overclaim detection, and structural citation validity. It does **not** measure citation faithfulness, production confirmation, or causal inference correctness.
+
+Do **not** describe passing results as:
+
+- human validation of writer faithfulness
+- empirical proof of scientific accuracy
+- justification for stronger production or causality claims
+
+Acceptable wording:
+
+- “deterministic writer safety/regression benchmark (n=16)”
+- “must-abstain and conflict predicates pass offline fixture replay”
+
+---
+
 ## Related Documents
 
 - `docs/ANNOTATION_POLICY.md` — grades, metrics, pooling, blind export

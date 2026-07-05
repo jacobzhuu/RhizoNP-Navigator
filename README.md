@@ -153,9 +153,10 @@ RhizoNP Navigator reports metrics **only within declared benchmark scope**:
 |---|---|---|---|
 | `data/eval/phase2_retrieval_gold.json` | 3-query synthetic literature fixture | Explicit source-hash gold | Offline retrieval regression (`make eval-retrieval`) |
 | `data/eval/end_to_end_cases.json` | Deterministic MVP replay cases | Built-in expected outcomes | End-to-end suite (`make eval-end-to-end`) |
+| `data/eval/writer_safety_cases.json` | 16-case writer abstention/conflict/bounded-answer safety set | Built-in expected status + forbidden patterns | Writer safety regression (`make eval-writer-safety`) |
 | `data/eval/phase2_real_pubmed_benchmark.json` | 18 real PubMed queries | **Human labels pending** | Blocked until annotation import |
 
-**Do not interpret** perfect scores on the 3-query synthetic gold or MVP replay cases as PubMed-wide or production retrieval accuracy. See [`docs/BENCHMARK_SCOPE.md`](docs/BENCHMARK_SCOPE.md).
+**Do not interpret** perfect scores on the 3-query synthetic gold, MVP replay cases, or writer safety benchmark as PubMed-wide retrieval accuracy or human-validated scientific faithfulness. See [`docs/BENCHMARK_SCOPE.md`](docs/BENCHMARK_SCOPE.md).
 
 Regenerated evaluation reports are written to `data/eval/reports/latest/` (gitignored).
 
