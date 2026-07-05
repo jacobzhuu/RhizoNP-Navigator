@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -72,6 +73,21 @@ def test_genus_16s_association_carries_taxonomy_warnings() -> None:
     feature_row = genus_result.candidate_matrix.rows[0]
     assert feature_row.compound_match is False
     assert feature_row.status == "PARTIALLY_SUPPORTED"
+
+
+def test_pipeline_auto_uses_npatlas_when_snapshot_present() -> None:
+    from rhizonp.ingestion.npatlas import DEFAULT_NPATLAS_SNAPSHOT_PATH
+
+    if not DEFAULT_NPATLAS_SNAPSHOT_PATH.is_file():
+        pytest.skip("NPAtlas bounded snapshot not present.")
+
+    result = run_own_data_pipeline(
+        PROJECT_ROOT / "data" / "fixtures" / "own_data_demo",
+        options=OwnDataPipelineOptions(natural_product_source="auto"),
+    )
+    first = result.association_results[0]
+    assert first.candidate_matrix.natural_product_source == "npatlas_bounded"
+    assert first.candidate_matrix.rows[0].provenance["source_database"] == "npatlas"
 
 
 def test_pipeline_persists_bundle_to_database_when_enabled() -> None:

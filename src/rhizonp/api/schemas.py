@@ -164,6 +164,7 @@ class NaturalProductLinkRequest(BaseModel):
     query_taxon: str
     metabolite_name: str | None = None
     observation_method: str | None = None
+    natural_product_source: str = "auto"
 
 
 class NaturalProductLinkRowResponse(BaseModel):
@@ -186,6 +187,7 @@ class NaturalProductLinkRowResponse(BaseModel):
 class NaturalProductLinkResponse(BaseModel):
     query_taxon: str
     metabolite_name: str | None
+    natural_product_source: str
     rows: list[NaturalProductLinkRowResponse]
 
 
@@ -195,6 +197,7 @@ class OwnDataPipelineRequest(BaseModel):
     retrieval_mode: str = "hybrid_rerank"
     top_k: int = 5
     max_queries: int = 3
+    natural_product_source: str = "auto"
 
 
 class OwnDataPipelineResponse(BaseModel):

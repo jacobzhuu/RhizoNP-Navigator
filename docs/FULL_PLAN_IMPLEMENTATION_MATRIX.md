@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 3 — priority correction re-audit)  
+**Last updated:** 2026-07-05 (loop iteration 4 — NPAtlas main-path integration)  
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -23,7 +23,7 @@
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
 | MVP Engineering | 80% | **83%** | 86% |
-| Full Plan Functional | 57% | **62%** | 65% |
+| Full Plan Functional | 58% | **63%** | 66% |
 | Empirical / Scientific Validation | 19% | **27%** | 34% |
 
 Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 moved **O08** and **N02** from NOT_STARTED toward IMPLEMENTED_MVP.
@@ -101,8 +101,8 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
-| N01 | §Phase 4 | Candidate linking engine | IMPLEMENTED_MVP | `candidate_engine.py` | Default still synthetic fixture | P1 | — |
-| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_NOT_VALIDATED | Adapter + 12-record snapshot; **not used by default pipeline/API** | Wire main own-data/linking path; bioactivity; scale | **P0** | CC-BY-NC scope |
+| N01 | §Phase 4 | Candidate linking engine | IMPLEMENTED_MVP | `candidate_engine.py`; default `record_source=auto` | Full NP corpus scale | P1 | — |
+| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_MVP | AUTO main path + API; 12-record bounded snapshot; real NPAID/URL provenance | Bioactivity fields; scale beyond bounded snapshot | P1 | CC-BY-NC scope |
 | N03 | §9.3 | MIBiG adapter (interface) | NOT_STARTED | Plan defers full integration | Stub `MibigAdapter` | P3 | DEFERRED_BY_PLAN |
 | N04 | §13.3 | Compound normalization | IMPLEMENTED_MVP | alias file + InChIKey in NPAtlas records | Structure search | P2 | — |
 | N05 | §7 | Bioactivity DB records | SYNTHETIC_FIXTURE_ONLY | fixture JSON fields | `bioactivities` table | P2 | — |
@@ -175,12 +175,12 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 ## Top remaining gaps (re-ranked after iteration 3)
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT  
-2. **NPAtlas on main candidate/own-data path** (N02) — adapter exists; default runtime still synthetic fixture  
-3. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
+2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
+3. **NCBI taxonomy as default resolver** (T01, T05) — bounded cache exists; default `taxonomy_resolver=fixture`  
 4. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-5. **NCBI taxonomy as default resolver** (T01, T05) — bounded cache exists; default `taxonomy_resolver=fixture`  
-6. **Evaluated LLM writer + faithfulness** (W03, V08)  
-7. **100-query benchmark scale** (R15, V01)  
+5. **Evaluated LLM writer + faithfulness** (W03, V08)  
+6. **100-query benchmark scale** (R15, V01)  
+7. **NPAtlas scale + bioactivity** (N02, N05) — main path wired; still 12-record bounded corpus  
 8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
@@ -191,6 +191,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | 1 | NPAtlas bounded adapter + snapshot | 60% → 60% (N02 partial; not main path) |
 | 2 | Own-data DB persistence (SQLite-tested) | 60% → 61% (O07 code; PG unvalidated) |
 | 3 | NCBI Taxonomy bounded resolver + cache | 61% → **62%** (T01/T05 partial) |
+| 4 | NPAtlas AUTO on own-data/API main path | 62% → **63%** (N02 main path; still bounded) |
 
 ---
 

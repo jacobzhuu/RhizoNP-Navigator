@@ -175,7 +175,10 @@ def run_demo_case_2_taxonomy_safety(output_dir: Path) -> DemoCaseResult:
 def run_demo_case_3_own_data_pipeline(output_dir: Path) -> DemoCaseResult:
     offline_result = run_own_data_pipeline(
         PROJECT_ROOT / "data" / "fixtures" / "own_data_demo",
-        options=OwnDataPipelineOptions(enable_literature_retrieval=False),
+        options=OwnDataPipelineOptions(
+            enable_literature_retrieval=False,
+            natural_product_source="fixture",
+        ),
     )
 
     session = _literature_session()
@@ -187,6 +190,7 @@ def run_demo_case_3_own_data_pipeline(output_dir: Path) -> DemoCaseResult:
                 enable_literature_retrieval=True,
                 retrieval_mode="hybrid_rerank",
                 top_k=3,
+                natural_product_source="auto",
             ),
         )
     finally:

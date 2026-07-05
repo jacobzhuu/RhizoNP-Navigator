@@ -317,10 +317,12 @@ def create_app() -> FastAPI:
             request.query_taxon,
             metabolite_name=request.metabolite_name,
             observation_method=request.observation_method,
+            record_source=request.natural_product_source,
         )
         return NaturalProductLinkResponse(
             query_taxon=matrix.query_taxon,
             metabolite_name=matrix.metabolite_name,
+            natural_product_source=matrix.natural_product_source,
             rows=[
                 NaturalProductLinkRowResponse(**row.to_dict()) for row in matrix.rows
             ],
@@ -368,6 +370,7 @@ def create_app() -> FastAPI:
                     retrieval_mode=request.retrieval_mode,
                     top_k=request.top_k,
                     max_queries=request.max_queries,
+                    natural_product_source=request.natural_product_source,
                 ),
             )
         finally:

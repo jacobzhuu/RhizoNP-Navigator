@@ -32,6 +32,7 @@ from rhizonp.taxonomy.grading import EvidenceGradingResult, grade_evidence
 class OwnDataPipelineOptions:
     enable_literature_retrieval: bool = False
     persist_to_database: bool = False
+    natural_product_source: str = "auto"
     retrieval_mode: str = "hybrid_rerank"
     top_k: int = 5
     max_queries: int = 3
@@ -169,6 +170,7 @@ def run_own_data_pipeline(
             taxon.raw_label,
             metabolite_name=metabolite.raw_label,
             observation_method=taxon.method,
+            record_source=resolved_options.natural_product_source,
         )
         top_row = candidate_matrix.rows[0] if candidate_matrix.rows else None
         grading = None
@@ -202,6 +204,7 @@ def run_own_data_pipeline(
             "literature_retrieval_enabled": resolved_options.enable_literature_retrieval,
             "literature_retrieval_mode": resolved_options.retrieval_mode,
             "persist_to_database": resolved_options.persist_to_database,
+            "natural_product_source": resolved_options.natural_product_source,
             "database_persistence": persistence_info,
         },
     )

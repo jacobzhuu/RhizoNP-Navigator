@@ -21,6 +21,20 @@ DEFAULT_NP_FIXTURE_PATH = PROJECT_ROOT / "data" / "fixtures" / "natural_products
 class NaturalProductSource(str, Enum):
     FIXTURE = "fixture"
     NPATLAS_BOUNDED = "npatlas_bounded"
+    AUTO = "auto"
+
+
+def resolve_natural_product_source(
+    source: NaturalProductSource | str,
+    *,
+    snapshot_path: str | Path = DEFAULT_NPATLAS_SNAPSHOT_PATH,
+) -> NaturalProductSource:
+    resolved = source if isinstance(source, NaturalProductSource) else NaturalProductSource(source)
+    if resolved is not NaturalProductSource.AUTO:
+        return resolved
+    if Path(snapshot_path).is_file():
+        return NaturalProductSource.NPATLAS_BOUNDED
+    return NaturalProductSource.FIXTURE
 
 
 def _normalized_to_fixture_record(record: NormalizedNPAtlasRecord) -> NaturalProductFixtureRecord:
@@ -79,7 +93,7 @@ def load_natural_product_records(
     fixture_path: str | Path = DEFAULT_NP_FIXTURE_PATH,
     snapshot_path: str | Path = DEFAULT_NPATLAS_SNAPSHOT_PATH,
 ) -> list[NaturalProductFixtureRecord]:
-    resolved = source if isinstance(source, NaturalProductSource) else NaturalProductSource(source)
+    resolved = resolve_natural_product_source(source, snapshot_path=snapshot_path)
     if resolved is NaturalProductSource.NPATLAS_BOUNDED:
         return load_bounded_npatlas_records(snapshot_path)
     return load_natural_product_fixture(fixture_path)

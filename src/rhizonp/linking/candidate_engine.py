@@ -3,9 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from rhizonp.ingestion.npatlas import DEFAULT_NPATLAS_SNAPSHOT_PATH
 from rhizonp.linking.compound_normalization import normalize_compound_name
 from rhizonp.linking.models import NaturalProductFixtureRecord
-from rhizonp.linking.np_adapter import NaturalProductSource, load_natural_product_records
+from rhizonp.linking.np_adapter import (
+    NaturalProductSource,
+    load_natural_product_records,
+    resolve_natural_product_source,
+)
 from rhizonp.taxonomy.grading import grade_evidence
 from rhizonp.taxonomy.models import EvidenceTier
 
@@ -51,11 +56,13 @@ class CandidateMatrix:
     query_taxon: str
     metabolite_name: str | None
     rows: list[CandidateMatrixRow] = field(default_factory=list)
+    natural_product_source: str = NaturalProductSource.FIXTURE.value
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "query_taxon": self.query_taxon,
             "metabolite_name": self.metabolite_name,
+            "natural_product_source": self.natural_product_source,
             "rows": [row.to_dict() for row in self.rows],
         }
 
@@ -106,10 +113,14 @@ def link_natural_product_candidates(
     metabolite_name: str | None = None,
     observation_method: str | None = None,
     fixture_path: str | None = None,
-    record_source: NaturalProductSource | str = NaturalProductSource.FIXTURE,
+    record_source: NaturalProductSource | str = NaturalProductSource.AUTO,
     snapshot_path: str | None = None,
 ) -> CandidateMatrix:
-    load_kwargs: dict[str, Any] = {"source": record_source}
+    resolved_source = resolve_natural_product_source(
+        record_source,
+        snapshot_path=snapshot_path or DEFAULT_NPATLAS_SNAPSHOT_PATH,
+    )
+    load_kwargs: dict[str, Any] = {"source": resolved_source}
     if fixture_path is not None:
         load_kwargs["fixture_path"] = fixture_path
     if snapshot_path is not None:
@@ -158,6 +169,7 @@ def link_natural_product_candidates(
         query_taxon=query_taxon,
         metabolite_name=metabolite_name,
         rows=ranked_rows,
+        natural_product_source=resolved_source.value,
     )
 
 
