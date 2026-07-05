@@ -22,6 +22,40 @@ class VectorIndexEntry:
     vector: list[float]
 
 
+def _build_vector_index_entries(
+    chunks: Iterable[PaperChunk],
+    embedding_provider: LiteratureEmbeddingProvider,
+) -> list[VectorIndexEntry]:
+    entries: list[VectorIndexEntry] = []
+    for chunk in chunks:
+        paper = chunk.paper
+        metadata = {
+            **dict(chunk.chunk_metadata),
+            "chunk_id": str(chunk.chunk_id),
+            "paper_id": str(chunk.paper_id),
+            "section": chunk.section,
+            "paragraph_index": chunk.paragraph_index,
+            "char_start": chunk.char_start,
+            "char_end": chunk.char_end,
+            "source_hash": chunk.source_hash,
+            "doi": paper.doi if paper is not None else None,
+            "source_url": paper.source_url if paper is not None else None,
+            "title": paper.title if paper is not None else None,
+            "year": paper.year if paper is not None else None,
+            "journal": paper.journal if paper is not None else None,
+        }
+        entries.append(
+            VectorIndexEntry(
+                chunk_id=str(chunk.chunk_id),
+                paper_id=str(chunk.paper_id),
+                text=chunk.text,
+                metadata=metadata,
+                vector=embedding_provider.embed(chunk.text),
+            )
+        )
+    return entries
+
+
 @dataclass(frozen=True)
 class VectorIndexHit:
     chunk_id: str
@@ -63,35 +97,9 @@ class InMemoryLiteratureVectorIndex:
     def from_chunks(
         cls,
         chunks: Iterable[PaperChunk],
-        embedding_provider: TextEmbeddingProvider,
+        embedding_provider: LiteratureEmbeddingProvider,
     ) -> InMemoryLiteratureVectorIndex:
-        entries: list[VectorIndexEntry] = []
-        for chunk in chunks:
-            paper = chunk.paper
-            metadata = {
-                **dict(chunk.chunk_metadata),
-                "chunk_id": str(chunk.chunk_id),
-                "paper_id": str(chunk.paper_id),
-                "section": chunk.section,
-                "paragraph_index": chunk.paragraph_index,
-                "char_start": chunk.char_start,
-                "char_end": chunk.char_end,
-                "source_hash": chunk.source_hash,
-                "doi": paper.doi if paper is not None else None,
-                "source_url": paper.source_url if paper is not None else None,
-                "title": paper.title if paper is not None else None,
-                "year": paper.year if paper is not None else None,
-                "journal": paper.journal if paper is not None else None,
-            }
-            entries.append(
-                VectorIndexEntry(
-                    chunk_id=str(chunk.chunk_id),
-                    paper_id=str(chunk.paper_id),
-                    text=chunk.text,
-                    metadata=metadata,
-                    vector=embedding_provider.embed(chunk.text),
-                )
-            )
+        entries = _build_vector_index_entries(chunks, embedding_provider)
         return cls(entries, embedding_provider_name=embedding_provider.provider_name)
 
     def search(
