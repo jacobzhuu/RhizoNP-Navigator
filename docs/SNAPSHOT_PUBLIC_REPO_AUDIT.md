@@ -46,6 +46,14 @@ Abstracts are **not** committed to the public repository in the current configur
 `make export-annotation-candidates` requires a local `corpus.json` (or equivalent ingest
 source) because blind sheets include title and abstract text.
 
+Generated annotation CSVs under `data/eval/annotation/` (`blind_reviewer_sheet.csv`,
+`provenance_sidecar.csv`, optional QC mapping) are **local-only** (gitignored) for the
+same reason as `corpus.json`. Regenerate after ingesting a local snapshot:
+
+```bash
+make export-annotation-candidates
+```
+
 CI tests use small fixtures under `tests/fixtures/pubmed/` instead of the full snapshot.
 
 ---

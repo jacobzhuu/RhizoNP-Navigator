@@ -70,6 +70,14 @@ uploads/
 # ── PubMed corpus snapshots (regenerate locally; see docs/SNAPSHOT_PUBLIC_REPO_AUDIT.md)
 data/snapshots/pubmed/*/corpus.json
 
+# ── Generated annotation exports (contain titles/abstracts; regenerate locally)
+data/eval/annotation/blind_reviewer_sheet.csv
+data/eval/annotation/provenance_sidecar.csv
+data/eval/annotation/qc_audit_mapping.csv
+data/eval/annotation/*.import_filtered.csv
+data/eval/annotation/candidates*.csv
+data/eval/annotation/reviewed*.csv
+
 # ── Database files ──────────────────────────────────────
 *.db
 *.sqlite

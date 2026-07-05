@@ -62,13 +62,19 @@ def main() -> None:
         "exact_agreement_count": report.exact_agreement_count,
         "exact_agreement_rate": report.exact_agreement_rate,
         "weighted_agreement_rate": report.weighted_agreement_rate,
+        "metric_notes": {
+            "weighted_agreement_rate": (
+                "Mean of 1 - abs(source_grade - qc_grade) / 2 across QC pairs; "
+                "not Cohen's weighted kappa."
+            ),
+        },
         "pairs": list(report.pairs),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     print(
         f"QC consistency: {report.exact_agreement_count}/{report.pair_count} exact, "
-        f"weighted={report.weighted_agreement_rate:.3f} -> {args.output}"
+        f"weighted_agreement_rate={report.weighted_agreement_rate:.3f} -> {args.output}"
     )
 
 

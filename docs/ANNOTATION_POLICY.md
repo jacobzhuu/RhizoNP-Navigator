@@ -126,6 +126,14 @@ Disabled by default. When enabled via export (`--qc-fraction`):
 - Post-review: `make report-qc-consistency REVIEW=...`
 - Import: exclude QC rows via `--qc-audit` (one label per `query_id + pmid`)
 
+**QC consistency metrics:** `exact_agreement_rate` counts identical grades.
+`weighted_agreement_rate` is the mean of `1 - abs(delta_grade) / 2` across QC pairs.
+This is a simple weighted agreement score; it is **not** Cohen's weighted kappa.
+
+Generated annotation CSVs under `data/eval/annotation/` are **local-only** (gitignored)
+because blind exports include PubMed titles and abstracts. Regenerate with
+`make export-annotation-candidates` after ingesting a local corpus snapshot.
+
 ---
 
 ## Duplicate Judgment Handling
