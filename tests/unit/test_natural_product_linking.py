@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+from rhizonp.linking.candidate_engine import link_natural_product_candidates
+from rhizonp.linking.compound_normalization import normalize_compound_name
+from rhizonp.linking.np_adapter import load_natural_product_fixture
+
+
+def test_compound_alias_normalization() -> None:
+    assert normalize_compound_name("sirolimus") == "Rapamycin"
+    assert normalize_compound_name("FixturePolyketide-A") == "FixturePolyketide-A"
+
+
+def test_fixture_adapter_loads_records() -> None:
+    records = load_natural_product_fixture()
+    assert len(records) >= 3
+    assert records[0].source_database == "synthetic_fixture"
+    assert all(record.provenance.get("fixture") for record in records)
+
+
+def test_link_candidates_ranks_by_taxonomy_and_compound_match() -> None:
+    matrix = link_natural_product_candidates(
+        "Streptomyces hygroscopicus OS-2",
+        metabolite_name="rapamycin",
+    )
+    assert matrix.rows
+    top = matrix.rows[0]
+    assert top.compound_name == "Rapamycin"
+    assert top.compound_match is True
+    assert top.evidence_tier == "A"
+    assert top.rank == 1
+
+
+def test_genus_query_gets_conservative_tier_for_strain_record() -> None:
+    matrix = link_natural_product_candidates(
+        "Streptomyces",
+        observation_method="synthetic_16S_fixture",
+    )
+    strain_row = next(row for row in matrix.rows if "OS-2" in row.producer_taxon)
+    assert strain_row.evidence_tier == "C"
+    assert strain_row.status == "PARTIALLY_SUPPORTED"
+    assert any("strain-level" in warning.lower() for warning in strain_row.warnings)
+
+
+def test_candidate_matrix_preserves_provenance() -> None:
+    matrix = link_natural_product_candidates("Streptomyces")
+    payload = matrix.to_dict()
+    assert payload["query_taxon"] == "Streptomyces"
+    assert payload["rows"][0]["provenance"]["source_database"] == "synthetic_fixture"

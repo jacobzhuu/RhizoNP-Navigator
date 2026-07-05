@@ -158,3 +158,32 @@ class EvidenceGradingResponse(BaseModel):
     limitations: list[str]
     max_supported_claim: str
     provenance: dict[str, Any]
+
+
+class NaturalProductLinkRequest(BaseModel):
+    query_taxon: str
+    metabolite_name: str | None = None
+    observation_method: str | None = None
+
+
+class NaturalProductLinkRowResponse(BaseModel):
+    rank: int
+    query_taxon: str
+    compound_name: str
+    producer_taxon: str
+    taxonomy_distance: str
+    evidence_tier: str
+    compound_match: bool
+    evidence_count: int
+    score: float
+    status: str
+    bioactivity: dict[str, Any] | None
+    warnings: list[str]
+    limitations: list[str]
+    provenance: dict[str, Any]
+
+
+class NaturalProductLinkResponse(BaseModel):
+    query_taxon: str
+    metabolite_name: str | None
+    rows: list[NaturalProductLinkRowResponse]

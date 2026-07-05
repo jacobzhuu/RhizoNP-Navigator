@@ -31,6 +31,9 @@ from .schemas import (
     EvidenceGradingResponse,
     EvidenceItemResponse,
     HealthResponse,
+    NaturalProductLinkRequest,
+    NaturalProductLinkResponse,
+    NaturalProductLinkRowResponse,
     NormalizedTaxonResponse,
     OmicsAssociationResponse,
     SearchRequest,
@@ -274,6 +277,23 @@ def create_app() -> FastAPI:
             limitations=result.limitations,
             max_supported_claim=result.max_supported_claim,
             provenance=result.provenance,
+        )
+
+    @api.post("/api/v1/natural-products/link", response_model=NaturalProductLinkResponse)
+    def link_natural_products(request: NaturalProductLinkRequest) -> NaturalProductLinkResponse:
+        from rhizonp.linking.candidate_engine import link_natural_product_candidates
+
+        matrix = link_natural_product_candidates(
+            request.query_taxon,
+            metabolite_name=request.metabolite_name,
+            observation_method=request.observation_method,
+        )
+        return NaturalProductLinkResponse(
+            query_taxon=matrix.query_taxon,
+            metabolite_name=matrix.metabolite_name,
+            rows=[
+                NaturalProductLinkRowResponse(**row.to_dict()) for row in matrix.rows
+            ],
         )
 
     @api.post("/api/v1/search", response_model=SearchResponse)

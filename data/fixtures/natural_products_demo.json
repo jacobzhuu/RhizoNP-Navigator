@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "fixture": true,
+    "description": "Deterministic natural product records for offline linking demos."
+  },
+  "compound_aliases": {
+    "rapamycin": "Rapamycin",
+    "sirolimus": "Rapamycin",
+    "avermectin": "Avermectin",
+    "fixturepolyketide-a": "FixturePolyketide-A"
+  },
+  "records": [
+    {
+      "key": "np_rapamycin_os2",
+      "compound_name": "Rapamycin",
+      "producer_taxon": "Streptomyces hygroscopicus OS-2",
+      "source_database": "synthetic_fixture",
+      "external_record_id": "NP_FIXTURE_RAP_001",
+      "bioactivity": {
+        "activity_type": "antifungal",
+        "target": "plant pathogen",
+        "evidence_level": "reported"
+      },
+      "provenance": {
+        "fixture": true,
+        "not_real_database_record": true
+      }
+    },
+    {
+      "key": "np_avermectin_species",
+      "compound_name": "Avermectin",
+      "producer_taxon": "Streptomyces avermitilis",
+      "source_database": "synthetic_fixture",
+      "external_record_id": "NP_FIXTURE_AVE_001",
+      "bioactivity": {
+        "activity_type": "anthelmintic",
+        "target": "nematode",
+        "evidence_level": "reported"
+      },
+      "provenance": {
+        "fixture": true,
+        "not_real_database_record": true
+      }
+    },
+    {
+      "key": "np_fixture_polyketide_genus",
+      "compound_name": "FixturePolyketide-A",
+      "producer_taxon": "Streptomyces",
+      "source_database": "synthetic_fixture",
+      "external_record_id": "NP_FIXTURE_001",
+      "bioactivity": {
+        "activity_type": "antimicrobial",
+        "target": "bacteria",
+        "evidence_level": "candidate"
+      },
+      "provenance": {
+        "fixture": true,
+        "not_real_database_record": true
+      }
+    }
+  ]
+}
