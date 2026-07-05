@@ -1,28 +1,94 @@
 {
+  "corpus_id": "rhizonp_domain_v1",
   "corpus_name": "rhizonp_domain_v1",
-  "description": "Bounded PubMed metadata corpus for plant-microbe, rhizosphere, and microbial natural product literature.",
-  "default_retmax": 5,
-  "max_total_records": 50,
+  "description": "Bounded PubMed metadata corpus for plant-microbe, rhizosphere, PGPR/Streptomyces/biocontrol, and microbial natural product literature.",
+  "default_retmax": 12,
+  "max_total_records": 200,
   "queries": [
     {
       "query_id": "C001",
       "term": "plant microbe interaction[Title/Abstract] AND rhizosphere[Title/Abstract]",
-      "retmax": 5
+      "retmax": 12
     },
     {
       "query_id": "C002",
-      "term": "Streptomyces[Title/Abstract] AND biocontrol[Title/Abstract]",
-      "retmax": 5
+      "term": "plant root microbiome[Title/Abstract] AND symbiosis[Title/Abstract]",
+      "retmax": 12
     },
     {
       "query_id": "C003",
-      "term": "microbial natural products[Title/Abstract] AND secondary metabolites[Title/Abstract]",
-      "retmax": 5
+      "term": "rhizosphere colonization[Title/Abstract] AND bacteria[Title/Abstract]",
+      "retmax": 12
     },
     {
       "query_id": "C004",
+      "term": "rhizosphere microbiome[Title/Abstract] AND diversity[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C005",
       "term": "rhizosphere microbiome[Title/Abstract] AND metabolites[Title/Abstract]",
-      "retmax": 5
+      "retmax": 12
+    },
+    {
+      "query_id": "C006",
+      "term": "root exudates[Title/Abstract] AND microbiome[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C007",
+      "term": "PGPR[Title/Abstract] AND plant growth[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C008",
+      "term": "Streptomyces[Title/Abstract] AND biocontrol[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C009",
+      "term": "Streptomyces[Title/Abstract] AND rhizosphere[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C010",
+      "term": "biocontrol[Title/Abstract] AND soilborne pathogens[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C011",
+      "term": "microbial natural products[Title/Abstract] AND secondary metabolites[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C012",
+      "term": "bacterial secondary metabolites[Title/Abstract] AND bioactivity[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C013",
+      "term": "actinobacteria[Title/Abstract] AND natural products[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C014",
+      "term": "microbial metabolites[Title/Abstract] AND plant defense[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C015",
+      "term": "rhizosphere metabolites[Title/Abstract] AND plant microbe[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C016",
+      "term": "microbial secondary metabolites[Title/Abstract] AND root colonization[Title/Abstract]",
+      "retmax": 12
+    },
+    {
+      "query_id": "C017",
+      "term": "siderophore[Title/Abstract] AND rhizosphere[Title/Abstract] AND plant[Title/Abstract]",
+      "retmax": 12
     }
   ]
 }

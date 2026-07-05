@@ -22,8 +22,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=PROJECT_ROOT / "data" / "processed" / "pubmed_corpus" / "rhizonp_domain_v1.json",
-        help="Path for corpus snapshot JSON output or input.",
+        default=None,
+        help="Path for single-file corpus snapshot JSON (legacy mode).",
+    )
+    parser.add_argument(
+        "--snapshot-dir",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "snapshots" / "pubmed" / "rhizonp_domain_v1",
+        help="Directory for versioned corpus snapshot with manifest.",
     )
     parser.add_argument(
         "--fetch",
@@ -38,7 +44,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _resolve_corpus_path(args: argparse.Namespace) -> Path:
+    if args.output is not None:
+        return args.output
+    snapshot_corpus = args.snapshot_dir / "corpus.json"
+    if snapshot_corpus.is_file():
+        return snapshot_corpus
+    return PROJECT_ROOT / "data" / "processed" / "pubmed_corpus" / "rhizonp_domain_v1.json"
+
+
 def main() -> None:
+    from rhizonp.config import get_settings
     from rhizonp.ingestion.corpus import (
         corpus_snapshot_from_records,
         fetch_domain_corpus,
@@ -46,6 +62,8 @@ def main() -> None:
         load_corpus_snapshot,
         normalized_records_from_snapshot,
         save_corpus_snapshot,
+        save_versioned_corpus_snapshot,
+        verify_corpus_snapshot_directory,
     )
     from rhizonp.ingestion.literature import ingest_literature_records
     from rhizonp.literature.pubmed_adapter import PubMedEutilitiesAdapter
@@ -61,22 +79,46 @@ def main() -> None:
 
     if args.fetch:
         config = load_corpus_query_config(args.queries)
-        adapter = PubMedEutilitiesAdapter()
+        config = {
+            **config,
+            "query_config_path": str(args.queries.resolve()),
+        }
+        settings = get_settings()
+        per_query_retmax = int(config.get("default_retmax", 12))
+        adapter = PubMedEutilitiesAdapter(
+            max_results=max(per_query_retmax, settings.ncbi_max_results),
+        )
         records, metadata = fetch_domain_corpus(adapter, config)
         snapshot = corpus_snapshot_from_records(records, metadata=metadata)
-        output_path = save_corpus_snapshot(snapshot, args.output)
-        print(
-            f"Fetched PubMed corpus snapshot: {metadata['record_count']} records -> {output_path}"
+
+        corpus_path, manifest_path = save_versioned_corpus_snapshot(
+            snapshot,
+            args.snapshot_dir,
+            query_config_path=args.queries,
         )
+        verify_corpus_snapshot_directory(args.snapshot_dir)
+
+        if args.output is not None:
+            save_corpus_snapshot(snapshot, args.output)
+
+        print(
+            "Fetched PubMed corpus snapshot: "
+            f"{metadata['record_count']} records -> {corpus_path}"
+        )
+        print(f"Manifest: {manifest_path}")
         return
 
-    snapshot = load_corpus_snapshot(args.output)
+    corpus_path = _resolve_corpus_path(args)
+    if corpus_path.parent.name != "pubmed" and (corpus_path.parent / "manifest.json").is_file():
+        verify_corpus_snapshot_directory(corpus_path.parent)
+
+    snapshot = load_corpus_snapshot(corpus_path)
     records = normalized_records_from_snapshot(snapshot)
     engine = create_engine_from_settings()
     session_factory = create_session_factory(engine)
     with session_scope(session_factory) as session:
         summary = ingest_literature_records(session, records)
-    print(f"Ingested corpus snapshot from {args.output}: {summary}")
+    print(f"Ingested corpus snapshot from {corpus_path}: {summary}")
 
 
 if __name__ == "__main__":

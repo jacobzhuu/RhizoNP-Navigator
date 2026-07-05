@@ -13,6 +13,8 @@ from rhizonp.ingestion.corpus import (
     load_corpus_snapshot,
     normalized_records_from_snapshot,
     save_corpus_snapshot,
+    save_versioned_corpus_snapshot,
+    verify_corpus_snapshot_directory,
 )
 from rhizonp.ingestion.literature import ingest_literature_records
 from rhizonp.literature.http_client import HttpResponse
@@ -98,4 +100,33 @@ def test_load_corpus_query_config_reads_domain_queries() -> None:
         Path(__file__).resolve().parents[2] / "data" / "eval" / "domain_corpus_queries.json"
     )
     assert config["corpus_name"] == "rhizonp_domain_v1"
-    assert len(config["queries"]) >= 4
+    assert config["max_total_records"] == 200
+    assert len(config["queries"]) >= 15
+
+
+def test_versioned_snapshot_roundtrip(tmp_path: Path) -> None:
+    esearch_payload = json.loads((FIXTURE_DIR / "esearch_response.json").read_text(encoding="utf-8"))
+    efetch_payload = (FIXTURE_DIR / "efetch_response.xml").read_text(encoding="utf-8")
+    adapter = PubMedEutilitiesAdapter(http_client=FakeHttpClient(
+        esearch_payload=esearch_payload,
+        efetch_text=efetch_payload,
+    ))
+    config = {
+        "corpus_id": "test_corpus",
+        "corpus_name": "test_corpus",
+        "default_retmax": 2,
+        "max_total_records": 3,
+        "queries": [
+            {"query_id": "C001", "term": "Streptomyces rhizosphere"},
+        ],
+    }
+    records, metadata = fetch_domain_corpus(adapter, config)
+    snapshot = corpus_snapshot_from_records(records, metadata=metadata)
+    corpus_path, manifest_path = save_versioned_corpus_snapshot(
+        snapshot,
+        tmp_path / "test_snapshot",
+    )
+    manifest = verify_corpus_snapshot_directory(corpus_path.parent)
+    assert manifest["paper_count"] == metadata["record_count"]
+    assert manifest["deduplication_rules"]["key"] == "pmid"
+    assert manifest_path.exists()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -15,6 +16,14 @@ DEFAULT_DOMAIN_CORPUS_QUERIES = (
     PROJECT_ROOT / "data" / "eval" / "domain_corpus_queries.json"
 )
 DEFAULT_CORPUS_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "pubmed_corpus"
+DEFAULT_CORPUS_SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots" / "pubmed"
+
+DEDUPLICATION_RULES = {
+    "key": "pmid",
+    "fallback_key": "source_id",
+    "strategy": "first_seen_wins",
+    "description": "Records deduplicated by PMID (or source_id when PMID absent); first query run wins.",
+}
 
 
 @dataclass(frozen=True)
@@ -94,7 +103,9 @@ def fetch_domain_corpus(
             }
         )
 
+    query_config_path = config.get("query_config_path")
     metadata = {
+        "corpus_id": config.get("corpus_id") or config.get("corpus_name", "unnamed_corpus"),
         "corpus_name": config.get("corpus_name", "unnamed_corpus"),
         "description": config.get("description"),
         "fetched_at": datetime.now(tz=timezone.utc).isoformat(),
@@ -103,6 +114,8 @@ def fetch_domain_corpus(
         "full_text": False,
         "max_total_records": max_total_records,
         "record_count": len(normalized_records),
+        "deduplication_rules": dict(DEDUPLICATION_RULES),
+        "query_config_path": str(query_config_path) if query_config_path else None,
         "query_runs": query_runs,
     }
     return normalized_records, metadata
@@ -137,11 +150,115 @@ def corpus_snapshot_from_records(
     }
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def build_corpus_manifest(
+    snapshot: Mapping[str, Any],
+    *,
+    corpus_file: str,
+    corpus_checksum: str,
+    query_config_path: str | Path | None = None,
+    query_config_checksum: str | None = None,
+) -> dict[str, Any]:
+    metadata = dict(snapshot.get("metadata", {}))
+    manifest: dict[str, Any] = {
+        "corpus_id": metadata.get("corpus_id") or metadata.get("corpus_name"),
+        "corpus_name": metadata.get("corpus_name"),
+        "created_at": metadata.get("fetched_at"),
+        "paper_count": metadata.get("record_count", len(snapshot.get("records", []))),
+        "metadata_only": metadata.get("metadata_only", True),
+        "full_text": metadata.get("full_text", False),
+        "deduplication_rules": metadata.get("deduplication_rules", DEDUPLICATION_RULES),
+        "query_config": {
+            "path": str(query_config_path) if query_config_path else metadata.get("query_config_path"),
+            "checksum_sha256": query_config_checksum,
+        },
+        "files": {
+            corpus_file: {
+                "checksum_sha256": corpus_checksum,
+                "record_count": metadata.get("record_count", len(snapshot.get("records", []))),
+            }
+        },
+        "source_name": metadata.get("source_name"),
+        "description": metadata.get("description"),
+    }
+    return manifest
+
+
 def save_corpus_snapshot(snapshot: Mapping[str, Any], output_path: str | Path) -> Path:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def save_versioned_corpus_snapshot(
+    snapshot: Mapping[str, Any],
+    output_dir: str | Path,
+    *,
+    query_config_path: str | Path | None = None,
+    corpus_filename: str = "corpus.json",
+    manifest_filename: str = "manifest.json",
+) -> tuple[Path, Path]:
+    """Persist an immutable versioned corpus directory with manifest and checksums."""
+    directory = Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    corpus_path = directory / corpus_filename
+    corpus_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+    corpus_checksum = sha256_file(corpus_path)
+
+    query_checksum: str | None = None
+    if query_config_path is not None:
+        query_path = Path(query_config_path)
+        if query_path.is_file():
+            query_checksum = sha256_file(query_path)
+
+    manifest = build_corpus_manifest(
+        snapshot,
+        corpus_file=corpus_filename,
+        corpus_checksum=corpus_checksum,
+        query_config_path=query_config_path,
+        query_config_checksum=query_checksum,
+    )
+    manifest_path = directory / manifest_filename
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    return corpus_path, manifest_path
+
+
+def load_corpus_manifest(path: str | Path) -> dict[str, Any]:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def verify_corpus_snapshot_directory(snapshot_dir: str | Path) -> dict[str, Any]:
+    """Verify corpus file checksum against manifest; returns manifest on success."""
+    directory = Path(snapshot_dir)
+    manifest_path = directory / "manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"Missing manifest.json in {directory}")
+
+    manifest = load_corpus_manifest(manifest_path)
+    files = manifest.get("files", {})
+    for filename, file_meta in files.items():
+        corpus_path = directory / filename
+        if not corpus_path.is_file():
+            raise FileNotFoundError(f"Missing corpus file {filename} in {directory}")
+        expected = file_meta.get("checksum_sha256")
+        actual = sha256_file(corpus_path)
+        if expected and actual != expected:
+            raise ValueError(
+                f"Checksum mismatch for {filename}: expected {expected}, got {actual}"
+            )
+    return manifest
 
 
 def load_corpus_snapshot(path: str | Path) -> dict[str, Any]:
