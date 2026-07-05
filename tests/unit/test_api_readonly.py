@@ -299,6 +299,54 @@ def test_api_search_rejects_unsupported_retrieval_mode() -> None:
     assert "Unsupported retrieval_mode" in response.json()["detail"]
 
 
+def test_api_corpus_summary_describes_retrievable_literature_chunks() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.get("/api/v1/corpus/summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["paper_count"] >= 1
+    assert payload["paper_chunk_count"] >= 1
+    assert payload["retrievable_tables"] == ["paper_chunks"]
+    assert "bm25" in payload["retrieval_modes"]
+    assert payload["section_counts"]
+    assert payload["sample_papers"]
+
+
+def test_api_ask_runs_unified_question_to_grounded_answer_workflow() -> None:
+    client = _client_with_phase2_literature_fixture()
+
+    response = client.post(
+        "/api/v1/ask",
+        json={
+            "question": "检测到 Streptomyces 是否说明样本中存在天然产物生产证据？",
+            "retrieval_mode": "bm25",
+            "top_k": 3,
+            "max_queries": 2,
+            "use_llm": False,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["question_plan"]["intent"] == "must_bound_claim"
+    assert payload["question_plan"]["entities"]["taxa"] == ["Streptomyces"]
+    assert payload["question_plan"]["planner_mode"] == "deterministic_domain_rules"
+    assert any(
+        query["query_type"] == "taxon_np_expansion"
+        for query in payload["question_plan"]["planned_queries"]
+    )
+    assert payload["retrieval_mode"] == "bm25"
+    assert payload["retrieval_hits"]
+    assert payload["answer"]["status"] in {
+        "SUPPORTED",
+        "PARTIALLY_SUPPORTED",
+        "INSUFFICIENT_EVIDENCE",
+    }
+    assert payload["citation_validation"]["citation_ref_validity_rate"] == 1.0
+
+
 def test_api_own_data_pipeline_backward_compatible_empty_request() -> None:
     client = TestClient(create_app())
 

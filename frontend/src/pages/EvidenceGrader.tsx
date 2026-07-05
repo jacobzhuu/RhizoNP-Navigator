@@ -3,11 +3,9 @@ import { api } from '../api/client'
 import { ApiError, BackendUnavailableError, type EvidenceGradingResponse } from '../api/types'
 import { Badge, distanceBadgeVariant, tierBadgeVariant } from '../components/Badge'
 import { ErrorPanel, LimitationsPanel, WarningPanel } from '../components/Panels'
+import { PageHeader } from '../components/PageShell'
+import { isDebugMode } from '../utils/debug'
 import { ProvenanceBlock } from '../components/ProvenanceBlock'
-
-const DEFAULT_QUERY = 'Streptomyces'
-const DEFAULT_LIT = 'Streptomyces hygroscopicus OS-2'
-const DEFAULT_METHOD = '16S genus-level'
 
 function isHighRisk(result: EvidenceGradingResponse): boolean {
   const dist = result.taxonomy_distance.toUpperCase()
@@ -15,16 +13,23 @@ function isHighRisk(result: EvidenceGradingResponse): boolean {
   return dist.includes('SAME_GENUS') || tier === 'C' || result.warnings.length > 0
 }
 
+function formatTaxon(taxon: EvidenceGradingResponse['query_taxon']): string {
+  return [
+    taxon.canonical_name,
+    taxon.rank ? `(${taxon.rank})` : null,
+    taxon.normalization_status !== 'resolved' ? `[${taxon.normalization_status}]` : null,
+  ].filter(Boolean).join(' ')
+}
+
 export function EvidenceGraderPage() {
-  const [queryTaxon, setQueryTaxon] = useState(DEFAULT_QUERY)
-  const [literatureTaxon, setLiteratureTaxon] = useState(DEFAULT_LIT)
-  const [method, setMethod] = useState(DEFAULT_METHOD)
+  const [queryTaxon, setQueryTaxon] = useState('')
+  const [literatureTaxon, setLiteratureTaxon] = useState('')
+  const [method, setMethod] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<{ message: string; detail?: string } | null>(null)
   const [result, setResult] = useState<EvidenceGradingResponse | null>(null)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function runGrading() {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -46,26 +51,40 @@ export function EvidenceGraderPage() {
     }
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    await runGrading()
+  }
+
   return (
     <>
-      <header className="page-header">
-        <h1>证据分级</h1>
-        <p className="subtitle">分类学感知证据分级，保守限制可支持主张</p>
-      </header>
+      <PageHeader title="证据分级" subtitle="分类学感知证据分级，保守限制可支持主张" />
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="query">查询分类单元</label>
-            <input id="query" value={queryTaxon} onChange={(e) => setQueryTaxon(e.target.value)} required />
+            <input
+              id="query"
+              value={queryTaxon}
+              onChange={(e) => setQueryTaxon(e.target.value)}
+              placeholder="例如：Streptomyces"
+              required
+            />
           </div>
           <div className="form-group">
             <label htmlFor="lit">文献分类单元</label>
-            <input id="lit" value={literatureTaxon} onChange={(e) => setLiteratureTaxon(e.target.value)} required />
+            <input
+              id="lit"
+              value={literatureTaxon}
+              onChange={(e) => setLiteratureTaxon(e.target.value)}
+              placeholder="例如：Streptomyces hygroscopicus OS-2"
+              required
+            />
           </div>
           <div className="form-group">
             <label htmlFor="method">观测方法</label>
-            <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} />
+            <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} placeholder="例如：16S genus-level" />
           </div>
         </div>
         <button type="submit" className="btn" disabled={loading}>
@@ -74,11 +93,11 @@ export function EvidenceGraderPage() {
       </form>
 
       {loading && <p className="loading">正在应用分类学策略…</p>}
-      {error && <ErrorPanel message={error.message} detail={error.detail} />}
+      {error && <ErrorPanel message={error.message} detail={error.detail} onRetry={runGrading} />}
 
       {result && (
-        <div className={`card${isHighRisk(result) ? ' highlight-card' : ''}`} style={isHighRisk(result) ? { borderColor: 'var(--color-warning-border)', background: 'var(--color-warning-bg)' } : undefined}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+        <div className={`card${isHighRisk(result) ? ' highlight-card' : ''}`}>
+          <div className="badge-row">
             <Badge label={result.taxonomy_distance} variant={distanceBadgeVariant(result.taxonomy_distance)} />
             <Badge label={`等级 ${result.evidence_tier}`} variant={tierBadgeVariant(result.evidence_tier)} />
           </div>
@@ -99,15 +118,15 @@ export function EvidenceGraderPage() {
           <div className="form-row" style={{ marginTop: '1rem' }}>
             <div className="form-group">
               <label>查询分类单元（规范化）</label>
-              <pre style={{ margin: 0, fontSize: '0.8rem' }}>{JSON.stringify(result.query_taxon, null, 2)}</pre>
+              <p className="muted-text">{formatTaxon(result.query_taxon)}</p>
             </div>
             <div className="form-group">
               <label>文献分类单元（规范化）</label>
-              <pre style={{ margin: 0, fontSize: '0.8rem' }}>{JSON.stringify(result.literature_taxon, null, 2)}</pre>
+              <p className="muted-text">{formatTaxon(result.literature_taxon)}</p>
             </div>
           </div>
 
-          <ProvenanceBlock data={result.provenance} />
+          {isDebugMode() && <ProvenanceBlock data={result.provenance} />}
         </div>
       )}
     </>

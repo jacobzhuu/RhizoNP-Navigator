@@ -3,21 +3,19 @@ import { api } from '../api/client'
 import { ApiError, BackendUnavailableError, type NaturalProductLinkResponse } from '../api/types'
 import { Badge, distanceBadgeVariant, tierBadgeVariant } from '../components/Badge'
 import { ErrorPanel, InfoPanel } from '../components/Panels'
+import { PageHeader } from '../components/PageShell'
+import { isDebugMode } from '../utils/debug'
 import { isFixtureRecord, ProvenanceBlock } from '../components/ProvenanceBlock'
 
-const DEFAULT_QUERY = 'Streptomyces'
-const DEFAULT_METABOLITE = 'FixturePolyketide-A'
-
 export function NaturalProductsPage() {
-  const [queryTaxon, setQueryTaxon] = useState(DEFAULT_QUERY)
-  const [metabolite, setMetabolite] = useState(DEFAULT_METABOLITE)
-  const [method, setMethod] = useState('16S genus-level')
+  const [queryTaxon, setQueryTaxon] = useState('')
+  const [metabolite, setMetabolite] = useState('')
+  const [method, setMethod] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<{ message: string; detail?: string } | null>(null)
   const [result, setResult] = useState<NaturalProductLinkResponse | null>(null)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function runLinking() {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -39,23 +37,30 @@ export function NaturalProductsPage() {
     }
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    await runLinking()
+  }
+
   return (
     <>
-      <header className="page-header">
-        <h1>天然产物关联</h1>
-        <p className="subtitle">按分类学距离与证据等级对候选化合物排序</p>
-      </header>
+      <PageHeader title="天然产物关联" subtitle="按分类学距离与证据等级对候选化合物排序" />
 
       <InfoPanel>
-        候选矩阵使用合成 NP fixture 记录（<code>synthetic_fixture</code> 数据库）。
-        标记为 fixture 的行并非真实文献来源关联。
+        候选矩阵基于 bounded NPAtlas 快照与本地 fixture 记录。合成来源行会在结果中明确标记。
       </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="query">查询分类单元</label>
-            <input id="query" value={queryTaxon} onChange={(e) => setQueryTaxon(e.target.value)} required />
+            <input
+              id="query"
+              value={queryTaxon}
+              onChange={(e) => setQueryTaxon(e.target.value)}
+              placeholder="例如：Streptomyces"
+              required
+            />
           </div>
           <div className="form-group">
             <label htmlFor="metabolite">代谢物名称</label>
@@ -63,7 +68,7 @@ export function NaturalProductsPage() {
           </div>
           <div className="form-group">
             <label htmlFor="method">观测方法</label>
-            <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} />
+            <input id="method" value={method} onChange={(e) => setMethod(e.target.value)} placeholder="例如：16S genus-level" />
           </div>
         </div>
         <button type="submit" className="btn" disabled={loading}>
@@ -72,11 +77,11 @@ export function NaturalProductsPage() {
       </form>
 
       {loading && <p className="loading">正在构建候选矩阵…</p>}
-      {error && <ErrorPanel message={error.message} detail={error.detail} />}
+      {error && <ErrorPanel message={error.message} detail={error.detail} onRetry={runLinking} />}
 
       {result && (
         <div className="card">
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+          <p className="muted-text" style={{ marginBottom: '1rem' }}>
             查询：{result.query_taxon}
             {result.metabolite_name && ` · 代谢物：${result.metabolite_name}`}
             {' · '}{result.rows.length} 个候选
@@ -119,19 +124,9 @@ export function NaturalProductsPage() {
             </table>
           </div>
 
-          {result.rows.map((row) => (
+          {isDebugMode() && result.rows.map((row) => (
             <div key={`detail-${row.rank}`} className="card" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
               <strong>#{row.rank} {row.compound_name}</strong>
-              {row.warnings.length > 0 && (
-                <ul style={{ color: 'var(--color-warning-text)', margin: '0.5rem 0' }}>
-                  {row.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                </ul>
-              )}
-              {row.limitations.length > 0 && (
-                <ul style={{ color: 'var(--color-text-muted)', margin: '0.5rem 0' }}>
-                  {row.limitations.map((l, i) => <li key={i}>{l}</li>)}
-                </ul>
-              )}
               <ProvenanceBlock data={row.provenance} />
             </div>
           ))}

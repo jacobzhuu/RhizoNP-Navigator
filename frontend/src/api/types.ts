@@ -2,6 +2,26 @@ export interface HealthResponse {
   status: string
 }
 
+export interface ReadinessDatabaseStatus {
+  connected: boolean
+  backend: string
+}
+
+export interface ReadinessCorpusStatus {
+  paper_count: number
+  chunk_count: number
+  has_real_corpus: boolean
+}
+
+export interface ReadinessResponse {
+  status: 'ready' | 'degraded' | 'unavailable'
+  database: ReadinessDatabaseStatus
+  corpus: ReadinessCorpusStatus
+  embedding_provider: string
+  runtime_mode: string
+  warnings: string[]
+}
+
 export interface SearchFilters {
   year_from?: number | null
   year_to?: number | null
@@ -48,6 +68,36 @@ export interface SearchResponse {
   run_id: string
   retrieval_mode: string
   results: SearchResult[]
+}
+
+export interface CorpusCountItem {
+  value: string
+  count: number
+}
+
+export interface CorpusSamplePaper {
+  title: string
+  year: number | null
+  journal: string | null
+  doi: string | null
+  pmid: string | null
+  source_url: string | null
+}
+
+export interface CorpusSummaryResponse {
+  paper_count: number
+  paper_chunk_count: number
+  retrievable_tables: string[]
+  retrieval_modes: string[]
+  section_counts: Record<string, number>
+  source_type_counts: Record<string, number>
+  real_chunk_count: number
+  fixture_chunk_count: number
+  structured_counts: Record<string, number>
+  top_taxa: CorpusCountItem[]
+  top_compounds: CorpusCountItem[]
+  top_hosts: CorpusCountItem[]
+  sample_papers: CorpusSamplePaper[]
 }
 
 export interface NormalizedTaxon {
@@ -152,6 +202,64 @@ export interface GroundedAnswerResponse {
   limitations: string[]
   suggested_validations: string[]
   writer_mode: string
+  provenance: Record<string, unknown>
+  citation_validation?: Record<string, unknown> | null
+  faithfulness_diagnostics?: Record<string, unknown>[]
+}
+
+export interface AskRequest {
+  question: string
+  retrieval_mode?: string
+  top_k?: number
+  max_queries?: number
+  use_llm?: boolean
+}
+
+export interface AskPlannedQuery {
+  query_text: string
+  query_type: string
+  rationale: string
+}
+
+export interface AskQuestionPlan {
+  original_question: string
+  intent: string
+  entities: Record<string, string[]>
+  synonym_expansions: Record<string, string[]>
+  planned_queries: AskPlannedQuery[]
+  warnings: string[]
+  planner_mode: string
+}
+
+export interface AskRetrievalHit {
+  query_text: string
+  query_index: number
+  paper_id: string
+  chunk_id: string
+  title: string
+  supporting_text: string
+  pmid: string | null
+  doi: string | null
+  source_url: string | null
+  journal: string | null
+  year: number | null
+  section: string
+  retrieval_mode: string
+  retrieval_score: number
+  matched_terms: string[]
+  provenance: Record<string, unknown>
+  source_type: string
+  is_fixture: boolean
+}
+
+export interface AskResponse {
+  question_plan: AskQuestionPlan
+  retrieval_mode: string
+  retrieval_hits: AskRetrievalHit[]
+  answer: GroundedAnswerResponse
+  evidence_items: Record<string, unknown>[]
+  citation_validation: Record<string, unknown>
+  faithfulness_diagnostics: Record<string, unknown>[]
   provenance: Record<string, unknown>
 }
 

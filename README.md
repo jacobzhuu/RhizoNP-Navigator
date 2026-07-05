@@ -104,12 +104,23 @@ Runtime demo outputs are **regenerated locally** and gitignored under `data/outp
 python -m pip install -r requirements.txt
 python -m pip install pytest ruff mypy
 
+make start    # full web app: DB + API + frontend
 make smoke
 make demo
 make check
 ```
 
-Optional API server:
+Open workspace: [http://127.0.0.1:5173/](http://127.0.0.1:5173/). The default page is
+the unified research Q&A flow: one question box plans the query, expands domain terms,
+retrieves literature snippets, and generates a grounded answer. The other pages remain
+available as trace/debug views for individual pipeline stages.
+Stop background services:
+
+```bash
+make stop
+```
+
+API server only:
 
 ```bash
 uvicorn rhizonp.api.app:app --app-dir src --reload
@@ -120,6 +131,8 @@ More detail: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
 ### Key API endpoints
 
 - `GET /api/v1/health`
+- `POST /api/v1/ask`
+- `GET /api/v1/corpus/summary`
 - `GET /api/v1/taxa/{canonical_name}`
 - `POST /api/v1/search`
 - `POST /api/v1/taxonomy/grade`
@@ -131,12 +144,7 @@ More detail: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
 
 ```bash
 python -m scripts.grade_taxonomy_evidence "Streptomyces" "Streptomyces hygroscopicus OS-2"
-
-Bounded NCBI taxonomy cache validation (offline):
-
-```bash
 make validate-ncbi-taxonomy-resolver
-```
 python -m scripts.run_own_data_pipeline
 python -m scripts.run_end_to_end_eval
 python -m scripts.run_demo
@@ -177,7 +185,7 @@ Regenerated evaluation reports are written to `data/eval/reports/latest/` (gitig
 
 This MVP **does not** include:
 
-- NPAtlas, MIBiG, Crossref, or OpenAlex integrations,
+- production-scale NPAtlas, MIBiG, Crossref, or OpenAlex integrations,
 - production-scale literature indexing,
 - an autonomous multi-tool agent,
 - completed Phase 2 human relevance evaluation,

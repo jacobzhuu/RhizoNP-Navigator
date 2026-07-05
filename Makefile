@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-scientific-constraints eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app validate-real-pubmed-bridge validate-postgresql-fullstack check-deepseek-config eval-llm-writer-live
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-scientific-constraints eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app start stop share tunnel validate-real-pubmed-bridge validate-postgresql-fullstack check-deepseek-config eval-llm-writer-live
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -111,7 +111,7 @@ smoke:
 	$(PYTHON) -m scripts.run_smoke
 
 start:
-	bash scripts/start.sh all
+	bash scripts/start.sh
 
 start-api:
 	bash scripts/start.sh api
@@ -131,5 +131,20 @@ frontend-typecheck:
 app:
 	bash scripts/start.sh app
 
+stop:
+	bash scripts/start.sh stop
+
+share:
+	bash scripts/start.sh share
+
+tunnel:
+	bash scripts/tunnel.sh
+
 docker-test:
-	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app
+	$(COMPOSE) --profile test up --build --abort-on-container-exit --exit-code-from app app
+
+docker-app:
+	$(COMPOSE) up --build postgres migrate api frontend
+
+prod:
+	bash scripts/start.sh prod

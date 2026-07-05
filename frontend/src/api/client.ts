@@ -1,9 +1,13 @@
 import {
+  type AskRequest,
+  type AskResponse,
+  type CorpusSummaryResponse,
   type EvidenceGradingRequest,
   type EvidenceGradingResponse,
   type GroundedAnswerRequest,
   type GroundedAnswerResponse,
   type HealthResponse,
+  type ReadinessResponse,
   type NaturalProductLinkRequest,
   type NaturalProductLinkResponse,
   type OwnDataPipelineRequest,
@@ -33,8 +37,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     let detail: string | undefined
     try {
-      const body = (await response.json()) as { detail?: string }
-      detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail)
+      const body = (await response.json()) as {
+        detail?: string | unknown
+        error?: { message?: string; detail?: string }
+      }
+      if (body.error?.message) {
+        detail = body.error.detail ?? body.error.message
+      } else if (typeof body.detail === 'string') {
+        detail = body.detail
+      } else if (body.detail != null) {
+        detail = JSON.stringify(body.detail)
+      }
     } catch {
       detail = response.statusText
     }
@@ -46,6 +59,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<HealthResponse>('/api/v1/health'),
+
+  readiness: () => request<ReadinessResponse>('/api/v1/readiness'),
+
+  ask: (body: AskRequest) =>
+    request<AskResponse>('/api/v1/ask', { method: 'POST', body: JSON.stringify(body) }),
+
+  getCorpusSummary: () => request<CorpusSummaryResponse>('/api/v1/corpus/summary'),
 
   searchLiterature: (body: SearchRequest) =>
     request<SearchResponse>('/api/v1/search', { method: 'POST', body: JSON.stringify(body) }),

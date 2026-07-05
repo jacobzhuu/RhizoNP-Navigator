@@ -15,9 +15,60 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build:
+      context: .
+      target: api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rhizonp}:${POSTGRES_PASSWORD:-rhizonp_dev}@postgres:5432/${POSTGRES_DB:-rhizonp}
+      PYTHONPATH: /app/src
+      RHIZONP_RUNTIME_MODE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        "sh",
+        "-c",
+        "alembic upgrade head && python -m scripts.load_demo_fixtures && python -m scripts.load_literature_fixtures",
+      ]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rhizonp}:${POSTGRES_PASSWORD:-rhizonp_dev}@postgres:5432/${POSTGRES_DB:-rhizonp}
+      PYTHONPATH: /app/src
+      RHIZONP_RUNTIME_MODE: prod
+    ports:
+      - "${RHIZONP_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+    ports:
+      - "${RHIZONP_FRONTEND_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
   app:
     build:
       context: .
+      target: test
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-rhizonp}:${POSTGRES_PASSWORD:-rhizonp_dev}@postgres:5432/${POSTGRES_DB:-rhizonp}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-yangjhchs/acge_text_embedding}
@@ -27,6 +78,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    profiles:
+      - test
     command: ["python", "-m", "pytest"]
 
 volumes:

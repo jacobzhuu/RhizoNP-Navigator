@@ -106,9 +106,9 @@ request() {
     code="$(curl -sS -o "${tmp}" -w '%{http_code}' -X "${method}" \
       -H 'Content-Type: application/json' \
       -d "${data}" \
-      "${BASE_URL}${path}")"
+      "${BASE_URL}${path}" 2>/dev/null)" || code="000"
   else
-    code="$(curl -sS -o "${tmp}" -w '%{http_code}' -X "${method}" "${BASE_URL}${path}")"
+    code="$(curl -sS -o "${tmp}" -w '%{http_code}' -X "${method}" "${BASE_URL}${path}" 2>/dev/null)" || code="000"
   fi
 
   if [[ "${code}" == "${expected}" ]]; then
@@ -157,7 +157,7 @@ if [[ "${FULL}" -eq 1 ]]; then
     200 "literature search"
 else
   tmp="$(mktemp)"
-  code="$(curl -sS -o "${tmp}" -w '%{http_code}' "${BASE_URL}/api/v1/taxa/Streptomyces")"
+  code="$(curl -sS -o "${tmp}" -w '%{http_code}' "${BASE_URL}/api/v1/taxa/Streptomyces" 2>/dev/null)" || code="000"
   if [[ "${code}" == "200" ]]; then
     detail="$(summarize_response "taxon lookup" "${tmp}" 2>/dev/null || echo "ok")"
     pass "taxon lookup (${code}) — ${detail}"

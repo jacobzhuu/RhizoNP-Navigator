@@ -45,6 +45,7 @@ def _build_claims(
     allow_species_claim: bool,
 ) -> list[Claim]:
     claims: list[Claim] = []
+    merged_claim_refs: dict[tuple[str, str], list] = {}
     for item in request.evidence_items:
         if item.predicate.upper() in {"DOES_NOT_PRODUCE", "REFUTES", "NEGATES"}:
             claims.append(
@@ -77,13 +78,17 @@ def _build_claims(
                 f"（{item.evidence_tier}）。"
             )
 
-        claims.append(
-            Claim(
-                text=claim_text,
-                evidence_refs=[item.evidence_id],
-                claim_level="descriptive" if allow_species_claim else "candidate",
-            )
+        claim_level = "descriptive" if allow_species_claim else "candidate"
+        key = (claim_text, claim_level)
+        merged_claim_refs.setdefault(key, []).append(item.evidence_id)
+    claims.extend(
+        Claim(
+            text=text,
+            evidence_refs=list(dict.fromkeys(refs)),
+            claim_level=claim_level,
         )
+        for (text, claim_level), refs in merged_claim_refs.items()
+    )
     return claims
 
 
@@ -134,20 +139,20 @@ def write_fallback_answer(request: WriterRequest) -> GroundedAnswer:
     if allow_strain:
         status = AnswerStatus.SUPPORTED
         answer = (
-            "在菌株或更强分类学分辨率下存在支持性证据，"
-            "每条主张均附有明确引用。"
+            "可以给出支持性回答：当前证据达到菌株或更强分类学分辨率，"
+            "并且每条主张都有可追溯证据。"
         )
     elif allow_species:
         status = AnswerStatus.PARTIALLY_SUPPORTED
         answer = (
-            "在物种水平存在部分支持性证据；"
-            "当前样本的菌株水平生产应视为未验证。"
+            "可以部分支持这个判断：文献层面存在物种级相关证据，"
+            "但还不能把它提升为当前样本或具体菌株已经生产天然产物的结论。"
         )
     elif _tier_rank(strongest_tier) >= _tier_rank("C"):
         status = AnswerStatus.PARTIALLY_SUPPORTED
         answer = (
-            "仅有属级或更弱的候选证据；"
-            "结论应保持在假设生成层面，而非已确认生产。"
+            "不能直接证明样本中存在已确认的天然产物生产。"
+            "目前召回到的是属级或更弱的候选证据，最多支持“值得进一步验证的天然产物潜力线索”。"
         )
     else:
         status = AnswerStatus.INSUFFICIENT_EVIDENCE

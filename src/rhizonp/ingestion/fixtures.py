@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rhizonp.config import PROJECT_ROOT
@@ -77,6 +78,147 @@ def _source_id(source: Any) -> Any:
     raise TypeError(f"Unsupported source reference type: {type(source)!r}")
 
 
+def _find_paper(session: Session, record: dict[str, Any]) -> Paper | None:
+    for field, value in (
+        (Paper.doi, record.get("doi")),
+        (Paper.pmid, record.get("pmid")),
+        (Paper.source_url, record.get("source_url")),
+        (Paper.title, record.get("title")),
+    ):
+        if value:
+            found = session.scalar(select(Paper).where(field == value).limit(1))
+            if found is not None:
+                return found
+    return None
+
+
+def _find_taxon(session: Session, record: dict[str, Any]) -> Taxon | None:
+    canonical_name = record.get("canonical_name")
+    if not canonical_name:
+        return None
+    return session.scalar(
+        select(Taxon)
+        .where(func.lower(Taxon.canonical_name) == str(canonical_name).casefold())
+        .limit(1)
+    )
+
+
+def _find_compound(session: Session, record: dict[str, Any]) -> Compound | None:
+    canonical_name = record.get("canonical_name")
+    if not canonical_name:
+        return None
+    return session.scalar(
+        select(Compound)
+        .where(func.lower(Compound.canonical_name) == str(canonical_name).casefold())
+        .limit(1)
+    )
+
+
+def _find_dataset(session: Session, record: dict[str, Any]) -> Dataset | None:
+    name = record.get("name")
+    if not name:
+        return None
+    return session.scalar(select(Dataset).where(Dataset.name == name).limit(1))
+
+
+def _find_np_record(session: Session, record: dict[str, Any]) -> NaturalProductRecord | None:
+    return session.scalar(
+        select(NaturalProductRecord)
+        .where(
+            NaturalProductRecord.source_database == record["source_database"],
+            NaturalProductRecord.external_record_id == record["external_record_id"],
+        )
+        .limit(1)
+    )
+
+
+def _find_observation(
+    session: Session,
+    *,
+    dataset: Dataset,
+    record: dict[str, Any],
+) -> OmicsObservation | None:
+    with session.no_autoflush:
+        return session.scalar(
+            select(OmicsObservation)
+            .where(
+                OmicsObservation.dataset_id == dataset.dataset_id,
+                OmicsObservation.entity_type == record["entity_type"],
+                OmicsObservation.raw_label == record["raw_label"],
+                OmicsObservation.method == record["method"],
+                OmicsObservation.treatment == record.get("treatment"),
+                OmicsObservation.timepoint == record.get("timepoint"),
+            )
+            .limit(1)
+        )
+
+
+def _find_association(
+    session: Session,
+    *,
+    dataset: Dataset,
+    record: dict[str, Any],
+) -> OmicsAssociation | None:
+    with session.no_autoflush:
+        return session.scalar(
+            select(OmicsAssociation)
+            .where(
+                OmicsAssociation.dataset_id == dataset.dataset_id,
+                OmicsAssociation.source_entity_type == record["source_entity_type"],
+                OmicsAssociation.source_raw_label == record["source_raw_label"],
+                OmicsAssociation.target_entity_type == record["target_entity_type"],
+                OmicsAssociation.target_raw_label == record["target_raw_label"],
+                OmicsAssociation.method == record["method"],
+                OmicsAssociation.treatment == record.get("treatment"),
+                OmicsAssociation.timepoint == record.get("timepoint"),
+            )
+            .limit(1)
+        )
+
+
+def _find_evidence_item(
+    session: Session,
+    *,
+    subject_entity: Any,
+    source: Any,
+    record: dict[str, Any],
+) -> EvidenceItem | None:
+    return session.scalar(
+        select(EvidenceItem)
+        .where(
+            EvidenceItem.claim_type == record["claim_type"],
+            EvidenceItem.subject_entity_type == record["subject_entity_type"],
+            EvidenceItem.subject_entity_id == _entity_id(subject_entity),
+            EvidenceItem.predicate == record["predicate"],
+            EvidenceItem.source_type == record["source_type"],
+            EvidenceItem.source_id == _source_id(source),
+            EvidenceItem.extraction_method == record["extraction_method"],
+        )
+        .limit(1)
+    )
+
+
+def _find_candidate_link(
+    session: Session,
+    *,
+    source_entity: Any,
+    target_entity: Any,
+    record: dict[str, Any],
+) -> CandidateLink | None:
+    return session.scalar(
+        select(CandidateLink)
+        .where(
+            CandidateLink.source_entity_type == record["source_entity_type"],
+            CandidateLink.source_entity_id == _entity_id(source_entity),
+            CandidateLink.relation == record["relation"],
+            CandidateLink.target_entity_type == record["target_entity_type"],
+            CandidateLink.target_entity_id == _entity_id(target_entity),
+            CandidateLink.status == record["status"],
+        )
+        .limit(1)
+    )
+
+
 def load_phase1_demo_fixture(
     session: Session,
     fixture_path: str | Path = DEFAULT_PHASE1_FIXTURE_PATH,
@@ -91,7 +233,8 @@ def load_phase1_demo_fixture(
 
     papers: dict[str, Paper] = {}
     for key, record in paper_records.items():
-        papers[key] = Paper(
+        existing_paper = _find_paper(session, record)
+        papers[key] = existing_paper or Paper(
             doi=record.get("doi"),
             pmid=record.get("pmid"),
             pmcid=record.get("pmcid"),
@@ -107,7 +250,8 @@ def load_phase1_demo_fixture(
 
     taxa: dict[str, Taxon] = {}
     for key, record in taxon_records.items():
-        taxa[key] = Taxon(
+        existing_taxon = _find_taxon(session, record)
+        taxa[key] = existing_taxon or Taxon(
             canonical_name=record["canonical_name"],
             rank=record.get("rank"),
             strain=record.get("strain"),
@@ -121,7 +265,8 @@ def load_phase1_demo_fixture(
 
     compounds: dict[str, Compound] = {}
     for key, record in compound_records.items():
-        compounds[key] = Compound(
+        existing_compound = _find_compound(session, record)
+        compounds[key] = existing_compound or Compound(
             canonical_name=record["canonical_name"],
             smiles=record.get("smiles"),
             inchikey=record.get("inchikey"),
@@ -134,7 +279,8 @@ def load_phase1_demo_fixture(
 
     datasets: dict[str, Dataset] = {}
     for key, record in dataset_records.items():
-        datasets[key] = Dataset(
+        existing_dataset = _find_dataset(session, record)
+        datasets[key] = existing_dataset or Dataset(
             name=record["name"],
             description=record.get("description"),
             owner=record.get("owner"),
@@ -146,8 +292,9 @@ def load_phase1_demo_fixture(
 
     natural_product_records: list[NaturalProductRecord] = []
     for record in payload.get("natural_product_records", []):
+        existing_np_record = _find_np_record(session, record)
         natural_product_records.append(
-            NaturalProductRecord(
+            existing_np_record or NaturalProductRecord(
                 compound=_ref(compounds, record.get("compound_ref")),
                 producer_taxon=_ref(taxa, record.get("producer_taxon_ref")),
                 source_database=record["source_database"],
@@ -157,13 +304,18 @@ def load_phase1_demo_fixture(
                 provenance=record.get("provenance", {}),
             )
         )
+    session.add_all(natural_product_records)
+    session.flush()
 
     observations: list[OmicsObservation] = []
     for record in payload.get("omics_observations", []):
         entity = _ref({**taxa, **compounds}, record.get("entity_ref"))
+        dataset = _ref(datasets, record.get("dataset_ref"))
+        assert isinstance(dataset, Dataset)
+        existing_observation = _find_observation(session, dataset=dataset, record=record)
         observations.append(
-            OmicsObservation(
-                dataset=_ref(datasets, record.get("dataset_ref")),
+            existing_observation or OmicsObservation(
+                dataset=dataset,
                 entity_type=record["entity_type"],
                 entity_id=_entity_id(entity),
                 raw_label=record["raw_label"],
@@ -177,14 +329,19 @@ def load_phase1_demo_fixture(
                 observation_metadata=record.get("metadata", {}),
             )
         )
+    session.add_all(observations)
+    session.flush()
 
     associations: list[OmicsAssociation] = []
     for record in payload.get("omics_associations", []):
         source_entity = _ref({**taxa, **compounds}, record.get("source_entity_ref"))
         target_entity = _ref({**taxa, **compounds}, record.get("target_entity_ref"))
+        dataset = _ref(datasets, record.get("dataset_ref"))
+        assert isinstance(dataset, Dataset)
+        existing_association = _find_association(session, dataset=dataset, record=record)
         associations.append(
-            OmicsAssociation(
-                dataset=_ref(datasets, record.get("dataset_ref")),
+            existing_association or OmicsAssociation(
+                dataset=dataset,
                 source_entity_type=record["source_entity_type"],
                 source_entity_id=_entity_id(source_entity),
                 source_raw_label=record["source_raw_label"],
@@ -200,6 +357,8 @@ def load_phase1_demo_fixture(
                 association_metadata=record.get("metadata", {}),
             )
         )
+    session.add_all(associations)
+    session.flush()
 
     evidence_items: list[EvidenceItem] = []
     entity_refs = {**taxa, **compounds}
@@ -208,8 +367,14 @@ def load_phase1_demo_fixture(
         subject_entity = _ref(entity_refs, record.get("subject_entity_ref"))
         object_entity = _ref(entity_refs, record.get("object_entity_ref"))
         source = _ref(source_refs, record.get("source_ref"))
+        existing_evidence = _find_evidence_item(
+            session,
+            subject_entity=subject_entity,
+            source=source,
+            record=record,
+        )
         evidence_items.append(
-            EvidenceItem(
+            existing_evidence or EvidenceItem(
                 claim_type=record["claim_type"],
                 subject_entity_type=record["subject_entity_type"],
                 subject_entity_id=_entity_id(subject_entity),
@@ -232,8 +397,14 @@ def load_phase1_demo_fixture(
     for record in payload.get("candidate_links", []):
         source_entity = _ref(entity_refs, record.get("source_entity_ref"))
         target_entity = _ref(entity_refs, record.get("target_entity_ref"))
+        existing_candidate = _find_candidate_link(
+            session,
+            source_entity=source_entity,
+            target_entity=target_entity,
+            record=record,
+        )
         candidate_links.append(
-            CandidateLink(
+            existing_candidate or CandidateLink(
                 source_entity_type=record["source_entity_type"],
                 source_entity_id=_entity_id(source_entity),
                 relation=record["relation"],
@@ -248,15 +419,7 @@ def load_phase1_demo_fixture(
             )
         )
 
-    session.add_all(
-        [
-            *natural_product_records,
-            *observations,
-            *associations,
-            *evidence_items,
-            *candidate_links,
-        ]
-    )
+    session.add_all([*evidence_items, *candidate_links])
     session.flush()
 
     return DemoFixtureSummary(

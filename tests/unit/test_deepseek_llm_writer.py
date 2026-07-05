@@ -164,7 +164,9 @@ def test_taxonomy_overclaim_triggers_constraint_fallback(monkeypatch: pytest.Mon
     assert result.writer_mode == "fallback_after_constraint_violation"
 
 
-def test_provider_failure_fallback() -> None:
+def test_provider_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key-placeholder")
+    get_settings.cache_clear()
     request = _request()
 
     def failing_client(_prompt: str) -> str:

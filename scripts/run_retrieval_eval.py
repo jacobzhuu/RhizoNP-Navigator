@@ -73,7 +73,23 @@ def main() -> None:
     )
 
     args = parse_args()
-    engine = create_engine_from_settings()
+    try:
+        engine = create_engine_from_settings()
+    except RuntimeError as exc:
+        if "DATABASE_URL" not in str(exc):
+            raise
+        from sqlalchemy import create_engine
+        from sqlalchemy.pool import StaticPool
+
+        print(
+            "DATABASE_URL is not configured; using in-memory SQLite for offline retrieval eval."
+        )
+        engine = create_engine(
+            "sqlite+pysqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
     Base.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
 
@@ -85,7 +101,12 @@ def main() -> None:
         snapshot = load_corpus_snapshot(corpus_path)
         records = normalized_records_from_snapshot(snapshot)
         output_path = args.output or (
-            PROJECT_ROOT / "data" / "eval" / "reports" / "phase2_real_retrieval_report.json"
+            PROJECT_ROOT
+            / "data"
+            / "eval"
+            / "reports"
+            / "latest"
+            / "phase2_real_retrieval_report.json"
         )
 
         with session_scope(session_factory) as session:
@@ -108,7 +129,12 @@ def main() -> None:
     else:
         benchmark = load_retrieval_benchmark(args.gold)
         output_path = args.output or (
-            PROJECT_ROOT / "data" / "eval" / "reports" / "phase2_retrieval_report.json"
+            PROJECT_ROOT
+            / "data"
+            / "eval"
+            / "reports"
+            / "latest"
+            / "phase2_retrieval_report.json"
         )
         with session_scope(session_factory) as session:
             load_phase2_literature_fixture(session)

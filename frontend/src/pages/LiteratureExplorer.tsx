@@ -3,22 +3,21 @@ import { api } from '../api/client'
 import { ApiError, BackendUnavailableError, type SearchResponse } from '../api/types'
 import { Badge } from '../components/Badge'
 import { ErrorPanel, InfoPanel } from '../components/Panels'
+import { PageHeader } from '../components/PageShell'
+import { isDebugMode } from '../utils/debug'
 import { ProvenanceBlock } from '../components/ProvenanceBlock'
 
 const RETRIEVAL_MODES = ['bm25', 'dense', 'hybrid', 'hybrid_rerank']
 
-const DEMO_QUERY = 'Streptomyces Feature_M123'
-
 export function LiteratureExplorerPage() {
-  const [query, setQuery] = useState(DEMO_QUERY)
-  const [mode, setMode] = useState('bm25')
+  const [query, setQuery] = useState('')
+  const [mode, setMode] = useState('hybrid_rerank')
   const [topK, setTopK] = useState(5)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<{ message: string; detail?: string; dbUnavailable?: boolean } | null>(null)
   const [response, setResponse] = useState<SearchResponse | null>(null)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function runSearch() {
     setLoading(true)
     setError(null)
     setResponse(null)
@@ -27,15 +26,6 @@ export function LiteratureExplorerPage() {
         query,
         top_k: topK,
         retrieval_mode: mode,
-        filters: {
-          sections: ['results'],
-          source_types: ['paper'],
-          dois: ['10.0000/rhizonp.fixture.lit.001'],
-          journals: ['fixture'],
-          taxa: ['Streptomyces'],
-          compounds: ['FixturePolyketide-A'],
-          host: ['Synthetic plant'],
-        },
       })
       setResponse(result)
     } catch (err) {
@@ -52,23 +42,30 @@ export function LiteratureExplorerPage() {
     }
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    await runSearch()
+  }
+
   return (
     <>
-      <header className="page-header">
-        <h1>文献检索</h1>
-        <p className="subtitle">检索已索引文献片段，并展示溯源轨迹</p>
-      </header>
+      <PageHeader title="文献检索" subtitle="检索已索引文献片段，并展示溯源轨迹" />
 
-      <div className="panel-info">
-        需要 PostgreSQL 并加载 Phase 2 文献 fixtures（
-        <code>./scripts/start.sh db</code>）。当前仅使用合成 fixture 语料。
-      </div>
+      <InfoPanel>
+        需要 PostgreSQL 并已 ingest 文献语料。可在首页查看当前可召回库规模。
+      </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group" style={{ flex: 3 }}>
             <label htmlFor="query">查询</label>
-            <input id="query" value={query} onChange={(e) => setQuery(e.target.value)} required />
+            <input
+              id="query"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="例如：Streptomyces rhizosphere natural product"
+              required
+            />
           </div>
           <div className="form-group">
             <label htmlFor="mode">检索模式</label>
@@ -92,14 +89,12 @@ export function LiteratureExplorerPage() {
 
       {error && (
         <>
-          <ErrorPanel message={error.message} detail={error.detail} />
+          <ErrorPanel message={error.message} detail={error.detail} onRetry={runSearch} />
           {error.dbUnavailable && (
             <InfoPanel>
               <strong>数据库不可用</strong>
               <p style={{ margin: '0.35rem 0 0' }}>
-                请先加载 fixtures：<code>./scripts/start.sh db</code>，再运行{' '}
-                <code>make start-api</code>。无数据库端点（分级、关联、自有数据、报告）
-                仍可正常使用。
+                请先启动数据库并完成 ingest：<code>./scripts/start.sh db</code>。
               </p>
             </InfoPanel>
           )}
@@ -108,11 +103,11 @@ export function LiteratureExplorerPage() {
 
       {response && (
         <div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+          <p className="muted-text">
             运行 {response.run_id.slice(0, 8)}… · 模式：{response.retrieval_mode} · {response.results.length} 条结果
           </p>
           {response.results.length === 0 && (
-            <InfoPanel>查询与 fixture 过滤器未匹配到任何结果。</InfoPanel>
+            <InfoPanel>未匹配到文献片段，请尝试调整查询词或检索模式。</InfoPanel>
           )}
           {response.results.map((result) => (
             <div key={result.rank} className="card">
@@ -122,9 +117,6 @@ export function LiteratureExplorerPage() {
               </div>
               <div className="result-meta">
                 <span>DOI：{result.trace.doi ?? '—'}</span>
-                <span>PMID：—（API 溯源中未返回）</span>
-                <span>期刊：fixture</span>
-                <span>年份：2026（fixture）</span>
                 <span>章节：{result.trace.section}</span>
               </div>
               <p className="result-text">{result.text}</p>
@@ -135,18 +127,20 @@ export function LiteratureExplorerPage() {
                   ))}
                 </div>
               )}
-              <ProvenanceBlock
-                data={{
-                  chunk_id: result.trace.chunk_id,
-                  paper_id: result.trace.paper_id,
-                  doi: result.trace.doi,
-                  source_url: result.trace.source_url,
-                  section: result.trace.section,
-                  char_start: result.trace.char_start,
-                  char_end: result.trace.char_end,
-                  score_components: result.score_components,
-                }}
-              />
+              {isDebugMode() && (
+                <ProvenanceBlock
+                  data={{
+                    chunk_id: result.trace.chunk_id,
+                    paper_id: result.trace.paper_id,
+                    doi: result.trace.doi,
+                    source_url: result.trace.source_url,
+                    section: result.trace.section,
+                    char_start: result.trace.char_start,
+                    char_end: result.trace.char_end,
+                    score_components: result.score_components,
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>

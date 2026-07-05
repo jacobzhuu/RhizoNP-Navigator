@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +51,8 @@ class Settings(BaseSettings):
 
     taxonomy_resolver: str = "auto"
     ncbi_max_results: int = 20
+
+    runtime_mode: str = Field(default="dev", validation_alias="RHIZONP_RUNTIME_MODE")
 
 
 @lru_cache

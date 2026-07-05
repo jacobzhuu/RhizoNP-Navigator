@@ -1,12 +1,32 @@
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Iterator
 from functools import lru_cache
+import logging
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from rhizonp.domain.models import CandidateLink, Compound, EvidenceItem, OmicsAssociation, Taxon
+from rhizonp.api.middleware import RequestContextMiddleware
+from rhizonp.api.readiness import evaluate_readiness
+from rhizonp.api.runtime import create_runtime_engine, is_prod_mode
+
+from rhizonp.domain.models import (
+    CandidateLink,
+    Compound,
+    Dataset,
+    EvidenceItem,
+    NaturalProductRecord,
+    OmicsAssociation,
+    OmicsObservation,
+    Paper,
+    PaperChunk,
+    Taxon,
+)
 from rhizonp.literature.retrieval import (
     HybridWeights,
     SearchFilters,
@@ -25,8 +45,13 @@ from rhizonp.storage.repositories import (
 )
 
 from .schemas import (
+    AskRequest,
+    AskResponse,
     CandidateLinkResponse,
     CompoundResponse,
+    CorpusCountItemResponse,
+    CorpusSamplePaperResponse,
+    CorpusSummaryResponse,
     EvidenceGradingRequest,
     EvidenceGradingResponse,
     EvidenceItemResponse,
@@ -40,6 +65,7 @@ from .schemas import (
     OmicsAssociationResponse,
     OwnDataPipelineRequest,
     OwnDataPipelineResponse,
+    ReadinessResponse,
     SearchRequest,
     SearchResponse,
     SearchResultResponse,
@@ -47,6 +73,8 @@ from .schemas import (
     TaxonResponse,
     WriterClaimResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -63,7 +91,32 @@ def get_session() -> Iterator[Session]:
         session.close()
 
 
+def get_optional_session() -> Iterator[Session | None]:
+    try:
+        session = get_session_factory()()
+    except RuntimeError:
+        yield None
+        return
+    try:
+        yield session
+    finally:
+        session.close()
+
+
 SESSION_DEPENDENCY = Depends(get_session)
+OPTIONAL_SESSION_DEPENDENCY = Depends(get_optional_session)
+
+
+def _error_payload(*, code: str, message: str, detail: str | None = None) -> dict[str, object]:
+    resolved_detail = detail or message
+    return {
+        "error": {
+            "code": code,
+            "message": message,
+            "detail": resolved_detail,
+        },
+        "detail": resolved_detail,
+    }
 
 
 def _taxon_or_404(session: Session, canonical_name: str) -> Taxon:
@@ -184,6 +237,13 @@ def _search_result_response(result: SearchResult) -> SearchResultResponse:
     )
 
 
+def _top_count_items(counter: Counter[str], *, limit: int = 8) -> list[CorpusCountItemResponse]:
+    return [
+        CorpusCountItemResponse(value=value, count=count)
+        for value, count in counter.most_common(limit)
+    ]
+
+
 TAGS_HEALTH = "Health"
 TAGS_ENTITIES = "Entities"
 TAGS_LITERATURE = "Literature"
@@ -191,6 +251,7 @@ TAGS_TAXONOMY = "Taxonomy"
 TAGS_NATURAL_PRODUCTS = "Natural Products"
 TAGS_OWN_DATA = "Own Data"
 TAGS_WRITER = "Grounded Writer"
+TAGS_ASK = "Unified Ask"
 
 
 def create_app() -> FastAPI:
@@ -201,9 +262,7 @@ def create_app() -> FastAPI:
             "Evidence-grounded research API for plant–microbe interactions and microbial "
             "natural products. Exposes literature retrieval, taxonomy-aware evidence grading, "
             "natural product candidate linking, own-data omics pipelines, and a grounded report "
-            "writer. Entity endpoints require PostgreSQL with loaded fixtures; grading, linking, "
-            "own-data, and writer endpoints are stateless. See the research workspace frontend "
-            "for workflow demos."
+            "writer. Entity endpoints require PostgreSQL with loaded corpus data."
         ),
         openapi_tags=[
             {"name": TAGS_HEALTH, "description": "Service health checks."},
@@ -213,12 +272,159 @@ def create_app() -> FastAPI:
             {"name": TAGS_NATURAL_PRODUCTS, "description": "Natural product candidate linking matrix."},
             {"name": TAGS_OWN_DATA, "description": "Own-data omics CSV pipeline."},
             {"name": TAGS_WRITER, "description": "Evidence-grounded scientific report writer."},
+            {"name": TAGS_ASK, "description": "Single-question RAG workflow: plan, expand, retrieve, and answer."},
         ],
     )
+
+    api.add_middleware(RequestContextMiddleware)
+
+    @api.exception_handler(HTTPException)
+    async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONResponse:
+        message = str(exc.detail)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=_error_payload(code=f"http_{exc.status_code}", message=message, detail=message),
+        )
+
+    @api.exception_handler(RequestValidationError)
+    async def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+        message = "Request validation failed"
+        detail = str(exc.errors())
+        return JSONResponse(
+            status_code=422,
+            content=_error_payload(code="validation_error", message=message, detail=detail),
+        )
+
+    @api.exception_handler(Exception)
+    async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled API error")
+        message = "Internal server error"
+        return JSONResponse(
+            status_code=500,
+            content=_error_payload(code="internal_error", message=message, detail=str(exc)),
+        )
 
     @api.get("/api/v1/health", response_model=HealthResponse, tags=[TAGS_HEALTH])
     def health() -> HealthResponse:
         return HealthResponse(status="ok")
+
+    @api.get("/api/v1/readiness", response_model=ReadinessResponse, tags=[TAGS_HEALTH])
+    def readiness(session: Session | None = OPTIONAL_SESSION_DEPENDENCY) -> ReadinessResponse:
+        payload = evaluate_readiness(session)
+        return ReadinessResponse(**payload)
+
+    @api.post("/api/v1/ask", response_model=AskResponse, tags=[TAGS_ASK])
+    def ask_question(
+        request: AskRequest,
+        session: Session = SESSION_DEPENDENCY,
+    ) -> AskResponse:
+        from rhizonp.query.assistant import run_ask_pipeline
+
+        try:
+            result = run_ask_pipeline(
+                session,
+                request.question,
+                retrieval_mode=request.retrieval_mode,
+                top_k=request.top_k,
+                max_queries=request.max_queries,
+                use_llm=request.use_llm,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        payload = result.to_dict()
+        answer = payload["answer"]
+        return AskResponse(
+            question_plan=payload["question_plan"],
+            retrieval_mode=payload["retrieval_mode"],
+            retrieval_hits=payload["retrieval_hits"],
+            answer=GroundedAnswerResponse(
+                status=answer["status"],
+                answer=answer["answer"],
+                claims=[
+                    WriterClaimResponse(
+                        text=claim["text"],
+                        evidence_refs=claim["evidence_refs"],
+                        claim_level=claim["claim_level"],
+                    )
+                    for claim in answer["claims"]
+                ],
+                evidence_refs=answer["evidence_refs"],
+                limitations=answer["limitations"],
+                suggested_validations=answer["suggested_validations"],
+                writer_mode=answer["writer_mode"],
+                provenance=answer["provenance"],
+                citation_validation=payload["citation_validation"],
+                faithfulness_diagnostics=payload["faithfulness_diagnostics"],
+            ),
+            evidence_items=payload["evidence_items"],
+            citation_validation=payload["citation_validation"],
+            faithfulness_diagnostics=payload["faithfulness_diagnostics"],
+            provenance=payload["provenance"],
+        )
+
+    @api.get("/api/v1/corpus/summary", response_model=CorpusSummaryResponse, tags=[TAGS_LITERATURE])
+    def corpus_summary(session: Session = SESSION_DEPENDENCY) -> CorpusSummaryResponse:
+        chunks = list(session.scalars(select(PaperChunk).join(Paper).order_by(PaperChunk.created_at)))
+        section_counts: Counter[str] = Counter()
+        source_type_counts: Counter[str] = Counter()
+        taxa_counts: Counter[str] = Counter()
+        compound_counts: Counter[str] = Counter()
+        host_counts: Counter[str] = Counter()
+        fixture_chunk_count = 0
+        real_chunk_count = 0
+        for chunk in chunks:
+            section_counts[chunk.section] += 1
+            metadata = chunk.chunk_metadata or {}
+            source_type_counts[str(metadata.get("source_type") or "unknown")] += 1
+            if metadata.get("fixture") is True:
+                fixture_chunk_count += 1
+            else:
+                real_chunk_count += 1
+            for item in metadata.get("taxa") or []:
+                taxa_counts[str(item)] += 1
+            for item in metadata.get("compounds") or []:
+                compound_counts[str(item)] += 1
+            for item in metadata.get("host") or []:
+                host_counts[str(item)] += 1
+
+        sample_papers = [
+            CorpusSamplePaperResponse(
+                title=paper.title,
+                year=paper.year,
+                journal=paper.journal,
+                doi=paper.doi,
+                pmid=paper.pmid,
+                source_url=paper.source_url,
+            )
+            for paper in session.scalars(
+                select(Paper).order_by(Paper.year.desc().nullslast(), Paper.title).limit(6)
+            )
+        ]
+        structured_counts = {
+            "taxa": session.scalar(select(func.count()).select_from(Taxon)) or 0,
+            "compounds": session.scalar(select(func.count()).select_from(Compound)) or 0,
+            "natural_product_records": session.scalar(select(func.count()).select_from(NaturalProductRecord)) or 0,
+            "datasets": session.scalar(select(func.count()).select_from(Dataset)) or 0,
+            "omics_observations": session.scalar(select(func.count()).select_from(OmicsObservation)) or 0,
+            "omics_associations": session.scalar(select(func.count()).select_from(OmicsAssociation)) or 0,
+            "evidence_items": session.scalar(select(func.count()).select_from(EvidenceItem)) or 0,
+            "candidate_links": session.scalar(select(func.count()).select_from(CandidateLink)) or 0,
+        }
+        return CorpusSummaryResponse(
+            paper_count=session.scalar(select(func.count()).select_from(Paper)) or 0,
+            paper_chunk_count=len(chunks),
+            retrievable_tables=["paper_chunks"],
+            retrieval_modes=["bm25", "dense", "hybrid", "hybrid_rerank"],
+            section_counts=dict(section_counts),
+            source_type_counts=dict(source_type_counts),
+            real_chunk_count=real_chunk_count,
+            fixture_chunk_count=fixture_chunk_count,
+            structured_counts=structured_counts,
+            top_taxa=_top_count_items(taxa_counts),
+            top_compounds=_top_count_items(compound_counts),
+            top_hosts=_top_count_items(host_counts),
+            sample_papers=sample_papers,
+        )
 
     @api.get("/api/v1/taxa/{canonical_name}", response_model=TaxonResponse, tags=[TAGS_ENTITIES])
     def get_taxon(canonical_name: str, session: Session = SESSION_DEPENDENCY) -> TaxonResponse:
@@ -333,14 +539,17 @@ def create_app() -> FastAPI:
     def run_own_data_to_literature(
         request: OwnDataPipelineRequest,
     ) -> OwnDataPipelineResponse:
-        from sqlalchemy import create_engine
-        from sqlalchemy.pool import StaticPool
-
         from rhizonp.config import PROJECT_ROOT
         from rhizonp.domain.models import Base
         from rhizonp.ingestion.literature import load_phase2_literature_fixture
         from rhizonp.omics.pipeline import OwnDataPipelineOptions, run_own_data_pipeline
-        from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
+        from rhizonp.storage.postgres import create_session_factory
+
+        if is_prod_mode() and not request.data_dir:
+            raise HTTPException(
+                status_code=400,
+                detail="data_dir is required when RHIZONP_RUNTIME_MODE=prod",
+            )
 
         data_dir = request.data_dir or str(
             PROJECT_ROOT / "data" / "fixtures" / "own_data_demo"
@@ -348,19 +557,15 @@ def create_app() -> FastAPI:
         literature_session = None
         if request.enable_literature_retrieval:
             try:
-                engine = create_engine_from_settings()
-            except RuntimeError:
-                engine = create_engine(
-                    "sqlite+pysqlite://",
-                    connect_args={"check_same_thread": False},
-                    poolclass=StaticPool,
-                    future=True,
-                )
+                engine = create_runtime_engine(allow_sqlite_fallback=not is_prod_mode())
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
             Base.metadata.create_all(engine)
             session_factory = create_session_factory(engine)
             literature_session = session_factory()
-            load_phase2_literature_fixture(literature_session)
-            literature_session.commit()
+            if not is_prod_mode():
+                load_phase2_literature_fixture(literature_session)
+                literature_session.commit()
 
         try:
             result = run_own_data_pipeline(
@@ -392,12 +597,9 @@ def create_app() -> FastAPI:
 
     @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
     def write_answer(request: GroundedAnswerRequest) -> GroundedAnswerResponse:
-        from sqlalchemy import create_engine
-        from sqlalchemy.pool import StaticPool
-
         from rhizonp.domain.models import Base
         from rhizonp.ingestion.literature import load_phase2_literature_fixture
-        from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
+        from rhizonp.storage.postgres import create_session_factory
         from rhizonp.writer.models import EvidenceInput, WriterRequest
         from rhizonp.writer.retrieval_service import retrieve_literature_evidence_hits
         from rhizonp.writer.retrieval_writer import write_grounded_answer_from_literature_hits
@@ -411,19 +613,15 @@ def create_app() -> FastAPI:
             literature_session = None
             try:
                 try:
-                    engine = create_engine_from_settings()
-                except RuntimeError:
-                    engine = create_engine(
-                        "sqlite+pysqlite://",
-                        connect_args={"check_same_thread": False},
-                        poolclass=StaticPool,
-                        future=True,
-                    )
+                    engine = create_runtime_engine(allow_sqlite_fallback=not is_prod_mode())
+                except RuntimeError as exc:
+                    raise HTTPException(status_code=503, detail=str(exc)) from exc
                 Base.metadata.create_all(engine)
                 session_factory = create_session_factory(engine)
                 literature_session = session_factory()
-                load_phase2_literature_fixture(literature_session)
-                literature_session.commit()
+                if not is_prod_mode():
+                    load_phase2_literature_fixture(literature_session)
+                    literature_session.commit()
                 hits = retrieve_literature_evidence_hits(
                     literature_session,
                     query,

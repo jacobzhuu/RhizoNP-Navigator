@@ -10,7 +10,7 @@
 - Citation faithfulness is **not** human-validated; only structural citation validity and heuristic diagnostics are reported.
 - **Phase 2 empirical human labeling** for the 543-item pooled annotation task remains **pending**. No real-benchmark retrieval quality claims are made until labels are imported.
 - Own-data pipeline literature retrieval requires an enabled flag and DB-backed corpus session; default offline runs report `DISABLED`/`RETRIEVAL_UNAVAILABLE` rather than fabricating papers. Phase 5.2 validates the bridge against the real bounded PubMed snapshot when ingested; this does not validate retrieval relevance or real applicant omics.
-- Real applicant 16S/LC-MS validation and PostgreSQL persistence of imported associations remain **pending**.
+- Real applicant 16S/LC-MS validation remains **pending**. PostgreSQL persistence is validated for fixture imports and the full-stack demo path, but not yet for private applicant datasets at scale.
 
 ## What this system is not
 

@@ -40,17 +40,28 @@ def _extract_warnings(hit: Mapping[str, Any]) -> list[str]:
     grading_payload = hit.get("taxonomy_grading") or {}
     nested = grading_payload.get("grading") or {}
     warnings = nested.get("warnings") or []
-    output = [str(item) for item in warnings]
+    output = [_localize_warning(str(item)) for item in warnings]
     provenance = hit.get("provenance") or {}
     corpus_type = provenance.get("corpus_type")
     if hit.get("is_fixture"):
-        output.append("Literature hit comes from a fixture/test corpus, not external evidence.")
+        output.append("该文献片段来自 fixture/test 语料，只能用于演示或回归测试。")
     elif corpus_type:
-        output.append(f"Literature corpus_type={corpus_type}.")
+        output.append(f"文献语料来源类型：{corpus_type}。")
     output.append(
-        "Retrieved passage is retrieval evidence only; co-occurrence does not imply production or causation."
+        "召回片段只能作为证据线索；文本共现不等同于生产或因果关系。"
     )
     return list(dict.fromkeys(output))
+
+
+def _localize_warning(warning: str) -> str:
+    warning_lower = warning.lower()
+    if "genus-level" in warning_lower and "strain-level production" in warning_lower:
+        return "属级或未解析的分类证据不能支持菌株水平生产主张。"
+    if "same-genus evidence is candidate-level only" in warning_lower:
+        return "同属证据只能作为候选线索，不能证明该样本生产目标化合物。"
+    if "16s genus-level" in warning_lower and "strain-level production" in warning_lower:
+        return "16S 属级观测不能提升为菌株水平生产结论。"
+    return warning
 
 
 def literature_hit_to_evidence_item(

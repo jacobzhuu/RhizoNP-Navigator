@@ -8,7 +8,9 @@ import {
 } from '../api/types'
 import { Badge, tierBadgeVariant } from '../components/Badge'
 import { ErrorPanel, InfoPanel, LimitationsPanel, WarningPanel } from '../components/Panels'
+import { PageHeader } from '../components/PageShell'
 import { ProvenanceBlock } from '../components/ProvenanceBlock'
+import { isDebugMode } from '../utils/debug'
 
 const DEMO_REQUEST: GroundedAnswerRequest = {
   question: '现有证据支持哪些保守结论？',
@@ -38,6 +40,9 @@ function statusVariant(status: string): 'supported' | 'partial' | 'insufficient'
 }
 
 export function GroundedReportPage() {
+  const debug = isDebugMode()
+  const [question, setQuestion] = useState('')
+  const [useLlm, setUseLlm] = useState(true)
   const [jsonInput, setJsonInput] = useState(JSON.stringify(DEMO_REQUEST, null, 2))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<{ message: string; detail?: string } | null>(null)
@@ -50,13 +55,18 @@ export function GroundedReportPage() {
     setError(null)
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function generateReport() {
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const body = JSON.parse(jsonInput) as GroundedAnswerRequest
+      const body = debug
+        ? (JSON.parse(jsonInput) as GroundedAnswerRequest)
+        : ({
+            question,
+            evidence_items: [],
+            use_llm: useLlm,
+          } satisfies GroundedAnswerRequest)
       setLastWarnings(body.taxonomy_warnings ?? [])
       const data = await api.writeAnswer(body)
       setResult(data)
@@ -73,45 +83,75 @@ export function GroundedReportPage() {
     }
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    await generateReport()
+  }
+
   return (
     <>
-      <header className="page-header">
-        <h1>证据报告</h1>
-        <p className="subtitle">有证据边界约束的科学回答，含主张溯源</p>
-      </header>
+      <PageHeader title="证据报告" subtitle="有证据边界约束的科学回答，含主张溯源" />
 
       <InfoPanel>
-        默认启用 DeepSeek 写作器（<code>use_llm: true</code>），需本地 <code>.env</code> 已配置{' '}
-        <code>DEEPSEEK_API_KEY</code>。未配置或门控失败时自动回退确定性写作器。
+        可选启用大模型写作（需配置 <code>DEEPSEEK_API_KEY</code>）。校验失败或未配置时自动回退确定性写作器。
       </InfoPanel>
 
       <form className="card" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="json">请求 JSON</label>
-          <textarea
-            id="json"
-            value={jsonInput}
-            onChange={(e) => setJsonInput(e.target.value)}
-            rows={14}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
-          />
-        </div>
+        {debug ? (
+          <div className="form-group">
+            <label htmlFor="json">请求 JSON（调试模式）</label>
+            <textarea
+              id="json"
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              rows={14}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="form-group">
+              <label htmlFor="question">问题</label>
+              <textarea
+                id="question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                rows={4}
+                placeholder="输入需要生成证据约束回答的问题"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="checkbox-label" htmlFor="grounded-use-llm">
+                <input
+                  id="grounded-use-llm"
+                  type="checkbox"
+                  checked={useLlm}
+                  onChange={(e) => setUseLlm(e.target.checked)}
+                />
+                启用大模型写作
+              </label>
+            </div>
+          </>
+        )}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="submit" className="btn" disabled={loading}>
             {loading ? '生成中…' : '生成报告'}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={loadDemo}>
-            加载演示示例
-          </button>
+          {debug && (
+            <button type="button" className="btn btn-secondary" onClick={loadDemo}>
+              加载演示示例
+            </button>
+          )}
         </div>
       </form>
 
       {loading && <p className="loading">正在生成证据约束回答…</p>}
-      {error && <ErrorPanel message={error.message} detail={error.detail} />}
+      {error && <ErrorPanel message={error.message} detail={error.detail} onRetry={generateReport} />}
 
       {result && (
         <div className="card">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+          <div className="badge-row">
             <Badge label={result.status} variant={statusVariant(result.status)} />
             <Badge label={`写作器：${result.writer_mode}`} variant="mode" />
           </div>
@@ -127,19 +167,10 @@ export function GroundedReportPage() {
                   <li key={i} style={{ marginBottom: '0.5rem' }}>
                     <Badge label={claim.claim_level} variant={tierBadgeVariant(claim.claim_level)} />
                     {' '}{claim.text}
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                      证据引用：{claim.evidence_refs.join(', ')}
-                    </div>
                   </li>
                 ))}
               </ul>
             </>
-          )}
-
-          {result.evidence_refs.length > 0 && (
-            <p style={{ fontSize: '0.875rem' }}>
-              <strong>证据引用：</strong> {result.evidence_refs.join(', ')}
-            </p>
           )}
 
           <WarningPanel title="分类学警告" items={lastWarnings} />
@@ -156,7 +187,7 @@ export function GroundedReportPage() {
             </>
           )}
 
-          <ProvenanceBlock data={result.provenance} />
+          {debug && <ProvenanceBlock data={result.provenance} />}
         </div>
       )}
     </>

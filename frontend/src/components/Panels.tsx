@@ -33,11 +33,22 @@ export function LimitationsPanel({ items }: { items: string[] }) {
   )
 }
 
-export function ErrorPanel({ message, detail }: { message: string; detail?: string }) {
+interface ErrorPanelProps {
+  message: string
+  detail?: string
+  onRetry?: () => void
+}
+
+export function ErrorPanel({ message, detail, onRetry }: ErrorPanelProps) {
   return (
-    <div className="panel-error">
+    <div className="panel-error" role="alert">
       <strong>{message}</strong>
       {detail && <p style={{ margin: '0.35rem 0 0' }}>{detail}</p>}
+      {onRetry && (
+        <button type="button" className="btn btn-secondary" style={{ marginTop: '0.75rem' }} onClick={onRetry}>
+          重试
+        </button>
+      )}
     </div>
   )
 }

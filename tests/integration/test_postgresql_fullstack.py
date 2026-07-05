@@ -4,6 +4,9 @@ import os
 import shutil
 
 import pytest
+from sqlalchemy import create_engine, text
+
+from rhizonp.evaluation.postgresql_fullstack_validation import run_postgresql_fullstack_validation
 
 
 def _postgres_available() -> bool:
@@ -16,8 +19,6 @@ def _postgres_available() -> bool:
     if not database_url.startswith("postgresql"):
         return False
     try:
-        from sqlalchemy import create_engine, text
-
         engine = create_engine(database_url, future=True)
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
@@ -28,8 +29,6 @@ def _postgres_available() -> bool:
 
 @pytest.mark.skipif(not _postgres_available(), reason="PostgreSQL runtime unavailable")
 def test_postgresql_fullstack_validation_passes() -> None:
-    from rhizonp.evaluation.postgresql_fullstack_validation import run_postgresql_fullstack_validation
-
     report = run_postgresql_fullstack_validation(skip_restart=True)
     assert report.database_backend == "postgresql"
     assert report.corpus.get("corpus_type") == "REAL_BOUNDED_PUBMED"

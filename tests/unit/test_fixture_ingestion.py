@@ -62,3 +62,30 @@ def test_phase1_demo_fixture_loads_and_preserves_scientific_boundaries() -> None
         assert len(candidates) == 1
         assert candidates[0].taxonomy_distance == "same_genus"
         assert "genus-level" in candidates[0].rationale["limitation"]
+
+
+def test_phase1_demo_fixture_is_idempotent() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    with session_scope(session_factory) as session:
+        first = load_phase1_demo_fixture(session, DEFAULT_PHASE1_FIXTURE_PATH)
+        second = load_phase1_demo_fixture(session, DEFAULT_PHASE1_FIXTURE_PATH)
+
+    assert first == second
+
+    with session_scope(session_factory) as session:
+        np_record = NaturalProductRecordRepository(session).find_by_source_record(
+            source_database="synthetic_fixture",
+            external_record_id="NP_FIXTURE_001",
+        )
+        assert np_record is not None
+        candidates = CandidateLinkRepository(session).list_by_status("PARTIALLY_SUPPORTED")
+        evidence = EvidenceRepository(session).list_for_subject(
+            subject_entity_type="taxon",
+            subject_entity_id=np_record.producer_taxon_id,
+        )
+
+    assert len(candidates) == 1
+    assert len(evidence) == 1

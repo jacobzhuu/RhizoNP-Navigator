@@ -1,13 +1,43 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class HealthResponse(BaseModel):
     status: str
+
+
+class ApiErrorBody(BaseModel):
+    code: str
+    message: str
+    detail: str | None = None
+
+
+class ApiErrorResponse(BaseModel):
+    error: ApiErrorBody
+
+
+class ReadinessDatabaseResponse(BaseModel):
+    connected: bool
+    backend: str
+
+
+class ReadinessCorpusResponse(BaseModel):
+    paper_count: int
+    chunk_count: int
+    has_real_corpus: bool
+
+
+class ReadinessResponse(BaseModel):
+    status: Literal["ready", "degraded", "unavailable"]
+    database: ReadinessDatabaseResponse
+    corpus: ReadinessCorpusResponse
+    embedding_provider: str
+    runtime_mode: str
+    warnings: list[str]
 
 
 class TaxonResponse(BaseModel):
@@ -133,6 +163,36 @@ class SearchResponse(BaseModel):
     results: list[SearchResultResponse]
 
 
+class CorpusCountItemResponse(BaseModel):
+    value: str
+    count: int
+
+
+class CorpusSamplePaperResponse(BaseModel):
+    title: str
+    year: int | None
+    journal: str | None
+    doi: str | None
+    pmid: str | None
+    source_url: str | None
+
+
+class CorpusSummaryResponse(BaseModel):
+    paper_count: int
+    paper_chunk_count: int
+    retrievable_tables: list[str]
+    retrieval_modes: list[str]
+    section_counts: dict[str, int]
+    source_type_counts: dict[str, int]
+    real_chunk_count: int
+    fixture_chunk_count: int
+    structured_counts: dict[str, int]
+    top_taxa: list[CorpusCountItemResponse]
+    top_compounds: list[CorpusCountItemResponse]
+    top_hosts: list[CorpusCountItemResponse]
+    sample_papers: list[CorpusSamplePaperResponse]
+
+
 class NormalizedTaxonResponse(BaseModel):
     canonical_name: str
     rank: str | None
@@ -254,3 +314,67 @@ class GroundedAnswerResponse(BaseModel):
     provenance: dict[str, Any]
     citation_validation: dict[str, Any] | None = None
     faithfulness_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+    retrieval_mode: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid_rerank"
+    top_k: int = Field(default=5, ge=1, le=20)
+    max_queries: int = Field(default=3, ge=1, le=5)
+    use_llm: bool = False
+
+    @field_validator("question")
+    @classmethod
+    def strip_question(cls, value: str) -> str:
+        stripped = value.strip()
+        if len(stripped) < 3:
+            raise ValueError("question must be at least 3 characters after trimming whitespace")
+        return stripped
+
+
+class AskPlannedQueryResponse(BaseModel):
+    query_text: str
+    query_type: str
+    rationale: str
+
+
+class AskQuestionPlanResponse(BaseModel):
+    original_question: str
+    intent: str
+    entities: dict[str, list[str]]
+    synonym_expansions: dict[str, list[str]]
+    planned_queries: list[AskPlannedQueryResponse]
+    warnings: list[str]
+    planner_mode: str
+
+
+class AskRetrievalHitResponse(BaseModel):
+    query_text: str
+    query_index: int
+    paper_id: str
+    chunk_id: str
+    title: str
+    supporting_text: str
+    pmid: str | None = None
+    doi: str | None = None
+    source_url: str | None = None
+    journal: str | None = None
+    year: int | None = None
+    section: str
+    retrieval_mode: str
+    retrieval_score: float
+    matched_terms: list[str]
+    provenance: dict[str, Any]
+    source_type: str
+    is_fixture: bool
+
+
+class AskResponse(BaseModel):
+    question_plan: AskQuestionPlanResponse
+    retrieval_mode: str
+    retrieval_hits: list[AskRetrievalHitResponse]
+    answer: GroundedAnswerResponse
+    evidence_items: list[dict[str, Any]]
+    citation_validation: dict[str, Any]
+    faithfulness_diagnostics: list[dict[str, Any]]
+    provenance: dict[str, Any]

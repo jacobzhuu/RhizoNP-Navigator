@@ -97,6 +97,10 @@ Fetch and ingest are intentionally separatable so evaluation can run offline aft
 make eval-retrieval
 ```
 
+If `DATABASE_URL` is not configured, this command automatically uses an in-memory SQLite
+database for the offline synthetic benchmark. Generated reports are written under
+`data/eval/reports/latest/`.
+
 ### Real PubMed benchmark (human labels required)
 
 `data/eval/phase2_real_pubmed_benchmark.json` defines 18 paper-level domain queries with graded relevance schema (0/1/2). **No fabricated gold labels** — annotation is pending until human review.

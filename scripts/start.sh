@@ -2,7 +2,7 @@
 # One-click RhizoNP Navigator launcher.
 #
 # Usage:
-#   ./scripts/start.sh              # setup (if needed) + optional DB + API server
+#   ./scripts/start.sh              # setup + DB + API + Vite frontend
 #   ./scripts/start.sh setup        # conda env + pip install + .env
 #   ./scripts/start.sh db           # PostgreSQL (Docker) + migrate + fixtures
 #   ./scripts/start.sh api          # start FastAPI only (foreground)
@@ -10,8 +10,11 @@
 #   ./scripts/start.sh smoke        # offline 3-case smoke test
 #   ./scripts/start.sh demo         # full offline demo
 #   ./scripts/start.sh e2e          # end-to-end evaluation suite
-#   ./scripts/start.sh app          # API + Vite frontend (background)
+#   ./scripts/start.sh app          # same as default full-stack launch
+#   ./scripts/start.sh prod         # production runtime mode (no browser, RHIZONP_RUNTIME_MODE=prod)
 #   ./scripts/start.sh stop         # stop background API and frontend
+#   ./scripts/start.sh share        # full stack + Cloudflare Tunnel (public URL)
+#   ./scripts/start.sh tunnel       # Cloudflare Tunnel only (app must be running)
 #   ./scripts/start.sh --verbose    # show full pip/migration output
 #
 # Environment variables:
@@ -20,6 +23,9 @@
 #   RHIZONP_PORT        API bind port (default: 8000)
 #   RHIZONP_FRONTEND_PORT  Vite dev port (default: 5173)
 #   RHIZONP_SKIP_DB     set to 1 to skip Docker Postgres bootstrap
+#   RHIZONP_SKIP_API_CHECKS  set to 1 to skip post-start integration checks (used by share)
+#   RHIZONP_RUNTIME_MODE  dev|prod (default: dev)
+#   RHIZONP_OPEN_BROWSER  set to 0 to avoid opening the workspace URL
 #   RHIZONP_VERBOSE     set to 1 for detailed command output
 
 set -euo pipefail
@@ -36,8 +42,10 @@ FRONTEND_LOG_FILE="${ROOT}/.rhizonp-frontend.log"
 BOOTSTRAP_LOG="${ROOT}/.rhizonp-bootstrap.log"
 DEFAULT_DATABASE_URL="postgresql://rhizonp:rhizonp_dev@localhost:5432/rhizonp"
 VERBOSE="${RHIZONP_VERBOSE:-0}"
+OPEN_BROWSER="${RHIZONP_OPEN_BROWSER:-1}"
 STEP=0
 ENV_ENSURED=0
+DB_BOOTSTRAPPED=0
 
 while [[ $# -gt 0 && "${1}" == --* ]]; do
   case "$1" in
@@ -71,6 +79,20 @@ warn() {
 die() {
   printf '[rhizonp][error] %s\n' "$*" >&2
   exit 1
+}
+
+open_browser() {
+  local url="$1"
+  if [[ "${OPEN_BROWSER}" != "1" ]]; then
+    return 0
+  fi
+  if command -v open >/dev/null 2>&1; then
+    open "${url}" >/dev/null 2>&1 || true
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "${url}" >/dev/null 2>&1 || true
+  else
+    warn "No browser opener found; open ${url} manually."
+  fi
 }
 
 spawn_detached() {
@@ -203,13 +225,19 @@ docker_available() {
 }
 
 setup_db() {
+  local require_db="${1:-0}"
   if [[ "${RHIZONP_SKIP_DB:-0}" == "1" ]]; then
     warn "RHIZONP_SKIP_DB=1; skipping database bootstrap."
+    DB_BOOTSTRAPPED=0
     return 0
   fi
 
   if ! docker_available; then
+    if [[ "${require_db}" == "1" ]]; then
+      die "Docker is required for full-stack startup because PostgreSQL backs search and entity endpoints. Start Docker, or set RHIZONP_SKIP_DB=1 for stateless API/frontend only."
+    fi
     warn "Docker unavailable — stateless API only. Run './scripts/start.sh db' after Docker is up."
+    DB_BOOTSTRAPPED=0
     return 0
   fi
 
@@ -251,32 +279,54 @@ setup_db() {
     run_cmd "literature fixtures" python -m scripts.load_literature_fixtures
   )
   log "database OK"
+  DB_BOOTSTRAPPED=1
+}
+
+stop_process() {
+  local label="$1"
+  local pid_file="$2"
+  if [[ ! -f "${pid_file}" ]]; then
+    return 0
+  fi
+  local pid
+  pid="$(cat "${pid_file}")"
+  if kill -0 "${pid}" >/dev/null 2>&1; then
+    step "stopping ${label} (pid ${pid})"
+    # spawn_detached uses start_new_session=True, so pid is the process-group leader.
+    kill -TERM "-${pid}" 2>/dev/null || kill "${pid}" || true
+    for _ in $(seq 1 10); do
+      if ! kill -0 "${pid}" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.2
+    done
+    if kill -0 "${pid}" >/dev/null 2>&1; then
+      kill -KILL "-${pid}" 2>/dev/null || kill -KILL "${pid}" || true
+      wait "${pid}" 2>/dev/null || true
+    fi
+  fi
+  rm -f "${pid_file}"
+}
+
+wait_for_port_free() {
+  local port="$1"
+  for _ in $(seq 1 25); do
+    if ! lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.2
+  done
+  warn "port ${port} still in use; continuing anyway"
 }
 
 stop_api() {
-  if [[ -f "${PID_FILE}" ]]; then
-    local pid
-    pid="$(cat "${PID_FILE}")"
-    if kill -0 "${pid}" >/dev/null 2>&1; then
-      step "stopping API (pid ${pid})"
-      kill "${pid}" || true
-      wait "${pid}" 2>/dev/null || true
-    fi
-    rm -f "${PID_FILE}"
-  fi
+  stop_process "API" "${PID_FILE}"
+  wait_for_port_free "${PORT}"
 }
 
 stop_frontend() {
-  if [[ -f "${FRONTEND_PID_FILE}" ]]; then
-    local pid
-    pid="$(cat "${FRONTEND_PID_FILE}")"
-    if kill -0 "${pid}" >/dev/null 2>&1; then
-      step "stopping frontend (pid ${pid})"
-      kill "${pid}" || true
-      wait "${pid}" 2>/dev/null || true
-    fi
-    rm -f "${FRONTEND_PID_FILE}"
-  fi
+  stop_process "frontend" "${FRONTEND_PID_FILE}"
+  wait_for_port_free "${FRONTEND_PORT}"
 }
 
 stop_all() {
@@ -310,10 +360,25 @@ start_api_background() {
 wait_for_api() {
   local url="http://${HOST}:${PORT}/api/v1/health"
   step "waiting for API health"
+  local consecutive=0
   for _ in $(seq 1 30); do
+    if [[ -f "${PID_FILE}" ]]; then
+      local pid
+      pid="$(cat "${PID_FILE}")"
+      if ! kill -0 "${pid}" >/dev/null 2>&1; then
+        warn "API process (pid ${pid}) exited early. Recent log:"
+        tail -n 20 "${LOG_FILE}" >&2 || true
+        die "API process exited before becoming ready. See ${LOG_FILE}"
+      fi
+    fi
     if curl -fsS "${url}" >/dev/null 2>&1; then
-      log "API healthy"
-      return 0
+      consecutive=$((consecutive + 1))
+      if [[ "${consecutive}" -ge 2 ]]; then
+        log "API healthy"
+        return 0
+      fi
+    else
+      consecutive=0
     fi
     sleep 1
   done
@@ -339,6 +404,7 @@ start_frontend_background() {
   stop_frontend
   cd "${ROOT}/frontend"
   spawn_detached "frontend" "${FRONTEND_PID_FILE}" "${FRONTEND_LOG_FILE}" \
+    env VITE_API_PROXY_TARGET="http://${HOST}:${PORT}" \
     npm run dev -- --host "${HOST}" --port "${FRONTEND_PORT}"
   log "  app   → http://${HOST}:${FRONTEND_PORT}/"
   log "  logs  → ${FRONTEND_LOG_FILE}"
@@ -366,37 +432,49 @@ cmd_setup() {
 }
 
 cmd_all() {
-  : >"${BOOTSTRAP_LOG}"
-  cmd_setup
-  setup_db
-  start_api_background
-  wait_for_api
-  step "API integration checks"
-  "${ROOT}/scripts/test_api_integration.sh" --base-url "http://${HOST}:${PORT}"
-  printf '\n[rhizonp] Ready.\n'
-  log "  stop API → ./scripts/start.sh stop"
-  log "  tail log → tail -f ${LOG_FILE}"
+  cmd_app
 }
 
 cmd_app() {
   : >"${BOOTSTRAP_LOG}"
-  ensure_conda_env
-  ensure_env_file
-  ensure_database_url
+  cmd_setup
+  setup_db 1
   start_api_background
   wait_for_api
+  if [[ "${RHIZONP_SKIP_API_CHECKS:-0}" != "1" ]]; then
+    step "API integration checks"
+    if [[ "${DB_BOOTSTRAPPED}" -eq 1 ]]; then
+      "${ROOT}/scripts/test_api_integration.sh" --full --base-url "http://${HOST}:${PORT}"
+    else
+      "${ROOT}/scripts/test_api_integration.sh" --base-url "http://${HOST}:${PORT}"
+    fi
+  fi
   start_frontend_background
   wait_for_frontend
   printf '\n[rhizonp] Full-stack dev ready.\n'
   log "  workspace → http://${HOST}:${FRONTEND_PORT}/"
   log "  API docs  → http://${HOST}:${PORT}/docs"
   log "  stop all  → ./scripts/start.sh stop"
+  log "  API log   → ${LOG_FILE}"
+  log "  web log   → ${FRONTEND_LOG_FILE}"
+  open_browser "http://${HOST}:${FRONTEND_PORT}/"
 }
 
-cmd="${1:-all}"
+cmd_share() {
+  RHIZONP_OPEN_BROWSER=0 RHIZONP_SKIP_API_CHECKS=1 cmd_app
+  exec "${ROOT}/scripts/tunnel.sh"
+}
+
+cmd_prod() {
+  export RHIZONP_RUNTIME_MODE=prod
+  export RHIZONP_OPEN_BROWSER=0
+  cmd_app
+}
+
+cmd="${1:-app}"
 case "${cmd}" in
   setup) cmd_setup ;;
-  db) ensure_conda_env; ensure_env_file; : >"${BOOTSTRAP_LOG}"; setup_db ;;
+  db) ensure_conda_env; ensure_env_file; : >"${BOOTSTRAP_LOG}"; setup_db 1 ;;
   api) start_api_foreground ;;
   test-api)
     ensure_conda_env
@@ -418,9 +496,12 @@ case "${cmd}" in
     make eval-end-to-end
     ;;
   app) cmd_app ;;
+  prod) cmd_prod ;;
+  share) cmd_share ;;
+  tunnel) exec "${ROOT}/scripts/tunnel.sh" ;;
   stop) stop_all ;;
   all) cmd_all ;;
   *)
-    die "Unknown command: ${cmd}. Try: setup | db | api | app | test-api | smoke | demo | e2e | stop | all"
+    die "Unknown command: ${cmd}. Try: setup | db | api | app | prod | share | tunnel | test-api | smoke | demo | e2e | stop | all"
     ;;
 esac
