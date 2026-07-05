@@ -1,12 +1,16 @@
 # Literature Source Adapter Policy
 
-Phase 2 defines source adapter boundaries for future external literature ingestion. **No real PubMed, Crossref, OpenAlex, Europe PMC, or licensed full-text integration is implemented yet.**
+Phase 2 defines source adapter boundaries for literature ingestion. **PubMed/NCBI E-utilities metadata fetch is implemented.** Crossref, OpenAlex, Europe PMC, and licensed full-text ingestion are **not implemented**.
 
 ## Implemented Today
 
 - `SourceAdapter` protocol in `rhizonp.literature.adapters`
 - `SyntheticLiteratureAdapter` for fixture-backed local development and tests
+- `PubMedEutilitiesAdapter` for metadata-only PubMed title/abstract fetch via NCBI E-utilities
+- Injectable HTTP client (`rhizonp.literature.http_client`) so unit tests never require live network calls
 - Structured chunking and provenance fields on normalized records
+- Bounded domain corpus workflow (`scripts/build_domain_corpus.py`)
+- Offline Phase 2 retrieval benchmark framework (`scripts/run_retrieval_eval.py`)
 
 ## Adapter Contract
 
@@ -21,39 +25,91 @@ class SourceAdapter(Protocol):
     def provenance(self, record: RawLiteratureRecord) -> dict: ...
 ```
 
-Design requirements for future real adapters:
+Design requirements:
 
-1. **Explicit provenance** — every fetched record must record source name, fetch timestamp, query parameters, and license/API terms version.
+1. **Explicit provenance** — every fetched record must record source name, fetch timestamp, query parameters, and API policy reference.
 2. **Isolated network I/O** — HTTP clients must be injectable so unit tests never require live network calls.
-3. **Rate-limit awareness** — adapters must expose configured request limits and backoff; callers must not hard-code credentials.
-4. **No fake integration claims** — README, API docs, and provenance docs must not say a source is integrated until fetch + normalize + tests exist.
+3. **Rate-limit awareness** — adapters must expose configured request limits; callers must not hard-code credentials.
+4. **No fake integration claims** — README/docs must not say a source is integrated until fetch + normalize + tests exist.
 5. **License-first** — full text and metadata reuse must be checked against source terms before ingestion pipelines are enabled.
+
+## PubMed / NCBI E-utilities
+
+Implemented scope:
+
+- `esearch` PMID lookup from a PubMed query term
+- `efetch` XML metadata parse for title, abstract, journal, year, DOI, PMCID, PMID
+- Conservative mapping into existing `Paper` schema through `ingest_literature_records`
+- Metadata-only ingestion (`metadata_only=true`, `full_text=false`)
+
+Not implemented:
+
+- Full-text download
+- PDF OCR
+- Bulk offline mirror beyond bounded configured corpus snapshots
+
+Configuration (see `.env.example`):
+
+- `NCBI_TOOL_NAME`
+- `NCBI_EMAIL` (recommended by NCBI policy)
+- `NCBI_API_KEY` (optional)
+- `NCBI_REQUEST_TIMEOUT`
+- `NCBI_MAX_RESULTS`
+
+Policy reference: [NCBI website and data usage policies](https://www.ncbi.nlm.nih.gov/home/about/policies/)
 
 ## Candidate External Sources (Not Implemented)
 
-| Source | Primary use | Constraints to verify before implementation |
+| Source | Primary use | Status |
 | --- | --- | --- |
-| PubMed / NCBI E-utilities | Biomedical abstracts, PMIDs | [NCBI E-utilities policy](https://www.ncbi.nlm.nih.gov/home/about/policies/); rate limits; no bulk redistribution beyond permitted use |
-| Crossref REST API | DOI metadata, titles, journals | [Crossref REST API terms](https://www.crossref.org/documentation/retrieve-metadata/rest-api/); polite pool / mailto usage |
-| OpenAlex | Scholarly metadata graph | [OpenAlex API docs](https://docs.openalex.org/); rate limits; attribution |
-| Licensed OA full text | Section-aware chunking | Publisher/license-specific; no automatic download without explicit license audit |
+| Crossref REST API | DOI metadata | Not implemented |
+| OpenAlex | Scholarly metadata graph | Not implemented |
+| Licensed OA full text | Section-aware chunking | Not implemented |
 
-## Recommended First Real Adapter
+## Domain Corpus Workflow
 
-When adding the first production adapter, prefer **Crossref metadata only**:
+`data/eval/domain_corpus_queries.json` defines bounded PubMed queries for:
 
-- Smaller scope than full-text ingestion
-- Clear REST API and DOI-centric provenance
-- Easy to mock with recorded HTTP fixtures
-- Complements existing `papers.doi` and chunk trace fields
+- plant–microbe interactions
+- rhizosphere microbiome
+- Streptomyces / biocontrol
+- microbial natural products / secondary metabolites
 
-Do **not** start with simultaneous PubMed + Crossref + OpenAlex wrappers unless each has isolated tests and provenance documentation.
+Commands:
+
+```bash
+make fetch-domain-corpus   # live network; writes data/processed/pubmed_corpus/
+make ingest-domain-corpus  # offline ingest from saved snapshot
+```
+
+Fetch and ingest are intentionally separable so evaluation can run offline after a snapshot exists.
+
+## Retrieval Benchmark
+
+`data/eval/phase2_retrieval_gold.json` provides explicit gold labels for a **small synthetic mini-benchmark**. It is not a production benchmark and makes no quality claims beyond the labeled fixture.
+
+```bash
+make eval-retrieval
+```
+
+Supported offline systems by default:
+
+- BM25
+- deterministic/hash dense
+- hybrid (hash)
+- hybrid + lexical rerank
+
+Optional systems when dependencies/models are explicitly enabled:
+
+- model-backed dense/hybrid
+- hybrid + BGE reranker
+
+Metrics: Recall@5, Recall@10, MRR@10, nDCG@10.
 
 ## Non-Goals for Phase 2
 
 - Autonomous agent fetching
-- Bulk corpus mirroring
+- Bulk corpus mirroring beyond bounded configured fetches
 - PDF OCR pipelines
-- Claiming benchmark-quality retrieval from metadata-only adapters
-
-These belong to later phases after taxonomy-aware evidence grading and evaluation baselines exist.
+- Claiming benchmark-quality retrieval without explicit gold labels
+- Taxonomy-aware evidence grading (Phase 3)

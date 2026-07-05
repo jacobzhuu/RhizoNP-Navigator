@@ -18,6 +18,7 @@ from rhizonp.literature.faiss_index import (
     create_literature_vector_index,
     faiss_available,
 )
+from rhizonp.literature.pubmed_adapter import PubMedEutilitiesAdapter
 from rhizonp.literature.reranker import (
     BGLiteratureReranker,
     LexicalOverlapReranker,
@@ -56,6 +57,7 @@ __all__ = [
     "LiteratureReranker",
     "LiteratureVectorIndex",
     "NoOpLiteratureReranker",
+    "PubMedEutilitiesAdapter",
     "NormalizedLiteratureRecord",
     "RawLiteratureRecord",
     "SearchFilters",

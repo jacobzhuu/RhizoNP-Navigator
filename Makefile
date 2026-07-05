@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval docker-test
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -39,6 +39,15 @@ load-demo-fixtures:
 
 load-literature-fixtures:
 	$(PYTHON) -m scripts.load_literature_fixtures
+
+fetch-domain-corpus:
+	$(PYTHON) -m scripts.build_domain_corpus --fetch
+
+ingest-domain-corpus:
+	$(PYTHON) -m scripts.build_domain_corpus --ingest
+
+eval-retrieval:
+	$(PYTHON) -m scripts.run_retrieval_eval
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app
