@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 5 — NCBI bounded taxonomy AUTO authority)  
+**Last updated:** 2026-07-05 (loop iteration 6 — retrieval-grounded writer + score discipline correction)  
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -22,11 +22,11 @@
 
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
-| MVP Engineering | 80% | **83%** | 86% |
-| Full Plan Functional | 59% | **65%** | 68% |
-| Empirical / Scientific Validation | 20% | **29%** | 36% |
+| MVP Engineering | 81% | **84%** | 86% |
+| Full Plan Functional | 60% | **67%** | 70% |
+| Empirical / Scientific Validation | 18% | **27%** | 32% |
 
-Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 moved **O08** and **N02** from NOT_STARTED toward IMPLEMENTED_MVP.
+Scoring uses 72 requirements below with equal weight unless noted. **Empirical validation excludes** unit tests, integration traces, bounded cache fetches, and source-provenance wiring unless they involve human judgments, real applicant omics, expert adjudication, or labeled benchmark evaluation. Iteration 5 incorrectly bumped empirical score; corrected here.
 
 ---
 
@@ -78,7 +78,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | R13 | §9.2 | Full-text / PDF ingestion | NOT_STARTED | metadata_only corpus | Licensed full text | P3 | Licensing |
 | R14 | §9.2 | Production-scale indexing | NOT_STARTED | 149-paper bounded snapshot | PubMed-wide | P3 | — |
 | R15 | §17.1 | 100-query benchmark | NOT_STARTED | 3 synthetic + 18 real templates | Expand to 100 | P1 | — |
-| R16 | §17.2 | Human relevance labels | BLOCKED_BY_EXTERNAL_INPUT | 0/18 labeled; 543 pool ready | Complete blind review | **P0** | Human reviewers |
+| R16 | §17.2 | Human relevance labels | BLOCKED_BY_EXTERNAL_INPUT | 18 queries; ~543 pooled candidates; blind export/QC/qrels workflow functional; **0 labels imported** | Complete blind review | **P0** | Human reviewers |
 | R17 | §17.3 | R@k, MRR, nDCG | FULLY_IMPLEMENTED | `retrieval_metrics.py` | Real labeled reports | P1 | R16 |
 | R18 | §17.4 | Retrieval ablation matrix | IMPLEMENTED_MVP | partial multi-system | Full plan matrix + structured DB arm | P1 | R16 |
 | R19 | §18.3 | Adapter contract tests | NOT_STARTED | PubMed unit tests only | timeout/rate-limit suite | P2 | — |
@@ -133,24 +133,24 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | W02 | §15 | Deterministic fallback writer | FULLY_IMPLEMENTED | `fallback_writer.py` | — | — | — |
 | W03 | §15 | LLM grounded writer | INTERFACE_ONLY | `writer/service.py` disabled | Constrained LLM path | P1 | API keys + eval |
 | W04 | §14 | Scientific constraint validator | IMPLEMENTED_MVP | taxonomy + writer logic | Unified evidence module | P2 | — |
-| W05 | §15.2 | Claim-level citations | IMPLEMENTED_MVP | fallback writer | LLM-enforced + eval | P1 | W03 |
-| W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | writer rule | Literature-derived conflicts | P2 | — |
+| W05 | §15.2 | Claim-level citations | IMPLEMENTED_MVP | retrieval-grounded writer + structural citation validation | Human faithfulness adjudication | P1 | V02 |
+| W06 | §14.5 | Conflict detection | IMPLEMENTED_MVP | explicit predicate conflict rule (`PRODUCES` vs `DOES_NOT_PRODUCE`) | Literature-derived semantic conflicts | P2 | — |
 | W07 | §20 | Audit view UI | IMPLEMENTED_MVP | `GroundedReport.tsx` (WIP uncommitted) | E2E browser validation | P3 | — |
-| W08 | §17.5 | Hallucination control (evaluated) | IMPLEMENTED_NOT_VALIDATED | policy tests | Human faithfulness eval | P1 | R16/W03 |
+| W08 | §17.5 | Hallucination control (evaluated) | IMPLEMENTED_NOT_VALIDATED | structural validity + heuristic diagnostics only | Human faithfulness eval | P1 | V02 |
 
 ## Phase 7 — Evaluation
 
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
-| V01 | §17.1 | 100-query benchmark | NOT_STARTED | 21 queries defined | Expand categories | P1 | — |
-| V02 | §17.2 | Human relevance labels | BLOCKED_BY_EXTERNAL_INPUT | annotation workflow ready | Import labels | **P0** | Human reviewers |
+| V01 | §17.1 | 100-query benchmark | NOT_STARTED | 21 queries defined; **deferred until R16 labels exist** | Expand after labeling | P2 | R16 |
+| V02 | §17.2 | Human relevance labels | BLOCKED_BY_EXTERNAL_INPUT | full annotation workflow (`annotation.py`, blind sheet, QC, qrels, judged@k) | Import labels only | **P0** | Human reviewers |
 | V03 | §17.3 | Retrieval metrics | FULLY_IMPLEMENTED | metric code | Labeled benchmark reports | P1 | V02 |
 | V04 | §17.4 | Multi-system comparison | IMPLEMENTED_MVP | synthetic gold runs | Real labeled comparison | P1 | V02 |
 | V05 | §17.4 | Ablation report artifacts | IMPLEMENTED_MVP | JSON reports | Plan CSV/MD paths | P2 | V02 |
-| V06 | §17.5 | Citation precision | IMPLEMENTED_NOT_VALIDATED | 1 E2E case | Human adjudication | P1 | V02 |
-| V07 | §17.5 | Citation coverage | IMPLEMENTED_MVP | 1 E2E case | Scaled eval | P2 | — |
-| V08 | §17.5 | Faithfulness metric | NOT_STARTED | — | Implement + evaluate | P1 | V02 |
-| V09 | §17.5 | Abstention accuracy | IMPLEMENTED_NOT_VALIDATED | 1 abstain case | Must-abstain benchmark set | P1 | — |
+| V06 | §17.5 | Citation precision | IMPLEMENTED_NOT_VALIDATED | structural `citation_ref_validity_rate` harness | Human adjudication | P1 | V02 |
+| V07 | §17.5 | Citation coverage | IMPLEMENTED_MVP | provenance/trace completeness metrics | Scaled labeled eval | P2 | V02 |
+| V08 | §17.5 | Faithfulness metric | IMPLEMENTED_NOT_VALIDATED | heuristic overlap diagnostic only (`human_faithfulness_pending`) | Human faithfulness labels | P1 | V02 |
+| V09 | §17.5 | Abstention accuracy | IMPLEMENTED_NOT_VALIDATED | writer regression + metrics hook | Must-abstain benchmark set | P1 | — |
 | V10 | §17.5 | Taxonomy safety accuracy | IMPLEMENTED_NOT_VALIDATED | 2 replay cases | Real query eval | P1 | V02 |
 | V11 | §18.2 | PG integration test chain | NOT_STARTED | SQLite unit tests only; **Docker unavailable in loop env** | Docker PG E2E per Option A checklist | P1 | Docker daemon |
 | V12 | §Phase 7 | Eval reports directory | FULLY_IMPLEMENTED | `data/eval/reports/latest/` | — | — | — |
@@ -163,7 +163,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | P02 | §16 | POST evidence/query | NOT_STARTED | `/taxonomy/grade` instead | Plan-shaped endpoint | P3 | — |
 | P03 | §16 | Multipart omics upload | NOT_STARTED | JSON path only | File upload API | P3 | — |
 | P04 | §16 | Candidate link API | IMPLEMENTED_MVP | `/natural-products/link` | Path rename | P3 | — |
-| P05 | §16 | Grounded answer API | IMPLEMENTED_MVP | `/writer/answer` | Path rename | P3 | — |
+| P05 | §16 | Grounded answer API | IMPLEMENTED_MVP | `/writer/answer` + optional `retrieve_evidence` | Path rename | P3 | — |
 | P06 | §5 | Unified CLI module | IMPLEMENTED_MVP | `scripts/*.py` | `rhizonp.cli` | P3 | — |
 | P07 | §20 | Four demo UI pages | IMPLEMENTED_MVP | 6 React pages | Commit stable frontend | P2 | WIP files |
 | P08 | §Phase 8 | One-command demo/smoke | FULLY_IMPLEMENTED | `make smoke`, `make demo` | — | — | — |
@@ -172,27 +172,28 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 ---
 
-## Top remaining gaps (re-ranked after iteration 3)
+## Top remaining gaps (re-ranked after iteration 6)
 
-1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT  
+1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT (workflow ready; labels absent)  
 2. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
 3. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-4. **Evaluated LLM writer + faithfulness** (W03, V08)  
-5. **100-query benchmark scale** (R15, V01)  
-6. **NPAtlas scale + bioactivity** (N02, N05) — main path wired; still 12-record bounded corpus  
-7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache only; not production mirror  
+4. **Human citation faithfulness adjudication** (W08, V08) — heuristic diagnostics only  
+5. **Evaluated LLM writer** (W03) — disabled placeholder  
+6. **NPAtlas scale + bioactivity** (N02, N05) — bounded 12-record corpus  
+7. **Full taxonomy coverage** (T01, T05) — bounded 6-taxa cache  
 8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
 
-| Iteration | Gap addressed | Score delta (functional) |
+| Iteration | Gap addressed | Score delta (functional / empirical) |
 |---|---|---|
-| 0 | Baseline audit + matrix creation | 59% → 60% (O08 verified) |
-| 1 | NPAtlas bounded adapter + snapshot | 60% → 60% (N02 partial; not main path) |
-| 2 | Own-data DB persistence (SQLite-tested) | 60% → 61% (O07 code; PG unvalidated) |
-| 3 | NCBI Taxonomy bounded resolver + cache | 61% → **62%** (T01/T05 partial) |
-| 4 | NPAtlas AUTO on own-data/API main path | 62% → **63%** (N02 main path; still bounded) |
-| 5 | NCBI bounded taxonomy AUTO authority + resolution metadata | 63% → **65%** (T01/T05/T06 partial) |
+| 0 | Baseline audit + matrix creation | 60% / 26% |
+| 1 | NPAtlas bounded adapter + snapshot | 60% / 26% |
+| 2 | Own-data DB persistence (SQLite-tested) | 61% / 26% |
+| 3 | NCBI Taxonomy bounded resolver + cache | 62% / 27% |
+| 4 | NPAtlas AUTO on own-data/API main path | 63% / 27% |
+| 5 | NCBI bounded taxonomy AUTO authority | 65% / **27%** (empirical held; iter 5 +2 error corrected) |
+| 6 | Retrieval-grounded writer + citation validity harness | **67%** / **27%** (real bounded trace; no human faithfulness) |
 
 ---
 

@@ -8,7 +8,7 @@
 | Phase 3 | **TAXONOMY-AWARE GRADING IMPLEMENTED / NCBI BOUNDED AUTHORITY RESOLUTION INTEGRATED** | AUTO resolver prefers bounded NCBI cache (6 taxa) with explicit fixture fallback; full taxonomy coverage not claimed |
 | Phase 4 | COMPLETE (MVP) | NPAtlas bounded AUTO on main path + fixture fallback for offline demos |
 | Phase 5 | **OWN-DATA-TO-LITERATURE BRIDGE IMPLEMENTED / REAL BOUNDED PUBMED CORPUS VALIDATED** | CSV ingest + literature retrieval bridge + NP linking; bounded `rhizonp_domain_v1` PubMed integration validated (SQLite/PostgreSQL); real applicant omics validation pending |
-| Phase 6 | COMPLETE (MVP) | Deterministic grounded writer with abstention/conflict states |
+| Phase 6 | **RETRIEVAL-GROUNDED WRITER IMPLEMENTED / CITATION FAITHFULNESS NOT HUMAN-VALIDATED** | Writer consumes literature retrieval hits via EvidenceItem adapter; structural citation validity harness; heuristic faithfulness diagnostics only |
 | Phase 7 | COMPLETE (MVP) | Offline end-to-end evaluation with JSON/Markdown reports |
 | Phase 8 | COMPLETE (MVP) | `make smoke`, `make demo`, docs, offline demo cases |
 
@@ -37,6 +37,14 @@ Taxonomy grading uses **`taxonomy_source=auto` by default**: prefer the offline 
 ```bash
 make validate-ncbi-taxonomy-resolver
 make fetch-ncbi-taxonomy-cache   # optional network rebuild
+```
+
+## Phase 6 retrieval-grounded writer
+
+The writer can consume **real retrieved literature hits** (bounded PubMed or fixture corpus) through an EvidenceItem adapter with full chunk→paper→PMID/DOI trace validation. Citation **validity** is checked structurally; citation **faithfulness** remains `human_faithfulness_pending` (heuristic overlap diagnostics only).
+
+```bash
+make validate-retrieval-grounded-writer
 ```
 
 ## Deferred work
