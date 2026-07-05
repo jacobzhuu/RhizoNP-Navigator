@@ -14,8 +14,8 @@ Phase 2: 文献 provenance baseline 与本地检索。
 | --- | --- | --- |
 | Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
 | Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
-| Phase 2 | in_progress | 本地 synthetic literature provenance、paper_chunks、BM25 和 search trace baseline 已开始 |
-| Phase 3 | pending | Hybrid retrieval、reranking、taxonomy-aware grading |
+| Phase 2 | in_progress | embedding/FAISS/reranker adapter boundaries 已完成；真实外部 source adapter 与 benchmark 仍待 |
+| Phase 3 | pending | taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
 | Phase 5 | pending | own-data-to-literature |
 | Phase 6 | pending | grounded writer 与拒答机制 |
@@ -103,17 +103,23 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [x] 增加 column-backed 与 metadata-backed search filters。
 - [x] 新增 `POST /api/v1/search`，返回 chunk→paper→DOI/source trace。
 - [x] 新增单元/API 测试覆盖 chunking、ingestion、retrieval、API trace。
-- [x] 运行完整本地检查与 SQLite/PostgreSQL offline migration 验证。
+- [x] 新增 literature embedding adapter boundary（hashing + optional HuggingFace）。
+- [x] 新增 optional FAISS `LiteratureVectorIndex` adapter。
+- [x] 新增 literature reranker adapter boundary（none / lexical / optional BGE）。
+- [x] 新增 `docs/LITERATURE_SOURCES.md` 与 synthetic adapter contract tests。
 
 ## Phase 2 剩余项
 
 - [x] 形成 Phase 2 provenance baseline 单独 commit。
 - [x] 形成 Phase 2 local retrieval baseline 单独 commit。
-- [ ] 生产级 model-backed literature embeddings / FAISS literature index adapter。
-- [ ] 外部 cross-encoder/BGE literature reranker 集成。
-- [x] metadata filters 的 column-backed SQL 实现和跨数据库 metadata 过滤语义。
-- [ ] 真实外部 source adapter 及许可/API rate-limit 审计。
-- [ ] Phase 2 完整 DoD 终验和单独 commit。
+- [x] literature embedding adapter boundary（hashing + optional HuggingFace）。
+- [x] optional FAISS literature vector index adapter。
+- [x] literature reranker adapter boundary（none / lexical / optional BGE）。
+- [x] source adapter 边界文档与 synthetic adapter contract tests。
+- [ ] 真实外部 source adapter 及许可/API rate-limit 实装。
+- [ ] 生产环境 model-backed embedding/reranker 质量评估与 benchmark。
+- [ ] Phase 2 完整 DoD 终验（含可选 FAISS 实装环境 parity 验证）。
+- [ ] push 到 origin/main；当前环境缺 GitHub HTTPS 凭据。
 
 ## 决策原则
 

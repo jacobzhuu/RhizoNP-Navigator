@@ -1,6 +1,8 @@
 # Literature Provenance Baseline
 
-Phase 2 currently provides a local, synthetic, test-backed provenance baseline for literature retrieval. It does not integrate real PubMed, Crossref, OpenAlex, Europe PMC, PDF full text, or licensed corpora.
+Phase 2 provides a local, synthetic, test-backed provenance baseline for literature retrieval. Real PubMed, Crossref, OpenAlex, Europe PMC, PDF full text, and licensed corpora are **not integrated**.
+
+See also: [LITERATURE_SOURCES.md](./LITERATURE_SOURCES.md)
 
 ## Implemented
 
@@ -9,10 +11,16 @@ Phase 2 currently provides a local, synthetic, test-backed provenance baseline f
 - `SourceAdapter` protocol and `SyntheticLiteratureAdapter` fixture adapter.
 - Structured chunking for title, abstract, methods, results, discussion, and additional sections.
 - Local BM25 lexical search over persisted `paper_chunks`.
-- Deterministic hashing-vector dense retrieval baseline.
-- `LiteratureVectorIndex` protocol with a JSON-serializable `InMemoryLiteratureVectorIndex` baseline.
+- Literature embedding adapter boundary:
+  - `hashing` deterministic provider for offline tests
+  - optional `huggingface` provider with injectable embedder factory
+- `LiteratureVectorIndex` protocol with:
+  - JSON-serializable `InMemoryLiteratureVectorIndex`
+  - optional `FaissLiteratureVectorIndex` when `faiss-cpu` is installed
 - Hybrid BM25 + dense fusion with configurable weights.
-- Local lexical-overlap reranker through the same `score(query, passages)` protocol shape used by the existing reranker adapter.
+- Literature reranker adapter boundary:
+  - `none`, `lexical`, and optional `bge` providers
+  - factory-based explicit selection via settings
 - `POST /api/v1/search` returning traceable results.
 
 Each search result is traceable through:
@@ -23,11 +31,9 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 
 ## Not Implemented Yet
 
-- Real external literature adapters.
-- Production model-backed literature embeddings.
-- FAISS-backed literature vector index adapter.
-- External cross-encoder or BGE reranker integration for literature results.
-- License-aware full-text download.
+- Real external literature adapters (PubMed/Crossref/OpenAlex/full text).
+- License-aware full-text download pipelines.
+- Production embedding/reranker quality benchmarks.
 - Taxonomy-aware evidence grading, which belongs to Phase 3.
 
 ## Search Modes
@@ -35,17 +41,30 @@ retrieval_result -> paper_chunk -> paper -> DOI/source URL
 `POST /api/v1/search` supports:
 
 - `bm25`: local lexical retrieval.
-- `dense`: deterministic hashing-vector retrieval through the local vector index boundary, intended for reproducible tests and interface validation.
-- `hybrid`: weighted BM25 + deterministic dense fusion through the same vector index boundary.
-- `hybrid_rerank`: hybrid retrieval followed by local lexical-overlap reranking.
+- `dense`: embedding-backed retrieval through the literature vector index boundary. Defaults to deterministic hashing embeddings for reproducible tests.
+- `hybrid`: weighted BM25 + dense fusion through the same vector index boundary.
+- `hybrid_rerank`: hybrid retrieval followed by the configured literature reranker (default: lexical overlap).
 
-These modes are intentionally deterministic. They are not benchmarks and do not claim model-level semantic retrieval quality.
+These modes are intentionally deterministic in the default test configuration. They are not benchmarks and do not claim model-level semantic retrieval quality unless explicit model-backed providers are configured.
+
+## Adapter Settings
+
+Phase 2 literature adapters are configured through environment variables (see `.env.example`):
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `LITERATURE_EMBEDDING_PROVIDER` | `hashing` | `hashing` or `huggingface` |
+| `LITERATURE_HASHING_DIMENSIONS` | `128` | Deterministic test embedding size |
+| `LITERATURE_VECTOR_INDEX_BACKEND` | `in_memory` | `in_memory` or `faiss` |
+| `LITERATURE_RERANKER` | `lexical` | `none`, `lexical`, or `bge` |
+
+Model IDs remain separate (`EMBEDDING_MODEL`, `RERANKER_MODEL`) and must be explicit when selecting model-backed providers.
 
 ## Vector Index Boundary
 
-`InMemoryLiteratureVectorIndex` can be built from persisted `PaperChunk` rows, searched with an embedding provider, and saved/loaded as JSON via `pathlib`. Dense and hybrid retrieval accept an optional `LiteratureVectorIndex`, so a future FAISS/model-backed adapter can replace the local implementation without changing API result provenance.
+`InMemoryLiteratureVectorIndex` and optional `FaissLiteratureVectorIndex` can be built from persisted `PaperChunk` rows, searched with an embedding provider, and saved/loaded via `pathlib`. Dense and hybrid retrieval accept an optional `LiteratureVectorIndex`, so adapters can be swapped without changing API result provenance.
 
-The local index stores chunk IDs, paper IDs, text, embedding vectors, and trace metadata such as section, source hash, DOI, and source URL. It is a deterministic development and test baseline, not a production semantic search index.
+The local index stores chunk IDs, paper IDs, text, embedding vectors, and trace metadata such as section, source hash, DOI, and source URL.
 
 ## Metadata Filters
 
