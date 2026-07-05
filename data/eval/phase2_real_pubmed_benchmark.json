@@ -1,0 +1,140 @@
+{
+  "annotation_status": "pending",
+  "benchmark_id": "phase2_real_pubmed_v1",
+  "benchmark_type": "real_pubmed",
+  "corpus_id": "rhizonp_domain_v1",
+  "description": "Paper-level real PubMed retrieval benchmark for Phase 2 empirical validation. Queries are defined; human relevance labels (grades 0/1/2) must be imported after manual review. No fabricated gold labels.",
+  "label_schema": {
+    "0": "not relevant",
+    "1": "partially relevant",
+    "2": "highly relevant"
+  },
+  "queries": [
+    {
+      "annotation_status": "pending",
+      "category": "plant_microbe_interactions",
+      "labels": [],
+      "query": "plant microbe interaction rhizosphere signaling",
+      "query_id": "RQ001"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "plant_microbe_interactions",
+      "labels": [],
+      "query": "root exudates recruit beneficial rhizosphere bacteria",
+      "query_id": "RQ002"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "plant_microbe_interactions",
+      "labels": [],
+      "query": "symbiotic plant root colonization by bacteria",
+      "query_id": "RQ003"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "rhizosphere_microbiome",
+      "labels": [],
+      "query": "rhizosphere microbiome diversity and assembly",
+      "query_id": "RQ004"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "rhizosphere_microbiome",
+      "labels": [],
+      "query": "rhizosphere microbiome metabolite profiling",
+      "query_id": "RQ005"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "rhizosphere_microbiome",
+      "labels": [],
+      "query": "root associated microbiome under stress",
+      "query_id": "RQ006"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "pgpr_streptomyces_biocontrol",
+      "labels": [],
+      "query": "PGPR plant growth promotion rhizosphere",
+      "query_id": "RQ007"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "pgpr_streptomyces_biocontrol",
+      "labels": [],
+      "query": "Streptomyces biocontrol soilborne plant pathogens",
+      "query_id": "RQ008"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "pgpr_streptomyces_biocontrol",
+      "labels": [],
+      "query": "Streptomyces rhizosphere colonization biocontrol",
+      "query_id": "RQ009"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "pgpr_streptomyces_biocontrol",
+      "labels": [],
+      "query": "biocontrol bacteria suppress fungal root disease",
+      "query_id": "RQ010"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "microbial_natural_products",
+      "labels": [],
+      "query": "microbial natural products secondary metabolites bioactivity",
+      "query_id": "RQ011"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "microbial_natural_products",
+      "labels": [],
+      "query": "actinobacteria natural product discovery",
+      "query_id": "RQ012"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "microbial_natural_products",
+      "labels": [],
+      "query": "bacterial polyketide nonribosomal peptide natural products",
+      "query_id": "RQ013"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "metabolite_plant_microbe_bridge",
+      "labels": [],
+      "query": "microbial metabolites modulate plant immune response",
+      "query_id": "RQ014"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "metabolite_plant_microbe_bridge",
+      "labels": [],
+      "query": "rhizosphere secondary metabolites plant microbe interaction",
+      "query_id": "RQ015"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "metabolite_plant_microbe_bridge",
+      "labels": [],
+      "query": "siderophore rhizosphere plant microbe iron competition",
+      "query_id": "RQ016"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "metabolite_plant_microbe_bridge",
+      "labels": [],
+      "query": "microbial volatile organic compounds plant root growth",
+      "query_id": "RQ017"
+    },
+    {
+      "annotation_status": "pending",
+      "category": "plant_microbe_interactions",
+      "labels": [],
+      "query": "mycorrhiza helper bacteria rhizosphere",
+      "query_id": "RQ018"
+    }
+  ]
+}

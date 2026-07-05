@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 
 def recall_at_k(relevant: set[str], retrieved: Sequence[str], k: int) -> float:
@@ -47,3 +47,41 @@ def aggregate_metric(values: Iterable[float]) -> float:
     if not values_list:
         return 0.0
     return sum(values_list) / len(values_list)
+
+
+def _relevant_pmids(grades: Mapping[str, int], *, min_grade: int = 1) -> set[str]:
+    return {pmid for pmid, grade in grades.items() if grade >= min_grade}
+
+
+def graded_recall_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
+    """Recall@k using paper-level PMIDs; grades >= 1 count as relevant."""
+    relevant = _relevant_pmids(grades)
+    return recall_at_k(relevant, retrieved, k)
+
+
+def graded_mrr_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
+    relevant = _relevant_pmids(grades)
+    return mrr_at_k(relevant, retrieved, k)
+
+
+def graded_ndcg_at_k(grades: Mapping[str, int], retrieved: Sequence[str], k: int) -> float:
+    """nDCG@k with graded gains (0, 1, 2) for paper-level PMIDs."""
+    if not grades:
+        return 0.0
+
+    def dcg(items: Sequence[str]) -> float:
+        score = 0.0
+        for index, item in enumerate(items[:k], start=1):
+            gain = float(grades.get(item, 0))
+            if gain > 0.0:
+                score += gain / math.log2(index + 1)
+        return score
+
+    ideal_gains = sorted((float(grade) for grade in grades.values() if grade > 0), reverse=True)
+    ideal_gains = ideal_gains[:k]
+    if not ideal_gains:
+        return 0.0
+    ideal_dcg = sum(gain / math.log2(index + 2) for index, gain in enumerate(ideal_gains))
+    if ideal_dcg == 0.0:
+        return 0.0
+    return dcg(retrieved) / ideal_dcg

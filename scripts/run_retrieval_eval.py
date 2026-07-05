@@ -16,12 +16,24 @@ def parse_args() -> argparse.Namespace:
         "--gold",
         type=Path,
         default=PROJECT_ROOT / "data" / "eval" / "phase2_retrieval_gold.json",
-        help="Path to retrieval gold benchmark JSON.",
+        help="Path to synthetic retrieval gold benchmark JSON.",
+    )
+    parser.add_argument(
+        "--real-benchmark",
+        type=Path,
+        default=None,
+        help="Path to real PubMed benchmark JSON (paper-level PMID labels).",
+    )
+    parser.add_argument(
+        "--corpus",
+        type=Path,
+        default=None,
+        help="Corpus snapshot for real benchmark evaluation (offline).",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=PROJECT_ROOT / "data" / "eval" / "reports" / "phase2_retrieval_report.json",
+        default=None,
         help="Path for benchmark report JSON output.",
     )
     parser.add_argument(
@@ -38,12 +50,22 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    from rhizonp.domain.models import Base
+    from rhizonp.evaluation.real_benchmark import (
+        load_real_benchmark,
+        real_benchmark_report_to_dict,
+        run_real_retrieval_benchmark,
+    )
     from rhizonp.evaluation.retrieval_benchmark import (
         benchmark_report_to_dict,
         load_retrieval_benchmark,
         run_retrieval_benchmark,
     )
-    from rhizonp.ingestion.literature import load_phase2_literature_fixture
+    from rhizonp.ingestion.corpus import load_corpus_snapshot, normalized_records_from_snapshot
+    from rhizonp.ingestion.literature import (
+        ingest_literature_records,
+        load_phase2_literature_fixture,
+    )
     from rhizonp.storage.postgres import (
         create_engine_from_settings,
         create_session_factory,
@@ -51,23 +73,56 @@ def main() -> None:
     )
 
     args = parse_args()
-    benchmark = load_retrieval_benchmark(args.gold)
     engine = create_engine_from_settings()
+    Base.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
 
-    with session_scope(session_factory) as session:
-        load_phase2_literature_fixture(session)
-        report = run_retrieval_benchmark(
-            session,
-            benchmark,
-            include_model_dense=args.include_model_dense,
-            include_bge_rerank=args.include_bge_rerank,
+    if args.real_benchmark is not None:
+        benchmark = load_real_benchmark(args.real_benchmark)
+        corpus_path = args.corpus or (
+            PROJECT_ROOT / "data" / "snapshots" / "pubmed" / "rhizonp_domain_v1" / "corpus.json"
+        )
+        snapshot = load_corpus_snapshot(corpus_path)
+        records = normalized_records_from_snapshot(snapshot)
+        output_path = args.output or (
+            PROJECT_ROOT / "data" / "eval" / "reports" / "phase2_real_retrieval_report.json"
         )
 
-    output_path = args.output
+        with session_scope(session_factory) as session:
+            ingest_literature_records(session, records)
+            report = run_real_retrieval_benchmark(
+                session,
+                benchmark,
+                include_model_dense=args.include_model_dense,
+                include_bge_rerank=args.include_bge_rerank,
+            )
+
+        if report.labeled_query_count == 0:
+            print(
+                "Real benchmark has no human labels yet; "
+                "export candidates, annotate, and import labels before evaluation."
+            )
+            report_dict = real_benchmark_report_to_dict(report)
+        else:
+            report_dict = real_benchmark_report_to_dict(report)
+    else:
+        benchmark = load_retrieval_benchmark(args.gold)
+        output_path = args.output or (
+            PROJECT_ROOT / "data" / "eval" / "reports" / "phase2_retrieval_report.json"
+        )
+        with session_scope(session_factory) as session:
+            load_phase2_literature_fixture(session)
+            report = run_retrieval_benchmark(
+                session,
+                benchmark,
+                include_model_dense=args.include_model_dense,
+                include_bge_rerank=args.include_bge_rerank,
+            )
+        report_dict = benchmark_report_to_dict(report)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
-        json.dumps(benchmark_report_to_dict(report), indent=2, sort_keys=True),
+        json.dumps(report_dict, indent=2, sort_keys=True),
         encoding="utf-8",
     )
     print(f"Wrote retrieval benchmark report to {output_path}")

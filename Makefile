@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval docker-test
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels docker-test
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -48,6 +48,17 @@ ingest-domain-corpus:
 
 eval-retrieval:
 	$(PYTHON) -m scripts.run_retrieval_eval
+
+eval-real-retrieval:
+	$(PYTHON) -m scripts.run_retrieval_eval --real-benchmark data/eval/phase2_real_pubmed_benchmark.json
+
+export-annotation-candidates:
+	$(PYTHON) -m scripts.export_annotation_candidates
+
+import-annotation-labels:
+	@echo "Usage: make import-annotation-labels REVIEW=path/to/reviewed.csv"
+	@test -n "$(REVIEW)"
+	$(PYTHON) -m scripts.import_annotation_labels --review $(REVIEW)
 
 docker-test:
 	$(COMPOSE) up --build --abort-on-container-exit --exit-code-from app app
