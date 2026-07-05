@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk
 from rhizonp.literature.retrieval import HybridWeights, SearchResult, search_paper_chunks
+from rhizonp.omics.corpus_provenance import CorpusType, classify_paper
 from rhizonp.omics.query_builder import (
     GeneratedQuery,
     QueryConstructionContext,
@@ -104,14 +105,7 @@ class OwnDataLiteratureRetriever(Protocol):
 
 
 def _paper_is_fixture(paper: Paper | None) -> bool:
-    if paper is None:
-        return False
-    provenance = paper.provenance or {}
-    if provenance.get("fixture") is True:
-        return True
-    if paper.journal and paper.journal.casefold() == "fixture":
-        return True
-    return False
+    return classify_paper(paper) in {CorpusType.FIXTURE_TEST_ONLY, CorpusType.SYNTHETIC}
 
 
 def _chunk_source_type(chunk_metadata: dict[str, Any]) -> str:
@@ -180,6 +174,7 @@ def search_result_to_evidence_hit(
     )
 
     trace = result.trace
+    paper_corpus_type = classify_paper(paper)
     return LiteratureEvidenceHit(
         query_text=query_text,
         query_index=query_index,
@@ -200,6 +195,7 @@ def search_result_to_evidence_hit(
             "trace": trace,
             "score_components": dict(result.score_components),
             "association_to_query_to_chunk": True,
+            "corpus_type": paper_corpus_type.value,
         },
         source_type=_chunk_source_type(metadata),
         is_fixture=_paper_is_fixture(paper),
@@ -236,6 +232,8 @@ class DbBackedLiteratureRetriever:
     dense_weight: float = 0.5
     reranker_weight: float = 1.0
     corpus_label: str = "db_backed"
+    corpus_id: str | None = None
+    corpus_type: str | None = None
 
     def retrieve_for_association(
         self,
@@ -284,7 +282,7 @@ class DbBackedLiteratureRetriever:
             )
 
         collected: list[LiteratureEvidenceHit] = []
-        any_fixture = False
+        hit_corpus_types: set[CorpusType] = set()
         for generated_query in generated:
             results = search_paper_chunks(
                 self.session,
@@ -307,8 +305,7 @@ class DbBackedLiteratureRetriever:
                     query_taxon=query_taxon,
                     observation_method=observation_method,
                 )
-                if hit.is_fixture:
-                    any_fixture = True
+                hit_corpus_types.add(CorpusType(hit.provenance.get("corpus_type", CorpusType.UNKNOWN.value)))
                 collected.append(hit)
 
         hits = _dedupe_hits(collected)
@@ -322,13 +319,23 @@ class DbBackedLiteratureRetriever:
                 provenance={
                     "retriever": "DbBackedLiteratureRetriever",
                     "corpus_label": self.corpus_label,
+                    "corpus_id": self.corpus_id,
+                    "corpus_type": self.corpus_type,
                     "compound_identity_known": context.compound_identity_known,
                 },
             )
 
-        status = LiteratureRetrievalStatus.RETRIEVED
-        if any_fixture and all(hit.is_fixture for hit in hits):
+        resolved_corpus_type = self.corpus_type
+        if resolved_corpus_type is None and len(hit_corpus_types) == 1:
+            resolved_corpus_type = next(iter(hit_corpus_types)).value
+
+        if hit_corpus_types and hit_corpus_types <= {
+            CorpusType.FIXTURE_TEST_ONLY,
+            CorpusType.SYNTHETIC,
+        }:
             status = LiteratureRetrievalStatus.FIXTURE_TEST_ONLY
+        else:
+            status = LiteratureRetrievalStatus.RETRIEVED
 
         return LiteratureRetrievalResult(
             status=status,
@@ -339,6 +346,8 @@ class DbBackedLiteratureRetriever:
             provenance={
                 "retriever": "DbBackedLiteratureRetriever",
                 "corpus_label": self.corpus_label,
+                "corpus_id": self.corpus_id,
+                "corpus_type": resolved_corpus_type,
                 "canonical_search": "rhizonp.literature.retrieval.search_paper_chunks",
                 "hit_count": len(hits),
             },
@@ -390,6 +399,8 @@ def retrieve_literature_for_association(
     retrieval_mode: str = "hybrid_rerank",
     top_k: int = 5,
     max_queries: int = 3,
+    corpus_id: str | None = None,
+    corpus_type: str | None = None,
 ) -> LiteratureRetrievalResult:
     if not enabled:
         return LiteratureRetrievalResult(
@@ -423,6 +434,8 @@ def retrieve_literature_for_association(
         retrieval_mode=retrieval_mode,
         top_k=top_k,
         max_queries=max_queries,
+        corpus_id=corpus_id,
+        corpus_type=corpus_type,
     )
     return active.retrieve_for_association(
         context,

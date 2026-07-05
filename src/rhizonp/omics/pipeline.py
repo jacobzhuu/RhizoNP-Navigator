@@ -33,6 +33,8 @@ class OwnDataPipelineOptions:
     retrieval_mode: str = "hybrid_rerank"
     top_k: int = 5
     max_queries: int = 3
+    corpus_id: str | None = None
+    corpus_type: str | None = None
 
 
 @dataclass(frozen=True)
@@ -150,6 +152,8 @@ def run_own_data_pipeline(
             retrieval_mode=resolved_options.retrieval_mode,
             top_k=resolved_options.top_k,
             max_queries=resolved_options.max_queries,
+            corpus_id=resolved_options.corpus_id,
+            corpus_type=resolved_options.corpus_type,
         ).to_dict()
         _append_literature_limitations(limitations, literature_retrieval)
 

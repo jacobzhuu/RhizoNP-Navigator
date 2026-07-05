@@ -115,11 +115,35 @@ def main() -> None:
 
     snapshot = load_corpus_snapshot(corpus_path)
     records = normalized_records_from_snapshot(snapshot)
-    engine = create_engine_from_settings()
+    try:
+        engine = create_engine_from_settings()
+        backend = "configured_database"
+    except RuntimeError:
+        from sqlalchemy import create_engine
+        from sqlalchemy.pool import StaticPool
+
+        from rhizonp.domain.models import Base
+
+        engine = create_engine(
+            "sqlite+pysqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
+        )
+        Base.metadata.create_all(engine)
+        backend = "sqlite_in_memory"
+
     session_factory = create_session_factory(engine)
     with session_scope(session_factory) as session:
         summary = ingest_literature_records(session, records)
-    print(f"Ingested corpus snapshot from {corpus_path}: {summary}")
+    metadata = snapshot.get("metadata", {})
+    print(
+        "Ingested bounded PubMed corpus: "
+        f"corpus_id={metadata.get('corpus_id', metadata.get('corpus_name'))} "
+        f"records={len(records)} papers_added={summary.papers} chunks_added={summary.paper_chunks} "
+        f"backend={backend} source={metadata.get('source_name')}"
+    )
+    print(f"Snapshot: {corpus_path}")
 
 
 if __name__ == "__main__":

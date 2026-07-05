@@ -71,6 +71,9 @@ run-leakage-audit:
 eval-end-to-end:
 	$(PYTHON) -m scripts.run_end_to_end_eval
 
+validate-real-pubmed-bridge:
+	$(PYTHON) -m scripts.validate_real_pubmed_bridge
+
 demo:
 	$(PYTHON) -m scripts.run_demo
 
