@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "corpus_name": "pubmed_fixture_corpus",
+    "description": "Offline PubMed corpus snapshot for tests.",
+    "fetched_at": "2026-07-05T00:00:00+00:00",
+    "source_name": "pubmed_eutils",
+    "metadata_only": true,
+    "full_text": false,
+    "record_count": 2
+  },
+  "records": [
+    {
+      "source_id": "12345678",
+      "source_name": "pubmed_eutils",
+      "title": "Streptomyces secondary metabolites in the plant rhizosphere",
+      "abstract": "Rhizosphere microbiome studies link Streptomyces to biocontrol.",
+      "sections": {},
+      "doi": "10.0000/rhizonp.pubmed.fixture.001",
+      "pmid": "12345678",
+      "pmcid": null,
+      "year": 2024,
+      "journal": "Fixture Journal of Plant Microbe Interactions",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/12345678/",
+      "license": "metadata_only",
+      "metadata": {
+        "source_type": "paper",
+        "pubmed_record": true
+      },
+      "provenance": {
+        "source_name": "pubmed_eutils",
+        "source_id": "12345678",
+        "metadata_only": true,
+        "full_text": false,
+        "api": "NCBI E-utilities"
+      }
+    }
+  ]
+}

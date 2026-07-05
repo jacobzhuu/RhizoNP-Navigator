@@ -1,0 +1,28 @@
+{
+  "corpus_name": "rhizonp_domain_v1",
+  "description": "Bounded PubMed metadata corpus for plant-microbe, rhizosphere, and microbial natural product literature.",
+  "default_retmax": 5,
+  "max_total_records": 50,
+  "queries": [
+    {
+      "query_id": "C001",
+      "term": "plant microbe interaction[Title/Abstract] AND rhizosphere[Title/Abstract]",
+      "retmax": 5
+    },
+    {
+      "query_id": "C002",
+      "term": "Streptomyces[Title/Abstract] AND biocontrol[Title/Abstract]",
+      "retmax": 5
+    },
+    {
+      "query_id": "C003",
+      "term": "microbial natural products[Title/Abstract] AND secondary metabolites[Title/Abstract]",
+      "retmax": 5
+    },
+    {
+      "query_id": "C004",
+      "term": "rhizosphere microbiome[Title/Abstract] AND metabolites[Title/Abstract]",
+      "retmax": 5
+    }
+  ]
+}
