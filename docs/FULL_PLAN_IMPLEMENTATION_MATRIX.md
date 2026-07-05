@@ -1,7 +1,7 @@
 # RhizoNP Navigator — Full Plan Implementation Matrix
 
 **Primary specification:** `RHIZONP_NAVIGATOR_MIGRATION_PLAN.md` (v1.0)  
-**Last updated:** 2026-07-05 (loop iteration 1)  
+**Last updated:** 2026-07-05 (loop iteration 3 — priority correction re-audit)  
 **Repository baseline:** `main` @ Phase 5.2 + NPAtlas bounded adapter
 
 ## Status legend
@@ -23,8 +23,8 @@
 | Lens | Conservative | Point | Optimistic |
 |---|---:|---:|---:|
 | MVP Engineering | 80% | **83%** | 86% |
-| Full Plan Functional | 57% | **61%** | 64% |
-| Empirical / Scientific Validation | 19% | **26%** | 33% |
+| Full Plan Functional | 57% | **62%** | 65% |
+| Empirical / Scientific Validation | 19% | **27%** | 34% |
 
 Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 moved **O08** and **N02** from NOT_STARTED toward IMPLEMENTED_MVP.
 
@@ -87,12 +87,12 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
-| T01 | §13.1 | Taxonomy normalization | SYNTHETIC_FIXTURE_ONLY | `taxonomy_mapping.json` | NCBI Taxonomy resolver | **P0** | External API |
-| T02 | §13.1 | Strain/species/genus parsing | IMPLEMENTED_MVP | NormalizedTaxon fields | Unmapped → unresolved | P2 | T01 |
+| T01 | §13.1 | Taxonomy normalization | IMPLEMENTED_MVP | `ncbi_resolver.py`, bounded cache (4 taxa), `resolver_mode=ncbi_cached` | Default still fixture; not full NCBI coverage | **P0** | — |
+| T02 | §13.1 | Strain/species/genus parsing | IMPLEMENTED_MVP | NormalizedTaxon + fixture strain labels | Strain labels absent from NCBI cache | P2 | — |
 | T03 | §13.2 | Rank-aware distance | FULLY_IMPLEMENTED | `taxonomy/distance.py` | — | — | — |
 | T04 | §8.1 | Evidence tier A–D | FULLY_IMPLEMENTED | `taxonomy/policy.py` | Standalone policy doc | P3 | — |
-| T05 | §13.1 | External taxonomy IDs | SYNTHETIC_FIXTURE_ONLY | fixture external_ids | Live resolver | P1 | T01 |
-| T06 | §13.1 | Synonym resolution (production) | IMPLEMENTED_MVP | Local alias map | DB synonym tables | P2 | T01 |
+| T05 | §13.1 | External taxonomy IDs | IMPLEMENTED_MVP | Real `ncbi_taxid` in bounded cache entries | Full resolver default + live fetch | P1 | — |
+| T06 | §13.1 | Synonym resolution (production) | IMPLEMENTED_MVP | NCBI cache synonyms + fixture aliases | DB synonym tables | P2 | — |
 | T07 | §10.3 | UNRESOLVED handling | FULLY_IMPLEMENTED | normalization + linking | — | — | — |
 | T08 | §18.4 | Scientific safety tests | FULLY_IMPLEMENTED | taxonomy/writer tests | Broader case set | P2 | — |
 | T09 | §8 | docs/EVIDENCE_POLICY.md | NOT_STARTED | Policy in code/tests | Standalone doc | P3 | — |
@@ -102,7 +102,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | ID | Plan Section | Requirement | Current Status | Evidence | Missing Work | Priority | Blocker |
 |---|---|---|---|---|---|---|---|
 | N01 | §Phase 4 | Candidate linking engine | IMPLEMENTED_MVP | `candidate_engine.py` | Default still synthetic fixture | P1 | — |
-| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_MVP | `ingestion/npatlas.py`, bounded snapshot (12 records), linking source switch | Full NPAtlas scale; bioactivity fields; live default | **P0** | CC-BY-NC scope |
+| N02 | §9.3 | NPAtlas integration | IMPLEMENTED_NOT_VALIDATED | Adapter + 12-record snapshot; **not used by default pipeline/API** | Wire main own-data/linking path; bioactivity; scale | **P0** | CC-BY-NC scope |
 | N03 | §9.3 | MIBiG adapter (interface) | NOT_STARTED | Plan defers full integration | Stub `MibigAdapter` | P3 | DEFERRED_BY_PLAN |
 | N04 | §13.3 | Compound normalization | IMPLEMENTED_MVP | alias file + InChIKey in NPAtlas records | Structure search | P2 | — |
 | N05 | §7 | Bioactivity DB records | SYNTHETIC_FIXTURE_ONLY | fixture JSON fields | `bioactivities` table | P2 | — |
@@ -119,7 +119,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | O04 | §10 | 16S observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | De-sensitized real 16S | P1 | Applicant data |
 | O05 | §10 | LC-MS observations (real) | BLOCKED_BY_EXTERNAL_INPUT | demo fixture only | Real LC-MS validation | P1 | Applicant data |
 | O06 | §8.2 | Chemical ID tier policy | IMPLEMENTED_MVP | C4 limitations in pipeline | Full C1–C4 enforcement | P2 | — |
-| O07 | §10.2 | Association import to PostgreSQL | IMPLEMENTED_MVP | `omics/persistence.py`, opt-in `persist_to_database` | API flag; entity resolution IDs null | P1 | — |
+| O07 | §10.2 | Association DB persistence | IMPLEMENTED_NOT_VALIDATED | `omics/persistence.py` opt-in; **validated on SQLite in-memory tests only** | PostgreSQL integration (V11); API flag | P1 | Docker daemon |
 | O08 | §10 / Phase 5 | Own-data → literature search | IMPLEMENTED_MVP | `literature_bridge.py`, `search_paper_chunks`, Phase 5.2 validation | Default disabled; not PubMed-wide quality eval | P1 | R16 for quality |
 | O09 | §10.4 | Candidate matrix + paper counts | IMPLEMENTED_MVP | CSV has literature_status/hit_count | Richer paper-level matrix | P2 | — |
 | O10 | §10.4 | Validation suggestions | IMPLEMENTED_MVP | limitations lists | Evidence-driven from papers | P2 | — |
@@ -152,7 +152,7 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 | V08 | §17.5 | Faithfulness metric | NOT_STARTED | — | Implement + evaluate | P1 | V02 |
 | V09 | §17.5 | Abstention accuracy | IMPLEMENTED_NOT_VALIDATED | 1 abstain case | Must-abstain benchmark set | P1 | — |
 | V10 | §17.5 | Taxonomy safety accuracy | IMPLEMENTED_NOT_VALIDATED | 2 replay cases | Real query eval | P1 | V02 |
-| V11 | §18.2 | PG integration test chain | NOT_STARTED | unit tests only | Docker PG E2E | P2 | Docker CI |
+| V11 | §18.2 | PG integration test chain | NOT_STARTED | SQLite unit tests only; **Docker unavailable in loop env** | Docker PG E2E per Option A checklist | P1 | Docker daemon |
 | V12 | §Phase 7 | Eval reports directory | FULLY_IMPLEMENTED | `data/eval/reports/latest/` | — | — | — |
 
 ## Phase 8 — Demo & delivery
@@ -172,24 +172,25 @@ Scoring uses 72 requirements below with equal weight unless noted. Iteration 1 m
 
 ---
 
-## Top remaining gaps (re-ranked after iteration 1)
+## Top remaining gaps (re-ranked after iteration 3)
 
 1. **Human-labeled real retrieval benchmark** (R16, V02) — BLOCKED_BY_EXTERNAL_INPUT  
-2. **Production taxonomy authority** (T01, T05) — external NCBI integration  
-3. **Full-scale NPAtlas linking as default** (N02) — bounded snapshot exists; not production-wide  
+2. **NPAtlas on main candidate/own-data path** (N02) — adapter exists; default runtime still synthetic fixture  
+3. **PostgreSQL full-stack validation** (V11, O07, P10) — **blocked: Docker daemon unavailable locally**  
 4. **Real applicant omics validation** (O04, O05, O11) — BLOCKED_BY_EXTERNAL_INPUT  
-5. **Own-data PostgreSQL persistence** (O07)  
+5. **NCBI taxonomy as default resolver** (T01, T05) — bounded cache exists; default `taxonomy_resolver=fixture`  
 6. **Evaluated LLM writer + faithfulness** (W03, V08)  
-7. **PostgreSQL full-stack integration test** (V11, P10)  
-8. **100-query benchmark scale** (R15, V01)
+7. **100-query benchmark scale** (R15, V01)  
+8. **MIBiG adapter stub** — **deferred; do not prioritize interface-only checkbox**
 
 ## Iteration log
 
 | Iteration | Gap addressed | Score delta (functional) |
 |---|---|---|
-| 0 | Baseline audit + matrix creation | 59% → 60% (O08 verified; matrix live) |
-| 1 | NPAtlas bounded adapter + snapshot | 59% → **60%** (N02 partial) |
-| 2 | Own-data PostgreSQL persistence (opt-in) | 60% → **61%** (O07 partial) |
+| 0 | Baseline audit + matrix creation | 59% → 60% (O08 verified) |
+| 1 | NPAtlas bounded adapter + snapshot | 60% → 60% (N02 partial; not main path) |
+| 2 | Own-data DB persistence (SQLite-tested) | 60% → 61% (O07 code; PG unvalidated) |
+| 3 | NCBI Taxonomy bounded resolver + cache | 61% → **62%** (T01/T05 partial) |
 
 ---
 

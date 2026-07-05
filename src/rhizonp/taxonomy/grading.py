@@ -49,16 +49,19 @@ class EvidenceGradingResult:
         }
 
 
-def grade_evidence(
+def     grade_evidence(
     query_label: str | Any,
     literature_label: str | Any,
     *,
     observation_method: str | None = None,
     mapping_path: str | None = None,
+    resolver_mode: str | None = None,
 ) -> EvidenceGradingResult:
     kwargs: dict[str, Any] = {}
     if mapping_path is not None:
         kwargs["mapping_path"] = mapping_path
+    if resolver_mode is not None:
+        kwargs["resolver_mode"] = resolver_mode
 
     query_taxon = normalize_taxon(query_label, **kwargs)
     literature_taxon = normalize_taxon(literature_label, **kwargs)
