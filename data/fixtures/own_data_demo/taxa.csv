@@ -1,0 +1,3 @@
+observation_id,raw_label,rank,method,treatment,timepoint,layer,effect_size,adjusted_p
+taxon_obs_001,Streptomyces,genus,synthetic_16S_fixture,RootInjury75,Day10,rhizosphere,0.72,0.003
+taxon_obs_002,Bacillus subtilis,species,synthetic_16S_fixture,RootInjury75,Day10,rhizosphere,0.41,0.021

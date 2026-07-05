@@ -1,0 +1,3 @@
+association_id,source_observation_id,target_observation_id,source_raw_label,target_raw_label,score,adjusted_p,method,direction,treatment,timepoint
+assoc_001,taxon_obs_001,met_obs_001,Streptomyces,Feature_M123,0.72,0.003,synthetic_sPLS_fixture,positive,RootInjury75,Day10
+assoc_002,taxon_obs_001,met_obs_002,Streptomyces,rapamycin,0.55,0.018,synthetic_sPLS_fixture,positive,RootInjury75,Day10

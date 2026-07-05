@@ -36,6 +36,8 @@ from .schemas import (
     NaturalProductLinkRowResponse,
     NormalizedTaxonResponse,
     OmicsAssociationResponse,
+    OwnDataPipelineRequest,
+    OwnDataPipelineResponse,
     SearchRequest,
     SearchResponse,
     SearchResultResponse,
@@ -294,6 +296,27 @@ def create_app() -> FastAPI:
             rows=[
                 NaturalProductLinkRowResponse(**row.to_dict()) for row in matrix.rows
             ],
+        )
+
+    @api.post("/api/v1/own-data/pipeline", response_model=OwnDataPipelineResponse)
+    def run_own_data_to_literature(
+        request: OwnDataPipelineRequest,
+    ) -> OwnDataPipelineResponse:
+        from rhizonp.config import PROJECT_ROOT
+        from rhizonp.omics.pipeline import run_own_data_pipeline
+
+        data_dir = request.data_dir or str(
+            PROJECT_ROOT / "data" / "fixtures" / "own_data_demo"
+        )
+        result = run_own_data_pipeline(data_dir)
+        payload = result.to_dict()
+        return OwnDataPipelineResponse(
+            association_count=len(result.association_results),
+            results=payload["association_results"],
+            provenance={
+                **payload["bundle_provenance"],
+                **payload["pipeline_provenance"],
+            },
         )
 
     @api.post("/api/v1/search", response_model=SearchResponse)

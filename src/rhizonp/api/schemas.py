@@ -187,3 +187,13 @@ class NaturalProductLinkResponse(BaseModel):
     query_taxon: str
     metabolite_name: str | None
     rows: list[NaturalProductLinkRowResponse]
+
+
+class OwnDataPipelineRequest(BaseModel):
+    data_dir: str | None = None
+
+
+class OwnDataPipelineResponse(BaseModel):
+    association_count: int
+    results: list[dict[str, Any]]
+    provenance: dict[str, Any]
