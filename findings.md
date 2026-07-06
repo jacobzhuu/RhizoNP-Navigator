@@ -29,7 +29,13 @@
 - P0-7 provenance：缺少 `docs/PROVENANCE.md`。
 - 高优先实施顺序：配置/secrets -> embedding 懒加载和跨平台路径 -> reranker adapter -> multi-chunk delete -> tests/tooling/docs。
 
-## 错误记录
+## Phase 2R 策略决策（2026-07-06）
+
+- **路径：** 先 metadata 扩规模 + 人工标注 + 可量化 baseline；全文 JATS 仅在 error analysis 触发门后试点。
+- **section-aware chunking 已实现**（`literature/chunking.py`）；瓶颈是语料内容与评测，不是 chunking 代码。
+- **v1 语料：** 149 篇 metadata-only；18 benchmark query 0 标注。
+- **JATS 门：** 见 `docs/RETRIEVAL_BASELINE_ROADMAP.md` § D — 需 G2/G3 完成后才评估。
+
 
 | 错误 | 尝试次数 | 处理 |
 | --- | ---: | --- |

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import logging
 from collections import Counter
 from collections.abc import Iterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
-import logging
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -14,7 +15,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from rhizonp.api.middleware import RequestContextMiddleware
 from rhizonp.api.readiness import evaluate_readiness
 from rhizonp.api.runtime import create_runtime_engine, is_prod_mode
-
 from rhizonp.domain.models import (
     CandidateLink,
     Compound,
@@ -32,8 +32,14 @@ from rhizonp.literature.retrieval import (
     SearchFilters,
     SearchResult,
     persist_retrieval_results,
-    search_paper_chunks,
 )
+from rhizonp.literature.retrieval_settings import (
+    PROFILE_OFFLINE,
+    resolve_literature_retrieval_settings,
+)
+from rhizonp.literature.runtime import build_literature_retrieval_runtime
+from rhizonp.literature.service import LiteratureRetrievalService
+from rhizonp.query.llm_policy import resolve_use_llm
 from rhizonp.storage.postgres import create_engine_from_settings, create_session_factory
 from rhizonp.storage.repositories import (
     CandidateLinkRepository,
@@ -43,6 +49,7 @@ from rhizonp.storage.repositories import (
     OmicsAssociationRepository,
     TaxonRepository,
 )
+from rhizonp.writer.answer_contract import enrich_grounded_answer_metadata
 
 from .schemas import (
     AskRequest,
@@ -105,6 +112,64 @@ def get_optional_session() -> Iterator[Session | None]:
 
 SESSION_DEPENDENCY = Depends(get_session)
 OPTIONAL_SESSION_DEPENDENCY = Depends(get_optional_session)
+
+
+def get_literature_retrieval_service(request: Request) -> LiteratureRetrievalService:
+    service = getattr(request.app.state, "literature_retrieval_service", None)
+    if service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Literature retrieval runtime is unavailable. Check readiness and FAISS index build.",
+        )
+    return service
+
+
+LITERATURE_SERVICE_DEPENDENCY = Depends(get_literature_retrieval_service)
+
+
+def _grounded_answer_response(
+    answer_payload: dict[str, object],
+    *,
+    llm_requested: bool,
+    citation_validation: dict[str, object] | None = None,
+    faithfulness_diagnostics: list[dict[str, object]] | None = None,
+) -> GroundedAnswerResponse:
+    from rhizonp.writer.models import GroundedAnswer
+
+    grounded = GroundedAnswer.model_validate(answer_payload)
+    contract = enrich_grounded_answer_metadata(grounded, llm_requested=llm_requested)
+    return GroundedAnswerResponse(
+        status=str(answer_payload["status"]),
+        answer=str(answer_payload["answer"]),
+        claims=[
+            WriterClaimResponse(
+                text=claim["text"],
+                evidence_refs=claim["evidence_refs"],
+                claim_level=claim["claim_level"],
+            )
+            for claim in answer_payload.get("claims", [])
+        ],
+        evidence_refs=answer_payload.get("evidence_refs", []),
+        limitations=list(answer_payload.get("limitations", [])),
+        suggested_validations=list(answer_payload.get("suggested_validations", [])),
+        writer_mode=str(answer_payload.get("writer_mode", "fallback")),
+        provenance=dict(answer_payload.get("provenance", {})),
+        citation_validation=citation_validation,
+        faithfulness_diagnostics=list(faithfulness_diagnostics or []),
+        answer_mode=contract["answer_mode"],
+        evidence_status=contract["evidence_status"],
+        llm_status=contract["llm_status"],
+    )
+
+
+@asynccontextmanager
+async def _app_lifespan(app: FastAPI):
+    settings = resolve_literature_retrieval_settings()
+    strict = settings.profile != PROFILE_OFFLINE
+    runtime = build_literature_retrieval_runtime(strict=strict)
+    app.state.literature_runtime = runtime
+    app.state.literature_retrieval_service = LiteratureRetrievalService(runtime)
+    yield
 
 
 def _error_payload(*, code: str, message: str, detail: str | None = None) -> dict[str, object]:
@@ -258,6 +323,7 @@ def create_app() -> FastAPI:
     api = FastAPI(
         title="RhizoNP Navigator",
         version="0.1.0",
+        lifespan=_app_lifespan,
         description=(
             "Evidence-grounded research API for plant–microbe interactions and microbial "
             "natural products. Exposes literature retrieval, taxonomy-aware evidence grading, "
@@ -317,9 +383,12 @@ def create_app() -> FastAPI:
     def ask_question(
         request: AskRequest,
         session: Session = SESSION_DEPENDENCY,
+        retrieval_service: LiteratureRetrievalService = LITERATURE_SERVICE_DEPENDENCY,
     ) -> AskResponse:
+        from rhizonp.config import get_settings
         from rhizonp.query.assistant import run_ask_pipeline
 
+        resolved_use_llm = resolve_use_llm(request.use_llm, get_settings())
         try:
             result = run_ask_pipeline(
                 session,
@@ -327,35 +396,24 @@ def create_app() -> FastAPI:
                 retrieval_mode=request.retrieval_mode,
                 top_k=request.top_k,
                 max_queries=request.max_queries,
-                use_llm=request.use_llm,
+                use_llm=resolved_use_llm,
+                retrieval_service=retrieval_service,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         payload = result.to_dict()
         answer = payload["answer"]
+        grounded = _grounded_answer_response(
+            answer,
+            llm_requested=resolved_use_llm,
+            citation_validation=payload["citation_validation"],
+            faithfulness_diagnostics=payload["faithfulness_diagnostics"],
+        )
         return AskResponse(
             question_plan=payload["question_plan"],
             retrieval_mode=payload["retrieval_mode"],
             retrieval_hits=payload["retrieval_hits"],
-            answer=GroundedAnswerResponse(
-                status=answer["status"],
-                answer=answer["answer"],
-                claims=[
-                    WriterClaimResponse(
-                        text=claim["text"],
-                        evidence_refs=claim["evidence_refs"],
-                        claim_level=claim["claim_level"],
-                    )
-                    for claim in answer["claims"]
-                ],
-                evidence_refs=answer["evidence_refs"],
-                limitations=answer["limitations"],
-                suggested_validations=answer["suggested_validations"],
-                writer_mode=answer["writer_mode"],
-                provenance=answer["provenance"],
-                citation_validation=payload["citation_validation"],
-                faithfulness_diagnostics=payload["faithfulness_diagnostics"],
-            ),
+            answer=grounded,
             evidence_items=payload["evidence_items"],
             citation_validation=payload["citation_validation"],
             faithfulness_diagnostics=payload["faithfulness_diagnostics"],
@@ -596,7 +654,11 @@ def create_app() -> FastAPI:
         )
 
     @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
-    def write_answer(request: GroundedAnswerRequest) -> GroundedAnswerResponse:
+    def write_answer(
+        request: GroundedAnswerRequest,
+        http_request: Request,
+    ) -> GroundedAnswerResponse:
+        from rhizonp.config import get_settings
         from rhizonp.domain.models import Base
         from rhizonp.ingestion.literature import load_phase2_literature_fixture
         from rhizonp.storage.postgres import create_session_factory
@@ -605,8 +667,10 @@ def create_app() -> FastAPI:
         from rhizonp.writer.retrieval_writer import write_grounded_answer_from_literature_hits
         from rhizonp.writer.service import write_grounded_answer
 
+        resolved_use_llm = resolve_use_llm(request.use_llm, get_settings())
         citation_validation: dict[str, object] | None = None
         faithfulness_diagnostics: list[dict[str, object]] = []
+        retrieval_service = getattr(http_request.app.state, "literature_retrieval_service", None)
 
         if request.retrieve_evidence:
             query = request.retrieval_query or request.question
@@ -629,6 +693,7 @@ def create_app() -> FastAPI:
                     observation_method=request.observation_method,
                     retrieval_mode=request.retrieval_mode,
                     top_k=request.top_k,
+                    retrieval_service=retrieval_service,
                 )
                 writer_result = write_grounded_answer_from_literature_hits(
                     request.question,
@@ -636,7 +701,7 @@ def create_app() -> FastAPI:
                     limitations=request.limitations,
                     taxonomy_warnings=request.taxonomy_warnings,
                     retrieval_status="RETRIEVED" if hits else "NO_RESULTS",
-                    use_llm=request.use_llm,
+                    use_llm=resolved_use_llm,
                 )
                 answer = writer_result.answer
                 citation_validation = writer_result.citation_validation.to_dict()
@@ -651,23 +716,10 @@ def create_app() -> FastAPI:
                 taxonomy_warnings=request.taxonomy_warnings,
                 limitations=request.limitations,
             )
-            answer = write_grounded_answer(writer_request, use_llm=request.use_llm)
-        return GroundedAnswerResponse(
-            status=answer.status.value,
-            answer=answer.answer,
-            claims=[
-                WriterClaimResponse(
-                    text=claim.text,
-                    evidence_refs=claim.evidence_refs,
-                    claim_level=claim.claim_level,
-                )
-                for claim in answer.claims
-            ],
-            evidence_refs=answer.evidence_refs,
-            limitations=answer.limitations,
-            suggested_validations=answer.suggested_validations,
-            writer_mode=answer.writer_mode,
-            provenance=answer.provenance,
+            answer = write_grounded_answer(writer_request, use_llm=resolved_use_llm)
+        return _grounded_answer_response(
+            answer.model_dump(mode="json"),
+            llm_requested=resolved_use_llm,
             citation_validation=citation_validation,
             faithfulness_diagnostics=faithfulness_diagnostics,
         )
@@ -676,6 +728,7 @@ def create_app() -> FastAPI:
     def search_literature(
         request: SearchRequest,
         session: Session = SESSION_DEPENDENCY,
+        retrieval_service: LiteratureRetrievalService = LITERATURE_SERVICE_DEPENDENCY,
     ) -> SearchResponse:
         filters = SearchFilters(
             year_from=request.filters.year_from,
@@ -690,7 +743,7 @@ def create_app() -> FastAPI:
             host=tuple(request.filters.host),
         )
         try:
-            results = search_paper_chunks(
+            results = retrieval_service.search(
                 session,
                 request.query,
                 top_k=request.top_k,

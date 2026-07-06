@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from rhizonp.literature.retrieval import SearchFilters, search_paper_chunks
+from rhizonp.literature.default_runtime import get_default_literature_runtime
+from rhizonp.literature.retrieval import SearchFilters
+from rhizonp.literature.service import LiteratureRetrievalService
 from rhizonp.omics.literature_bridge import LiteratureEvidenceHit, search_result_to_evidence_hit
 
 
@@ -14,8 +16,10 @@ def retrieve_literature_evidence_hits(
     observation_method: str | None = None,
     retrieval_mode: str = "bm25",
     top_k: int = 5,
+    retrieval_service: LiteratureRetrievalService | None = None,
 ) -> list[LiteratureEvidenceHit]:
-    results = search_paper_chunks(
+    service = retrieval_service or LiteratureRetrievalService(get_default_literature_runtime())
+    results = service.search(
         session,
         query,
         top_k=top_k,

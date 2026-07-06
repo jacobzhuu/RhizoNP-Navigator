@@ -427,6 +427,10 @@ textarea:focus-visible {
   margin: 0.75rem 0 1rem;
 }
 
+.answer-lead p {
+  margin: 0 0 0.85rem;
+}
+
 .evidence-list {
   line-height: 1.6;
   padding-left: 1.25rem;

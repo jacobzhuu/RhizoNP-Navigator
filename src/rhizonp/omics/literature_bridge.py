@@ -196,6 +196,8 @@ def search_result_to_evidence_hit(
             "score_components": dict(result.score_components),
             "association_to_query_to_chunk": True,
             "corpus_type": paper_corpus_type.value,
+            "structured_taxa": list(metadata.get("taxa") or []),
+            "structured_compounds": list(metadata.get("compounds") or []),
         },
         source_type=_chunk_source_type(metadata),
         is_fixture=_paper_is_fixture(paper),

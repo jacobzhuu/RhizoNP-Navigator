@@ -133,7 +133,8 @@ def test_dangling_citation_ref_triggers_fallback(monkeypatch: pytest.MonkeyPatch
         )
 
     result = write_deepseek_answer(request, llm_client=client, allow_remote=True)
-    assert result.writer_mode == "fallback_after_citation_failure"
+    assert result.writer_mode == "llm_partial_grounding"
+    assert result.answer.claims == []
 
 
 def test_taxonomy_overclaim_triggers_constraint_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -161,7 +162,7 @@ def test_taxonomy_overclaim_triggers_constraint_fallback(monkeypatch: pytest.Mon
         )
 
     result = write_deepseek_answer(request, llm_client=client, allow_remote=True)
-    assert result.writer_mode == "fallback_after_constraint_violation"
+    assert result.writer_mode == "deterministic_fallback"
 
 
 def test_provider_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -174,6 +175,88 @@ def test_provider_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     result = write_deepseek_answer(request, llm_client=failing_client, allow_remote=True)
     assert result.writer_mode == "fallback_after_provider_error"
+
+
+def test_empty_evidence_uses_general_knowledge_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key-placeholder")
+    get_settings.cache_clear()
+    request = WriterRequest(question="What are actinobacteria?", evidence_items=[])
+
+    def client(prompt: str) -> str:
+        assert "当前没有可加入上下文的本地证据条目" in prompt
+        assert "claims 必须是空数组" in prompt
+        return json.dumps(
+            {
+                "status": "SUPPORTED",
+                "answer": "本地知识库未检索到可引用证据，以下是通用知识回答。放线菌常被视为天然产物来源。",
+                "claims": [{"text": "模型不应保留这条无证据主张。", "evidence_refs": [], "claim_level": "descriptive"}],
+                "evidence_refs": [],
+                "limitations": ["这不是本地证据库支持的结论。"],
+                "suggested_validations": ["检索真实文献和数据库。"],
+            }
+        )
+
+    result = write_deepseek_answer(request, llm_client=client, allow_remote=True)
+
+    assert result.writer_mode == "llm_general_knowledge"
+    assert result.answer.status == AnswerStatus.INSUFFICIENT_EVIDENCE
+    assert result.answer.claims == []
+    assert result.answer.evidence_refs == []
+    assert "通用知识" in result.answer.limitations[0]
+
+
+def test_empty_evidence_schema_failure_keeps_unstructured_general_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key-placeholder")
+    get_settings.cache_clear()
+    request = WriterRequest(question="What are actinobacteria?", evidence_items=[])
+
+    def client(_prompt: str) -> str:
+        return "放线菌在通用知识中常被视为微生物天然产物的重要来源。"
+
+    result = write_deepseek_answer(request, llm_client=client, allow_remote=True)
+
+    assert result.writer_mode == "llm_general_knowledge"
+    assert result.answer.status == AnswerStatus.INSUFFICIENT_EVIDENCE
+    assert result.answer.claims == []
+    assert "放线菌" in result.answer.answer
+    assert "结构化 JSON 校验" in result.answer.limitations[1]
+
+
+def test_evidence_context_prompt_still_allows_general_knowledge(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key-placeholder")
+    get_settings.cache_clear()
+    request = _request()
+    evidence_id = request.evidence_items[0].evidence_id
+
+    def client(prompt: str) -> str:
+        assert "始终利用通用科学知识" in prompt
+        assert "本地知识库/检索证据如果存在，则作为额外上下文" in prompt
+        assert str(evidence_id) in prompt
+        return json.dumps(
+            {
+                "status": "PARTIALLY_SUPPORTED",
+                "answer": "通用知识上，放线菌常与次级代谢物研究相关；本地证据只提供属级线索。",
+                "claims": [
+                    {
+                        "text": "本地证据只支持属级候选线索。",
+                        "evidence_refs": [str(evidence_id)],
+                        "claim_level": "candidate",
+                    }
+                ],
+                "evidence_refs": [str(evidence_id)],
+                "limitations": ["通用知识不等同于本地证据支持。"],
+                "suggested_validations": ["补充菌株级证据。"],
+            }
+        )
+
+    result = write_deepseek_answer(request, llm_client=client, allow_remote=True)
+
+    assert result.writer_mode == "llm_grounded"
+    assert result.answer.status == AnswerStatus.PARTIALLY_SUPPORTED
+    assert result.answer.claims[0].evidence_refs == [evidence_id]
+    assert result.provider_metadata["grounding"] == "general_knowledge_with_local_evidence_context"
 
 
 def test_deterministic_fallback_preserved_for_use_llm_false() -> None:

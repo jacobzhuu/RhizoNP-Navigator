@@ -5,6 +5,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from sqlalchemy import delete, select
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -41,6 +43,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Ingest a saved corpus snapshot into the configured database.",
     )
+    parser.add_argument(
+        "--remove-fixture-literature",
+        action="store_true",
+        help="Before ingest, remove papers explicitly marked as synthetic fixture/test literature.",
+    )
     return parser.parse_args()
 
 
@@ -67,6 +74,7 @@ def main() -> None:
     )
     from rhizonp.ingestion.literature import ingest_literature_records
     from rhizonp.literature.pubmed_adapter import PubMedEutilitiesAdapter
+    from rhizonp.domain.models import Paper, RetrievalResult
     from rhizonp.storage.postgres import (
         create_engine_from_settings,
         create_session_factory,
@@ -135,12 +143,38 @@ def main() -> None:
 
     session_factory = create_session_factory(engine)
     with session_scope(session_factory) as session:
+        removed_fixture_papers = 0
+        if args.remove_fixture_literature:
+            fixture_papers = []
+            for paper in session.scalars(select(Paper)).all():
+                provenance = paper.provenance or {}
+                if provenance.get("fixture") is True or provenance.get("not_real_literature") is True:
+                    fixture_papers.append(paper)
+            fixture_chunk_ids = [
+                chunk.chunk_id
+                for paper in fixture_papers
+                for chunk in paper.chunks
+            ]
+            if fixture_chunk_ids:
+                session.execute(
+                    delete(RetrievalResult).where(RetrievalResult.chunk_id.in_(fixture_chunk_ids))
+                )
+            for paper in fixture_papers:
+                session.delete(paper)
+            removed_fixture_papers = len(fixture_papers)
+            if removed_fixture_papers:
+                session.flush()
         summary = ingest_literature_records(session, records)
+        if removed_fixture_papers > 0 and summary.paper_chunks == 0 and summary.papers == 0:
+            from rhizonp.ingestion.literature import finalize_literature_ingestion
+
+            finalize_literature_ingestion(session)
     metadata = snapshot.get("metadata", {})
     print(
         "Ingested bounded PubMed corpus: "
         f"corpus_id={metadata.get('corpus_id', metadata.get('corpus_name'))} "
         f"records={len(records)} papers_added={summary.papers} chunks_added={summary.paper_chunks} "
+        f"fixture_papers_removed={removed_fixture_papers} "
         f"backend={backend} source={metadata.get('source_name')}"
     )
     print(f"Snapshot: {corpus_path}")

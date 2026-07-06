@@ -73,3 +73,13 @@
 - 继续 Phase 2 methodology hardening：pooled judging（4 systems, depth 20）、blind reviewer sheet + provenance sidecar、leakage audit（0 lexical flags）、annotation policy docs。
 - annotation-readiness pass：blind shuffle + annotation_item_id、optional QC mode、Judged@k coverage、pmids.json public snapshot policy。
 - 验证：`make check` 104 passed / 3 skipped。
+
+## 2026-07-06 — Phase 2R loop 启动
+
+- 用户确认策略：先「有规模 + 人工标签 + 可量化 baseline」，再据 error analysis 决定是否上 OA JATS/XML。
+- 新增 `docs/RETRIEVAL_BASELINE_ROADMAP.md`（G1–G6 门禁、error analysis 模板、JATS 触发/阻塞条件）。
+- 新增 `data/eval/domain_corpus_queries_v2.json`（25 queries, retmax 25, max 800 → 目标 500–800 篇）。
+- Makefile 新增 `fetch-domain-corpus-v2` / `ingest-domain-corpus-v2`。
+- 更新 `task_plan.md` Phase 2R 门禁表；`findings.md` 记录策略决策。
+- **下一步（automatable）：** `make fetch-domain-corpus-v2`（需 NCBI 网络）；**下一步（human）：** `make export-annotation-candidates` → 盲审标注。
+- **阻塞（本轮）：** 无 `.env` / `DATABASE_URL`；`corpus.json` 未在本地（gitignore，需 fetch 或 ingest）；`export-annotation-candidates` 未跑通。

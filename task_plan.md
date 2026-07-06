@@ -6,7 +6,9 @@
 
 ## 当前阶段
 
-Phase 2: 文献 provenance baseline 与本地检索。
+**Phase 2R:** 可量化检索 baseline（语料扩规模 → 人工标注 → 评测 → error analysis → JATS 决策门）。
+
+详见 `docs/RETRIEVAL_BASELINE_ROADMAP.md`。
 
 ## 阶段状态
 
@@ -14,7 +16,8 @@ Phase 2: 文献 provenance baseline 与本地检索。
 | --- | --- | --- |
 | Phase 0 | complete_local | 本地 DoD 通过；远端 CI/secret scanning、Git 历史清理和凭据轮换仍需外部处理 |
 | Phase 1 | complete_local | Schema/migration/repository/fixture/API 与测试已通过本地验收；PostgreSQL 容器实跑受 Docker daemon 限制 |
-| Phase 2 | in_progress | Engineering DoD met; real PubMed snapshot + annotation workflow added; human labels pending |
+| Phase 2 | in_progress | Engineering DoD met; **Phase 2R** active — v2 corpus config ready; human labels pending |
+| Phase 2R | in_progress | G1 v2 fetch pending; G2 labels 0/18; G3–G6 blocked on G1/G2 |
 | Phase 3 | pending | taxonomy-aware grading |
 | Phase 4 | pending | natural-product linking |
 | Phase 5 | pending | own-data-to-literature |
@@ -129,6 +132,17 @@ Phase 2: 文献 provenance baseline 与本地检索。
 - [ ] real-corpus retrieval evaluation with human labels。
 - [ ] Phase 2 完整 DoD 终验（含可选 FAISS 实装环境 parity 验证）。
 - [ ] push 到 origin/main；当前环境缺 GitHub HTTPS 凭据。
+
+## Phase 2R 门禁（RETRIEVAL_BASELINE_ROADMAP）
+
+| Gate | 状态 | 说明 |
+| --- | --- | --- |
+| G1 语料规模 ≥500 | pending | `domain_corpus_queries_v2.json` 已就绪；待 `make fetch-domain-corpus-v2` |
+| G2 人工标注 18/18 | pending | 0/18；可先 pilot 5–10 query |
+| G3 真实 baseline 报告 | blocked | 依赖 G2 |
+| G4 多系统 ablation | blocked | 依赖 G3 |
+| G5 Error analysis | blocked | 依赖 G3 |
+| G6 JATS 决策 | deferred | 仅当 G5 触发条件满足 |
 
 ## 决策原则
 

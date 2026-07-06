@@ -71,7 +71,7 @@ services:
       target: test
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-rhizonp}:${POSTGRES_PASSWORD:-rhizonp_dev}@postgres:5432/${POSTGRES_DB:-rhizonp}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-yangjhchs/acge_text_embedding}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-aspire/acge_text_embedding}
       RERANKER_MODEL: ${RERANKER_MODEL:-BAAI/bge-reranker-v2-m3}
       VECTOR_DB_PATH: ${VECTOR_DB_PATH:-/app/data/faiss_all_acge}
       PYTHONPATH: /app/src

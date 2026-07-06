@@ -14,23 +14,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/log.sh
+source "${ROOT}/scripts/lib/log.sh"
+
 HOST="${RHIZONP_HOST:-127.0.0.1}"
 FRONTEND_PORT="${RHIZONP_FRONTEND_PORT:-5173}"
 LOCAL_URL="http://${HOST}:${FRONTEND_PORT}"
 AUTO_START=0
-
-log() {
-  printf '[rhizonp] %s\n' "$*"
-}
-
-warn() {
-  printf '[rhizonp][warn] %s\n' "$*" >&2
-}
-
-die() {
-  printf '[rhizonp][error] %s\n' "$*" >&2
-  exit 1
-}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,10 +48,10 @@ ensure_cloudflared() {
 }
 
 wait_for_frontend() {
-  log "waiting for frontend at ${LOCAL_URL}"
+  log_wait "waiting for frontend at ${LOCAL_URL}"
   for _ in $(seq 1 60); do
     if curl -fsS "${LOCAL_URL}/" >/dev/null 2>&1; then
-      log "frontend ready"
+      step_ok "frontend reachable"
       return 0
     fi
     sleep 1
@@ -71,25 +61,36 @@ wait_for_frontend() {
 
 start_stack() {
   log "starting full stack (browser auto-open disabled)"
-  RHIZONP_OPEN_BROWSER=0 "${ROOT}/scripts/start.sh" app
+  RHIZONP_OPEN_BROWSER=0 "${ROOT}/scripts/start.sh" app "Share via Cloudflare Tunnel"
 }
 
 run_tunnel() {
-  log "opening Cloudflare quick Tunnel → ${LOCAL_URL}"
-  log "share the https://….trycloudflare.com URL printed below (Ctrl+C to stop)"
+  [[ "${RHIZONP_TUNNEL_AFTER_SHARE:-0}" != "1" ]] && log_section "Public tunnel"
+  step "Cloudflare quick Tunnel"
+  log_detail "local target → ${LOCAL_URL}"
+  log_detail "press Ctrl+C to stop the tunnel"
   printf '\n'
 
-  # cloudflared logs to stderr; tee keeps a readable public URL in the output.
   cloudflared tunnel --url "${LOCAL_URL}" 2>&1 | while IFS= read -r line; do
     printf '%s\n' "${line}"
     if [[ "${line}" =~ (https://[a-zA-Z0-9-]+\.trycloudflare\.com) ]]; then
-      printf '\n[rhizonp] Public workspace URL: %s\n\n' "${BASH_REMATCH[1]}"
+      printf '\n'
+      log_summary_box "Public URL" \
+        "Share" "${BASH_REMATCH[1]}" \
+        "Local" "${LOCAL_URL}"
     fi
   done
 }
 
 if [[ "${AUTO_START}" -eq 1 ]]; then
+  log_init
+  log_banner "RhizoNP Navigator" "Share via Cloudflare Tunnel"
   start_stack
+elif [[ "${RHIZONP_TUNNEL_AFTER_SHARE:-0}" == "1" ]]; then
+  log_section "Public tunnel"
+else
+  log_init
+  log_banner "RhizoNP Navigator" "Cloudflare Tunnel"
 fi
 
 ensure_cloudflared

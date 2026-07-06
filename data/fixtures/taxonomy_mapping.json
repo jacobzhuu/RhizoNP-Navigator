@@ -46,6 +46,18 @@
       "normalization_status": "resolved_exact",
       "confidence": 1.0
     },
+    "streptomyces sp. sank 62799": {
+      "canonical_name": "Streptomyces sp. SANK 62799",
+      "rank": "strain",
+      "strain": "SANK 62799",
+      "species": "Streptomyces sp.",
+      "genus": "Streptomyces",
+      "external_ids": {
+        "npatlas_record": "NPA000003"
+      },
+      "normalization_status": "resolved_exact",
+      "confidence": 1.0
+    },
     "bacillus subtilis 168": {
       "canonical_name": "Bacillus subtilis 168",
       "rank": "strain",

@@ -27,7 +27,7 @@ def test_default_model_settings_are_cross_platform_identifiers() -> None:
 
     assert ":\\" not in settings.embedding_model
     assert ":\\" not in settings.reranker_model
-    assert settings.embedding_model == "yangjhchs/acge_text_embedding"
+    assert settings.embedding_model == "aspire/acge_text_embedding"
     assert settings.reranker_model == "BAAI/bge-reranker-v2-m3"
 
 

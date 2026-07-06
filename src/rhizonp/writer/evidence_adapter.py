@@ -8,6 +8,7 @@ from rhizonp.omics.literature_bridge import LiteratureEvidenceHit
 from rhizonp.writer.models import EvidenceInput
 
 EVIDENCE_ID_NAMESPACE = uuid.UUID("a3f2c8e1-4b9d-5e6f-8a1c-2d3e4f5a6b7c")
+_PRODUCTION_TERMS = (" produce ", " produces ", " produced ", " producing ")
 
 
 def stable_evidence_id_for_chunk(chunk_id: str) -> uuid.UUID:
@@ -36,7 +37,24 @@ def _extract_taxonomy_distance(hit: Mapping[str, Any]) -> str | None:
     return str(distance) if distance else None
 
 
-def _extract_warnings(hit: Mapping[str, Any]) -> list[str]:
+def _structured_compounds(hit: Mapping[str, Any]) -> list[str]:
+    provenance = hit.get("provenance") or {}
+    compounds = provenance.get("structured_compounds") or []
+    if isinstance(compounds, str):
+        return [compounds]
+    return [str(item) for item in compounds if str(item).strip()]
+
+
+def _is_direct_production_hit(hit: Mapping[str, Any]) -> bool:
+    if _extract_evidence_tier(hit) != "A":
+        return False
+    if not _structured_compounds(hit):
+        return False
+    text = f" {hit.get('supporting_text') or ''} ".casefold()
+    return any(term in text for term in _PRODUCTION_TERMS)
+
+
+def _extract_warnings(hit: Mapping[str, Any], *, direct_production: bool = False) -> list[str]:
     grading_payload = hit.get("taxonomy_grading") or {}
     nested = grading_payload.get("grading") or {}
     warnings = nested.get("warnings") or []
@@ -47,9 +65,10 @@ def _extract_warnings(hit: Mapping[str, Any]) -> list[str]:
         output.append("该文献片段来自 fixture/test 语料，只能用于演示或回归测试。")
     elif corpus_type:
         output.append(f"文献语料来源类型：{corpus_type}。")
-    output.append(
-        "召回片段只能作为证据线索；文本共现不等同于生产或因果关系。"
-    )
+    if not direct_production:
+        output.append(
+            "召回片段只能作为证据线索；文本共现不等同于生产或因果关系。"
+        )
     return list(dict.fromkeys(output))
 
 
@@ -69,6 +88,8 @@ def literature_hit_to_evidence_item(
 ) -> EvidenceInput:
     payload = _coerce_hit(hit)
     chunk_id = str(payload["chunk_id"])
+    is_direct_production = _is_direct_production_hit(payload)
+    compounds = _structured_compounds(payload)
     provenance = dict(payload.get("provenance") or {})
     provenance.update(
         {
@@ -88,15 +109,15 @@ def literature_hit_to_evidence_item(
     )
     return EvidenceInput(
         evidence_id=stable_evidence_id_for_chunk(chunk_id),
-        claim_type="literature_retrieval_clue",
-        predicate="MENTIONS",
-        object_literal=payload.get("title"),
+        claim_type="taxon_produces_compound" if is_direct_production else "literature_retrieval_clue",
+        predicate="PRODUCES" if is_direct_production else "MENTIONS",
+        object_literal=(compounds[0] if is_direct_production and compounds else payload.get("title")),
         evidence_tier=_extract_evidence_tier(payload),
-        directness="indirect",
-        confidence=0.3,
+        directness="direct" if is_direct_production else "indirect",
+        confidence=0.9 if is_direct_production else 0.3,
         supporting_span=str(payload.get("supporting_text") or "")[:2000] or None,
         taxonomy_distance=_extract_taxonomy_distance(payload),
-        warnings=_extract_warnings(payload),
+        warnings=_extract_warnings(payload, direct_production=is_direct_production),
         provenance=provenance,
     )
 

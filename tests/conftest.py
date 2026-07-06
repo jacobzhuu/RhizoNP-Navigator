@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("LITERATURE_RETRIEVAL_PROFILE", "offline")
+
 import pytest
 
 from rhizonp.config import get_settings
@@ -9,6 +13,7 @@ from rhizonp.config import get_settings
 def isolate_runtime_secrets(monkeypatch: pytest.MonkeyPatch):
     """Keep local .env credentials from changing deterministic test behavior."""
 
+    monkeypatch.setenv("LITERATURE_RETRIEVAL_PROFILE", "offline")
     for env_name in (
         "DEEPSEEK_API_KEY",
         "QWEN_API_KEY",

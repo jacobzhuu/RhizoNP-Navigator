@@ -9,6 +9,10 @@
 
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/log.sh
+source "${ROOT}/scripts/lib/log.sh"
+
 BASE_URL="http://127.0.0.1:8000"
 FULL=0
 VERBOSE=0
@@ -39,17 +43,29 @@ done
 
 pass() {
   PASS=$((PASS + 1))
-  printf '  ✓ %s\n' "$1"
+  _log_prefix
+  printf '      '
+  _log_green
+  printf '%s %s\n' "${_LOG_ICON_OK}" "$1"
+  _log_reset
 }
 
 fail() {
   FAIL=$((FAIL + 1))
-  printf '  ✗ %s\n' "$1" >&2
+  _log_prefix
+  printf '      ' >&2
+  _log_red
+  printf '%s %s\n' "${_LOG_ICON_FAIL}" "$1" >&2
+  _log_reset
 }
 
 skip() {
   SKIP=$((SKIP + 1))
-  printf '  ~ %s\n' "$1"
+  _log_prefix
+  printf '      '
+  _log_yellow
+  printf '%s %s\n' "${_LOG_ICON_SKIP}" "$1"
+  _log_reset
 }
 
 summarize_response() {
@@ -130,7 +146,9 @@ request() {
   rm -f "${tmp}"
 }
 
-printf '[rhizonp] API checks → %s\n' "${BASE_URL}"
+printf '\n'
+log_detail "target → ${BASE_URL}"
+printf '\n'
 
 request GET /api/v1/health "" 200 "health"
 
@@ -139,7 +157,7 @@ request POST /api/v1/taxonomy/grade \
   200 "taxonomy grade"
 
 request POST /api/v1/natural-products/link \
-  '{"query_taxon":"Streptomyces","metabolite_name":"FixturePolyketide-A","observation_method":"16S genus-level"}' \
+  '{"query_taxon":"Streptomyces sp. SANK 62799","metabolite_name":"A-503083 F","observation_method":"database record"}' \
   200 "natural product link"
 
 request POST /api/v1/own-data/pipeline \
@@ -153,7 +171,7 @@ request POST /api/v1/writer/answer \
 if [[ "${FULL}" -eq 1 ]]; then
   request GET /api/v1/taxa/Streptomyces "" 200 "taxon lookup"
   request POST /api/v1/search \
-    '{"query":"Streptomyces Feature_M123","top_k":2,"filters":{"sections":["results"],"source_types":["paper"],"dois":["10.0000/rhizonp.fixture.lit.001"],"journals":["fixture"],"taxa":["Streptomyces"],"compounds":["FixturePolyketide-A"],"host":["Synthetic plant"]}}' \
+    '{"query":"Streptomyces","top_k":2}' \
     200 "literature search"
 else
   tmp="$(mktemp)"
@@ -163,7 +181,7 @@ else
     pass "taxon lookup (${code}) — ${detail}"
     rm -f "${tmp}"
     request POST /api/v1/search \
-      '{"query":"Streptomyces Feature_M123","top_k":2,"filters":{"sections":["results"],"source_types":["paper"],"dois":["10.0000/rhizonp.fixture.lit.001"],"journals":["fixture"],"taxa":["Streptomyces"],"compounds":["FixturePolyketide-A"],"host":["Synthetic plant"]}}' \
+      '{"query":"Streptomyces","top_k":2}' \
       200 "literature search"
   else
     rm -f "${tmp}"
@@ -171,7 +189,13 @@ else
   fi
 fi
 
-printf '\n[rhizonp] Done: %d passed, %d failed, %d skipped\n' "${PASS}" "${FAIL}" "${SKIP}"
+printf '\n'
 if [[ "${FAIL}" -gt 0 ]]; then
+  _log_prefix
+  printf ' '
+  _log_red
+  printf '%s %d passed, %d failed, %d skipped\n' "${_LOG_ICON_FAIL}" "${PASS}" "${FAIL}" "${SKIP}"
+  _log_reset
   exit 1
 fi
+log_ok "${PASS} passed, ${FAIL} failed, ${SKIP} skipped"

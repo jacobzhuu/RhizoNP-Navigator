@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk, RetrievalResult, RetrievalRun
+from rhizonp.literature.default_runtime import get_default_literature_runtime
 from rhizonp.literature.embeddings import (
     HashingEmbeddingProvider,
     LiteratureEmbeddingProvider,
@@ -19,6 +20,7 @@ from rhizonp.literature.reranker import (
     LiteratureReranker,
     create_literature_reranker,
 )
+from rhizonp.literature.runtime import LiteratureRetrievalRuntime
 from rhizonp.literature.vector_index import InMemoryLiteratureVectorIndex, LiteratureVectorIndex
 
 
@@ -488,6 +490,7 @@ def search_paper_chunks(
     session: Session,
     query: str,
     *,
+    runtime: LiteratureRetrievalRuntime | None = None,
     top_k: int = 10,
     filters: SearchFilters | None = None,
     retrieval_mode: str = "bm25",
@@ -497,6 +500,12 @@ def search_paper_chunks(
     vector_index: LiteratureVectorIndex | None = None,
     reranker_weight: float = 1.0,
 ) -> list[SearchResult]:
+    active_runtime = runtime or get_default_literature_runtime()
+    resolved_embedding = embedding_provider or active_runtime.embedding_provider
+    resolved_reranker = reranker or active_runtime.reranker
+    resolved_vector_index = (
+        vector_index if vector_index is not None else active_runtime.vector_index
+    )
     if retrieval_mode == "bm25":
         return bm25_search(session, query, top_k=top_k, filters=filters)
     if retrieval_mode == "dense":
@@ -505,8 +514,8 @@ def search_paper_chunks(
             query,
             top_k=top_k,
             filters=filters,
-            embedding_provider=embedding_provider,
-            vector_index=vector_index,
+            embedding_provider=resolved_embedding,
+            vector_index=resolved_vector_index,
         )
     if retrieval_mode == "hybrid":
         return hybrid_search(
@@ -514,9 +523,9 @@ def search_paper_chunks(
             query,
             top_k=top_k,
             filters=filters,
-            embedding_provider=embedding_provider,
+            embedding_provider=resolved_embedding,
             weights=hybrid_weights,
-            vector_index=vector_index,
+            vector_index=resolved_vector_index,
         )
     if retrieval_mode == "hybrid_rerank":
         base_results = hybrid_search(
@@ -524,14 +533,14 @@ def search_paper_chunks(
             query,
             top_k=max(top_k * 3, top_k),
             filters=filters,
-            embedding_provider=embedding_provider,
+            embedding_provider=resolved_embedding,
             weights=hybrid_weights,
-            vector_index=vector_index,
+            vector_index=resolved_vector_index,
         )
         return rerank_search_results(
             query,
             base_results,
-            reranker=reranker,
+            reranker=resolved_reranker,
             reranker_weight=reranker_weight,
             top_k=top_k,
         )

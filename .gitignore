@@ -20,6 +20,7 @@ ENV/
 .env.*
 !.env.example
 .rhizonp-api.pid
+.rhizonp-api-test.pid
 .rhizonp-api.log
 .rhizonp-frontend.pid
 .rhizonp-frontend.log
@@ -68,6 +69,7 @@ data/faiss_all_acge/index.pkl
 data/input.csv
 data/input.xlsx
 data/faiss_all_acge/files/input.csv
+data/faiss_literature/
 data/private/
 data/raw/
 uploads/

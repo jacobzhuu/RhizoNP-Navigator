@@ -1,0 +1,134 @@
+{
+  "corpus_id": "rhizonp_domain_v2",
+  "corpus_name": "rhizonp_domain_v2",
+  "description": "Scaled PubMed metadata corpus (500-800 target) for Phase 2R quantified retrieval baseline. Metadata-only; no full text.",
+  "default_retmax": 25,
+  "max_total_records": 800,
+  "queries": [
+    {
+      "query_id": "C001",
+      "term": "plant microbe interaction[Title/Abstract] AND rhizosphere[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C002",
+      "term": "plant root microbiome[Title/Abstract] AND symbiosis[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C003",
+      "term": "rhizosphere colonization[Title/Abstract] AND bacteria[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C004",
+      "term": "rhizosphere microbiome[Title/Abstract] AND diversity[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C005",
+      "term": "rhizosphere microbiome[Title/Abstract] AND metabolites[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C006",
+      "term": "root exudates[Title/Abstract] AND microbiome[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C007",
+      "term": "PGPR[Title/Abstract] AND plant growth[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C008",
+      "term": "Streptomyces[Title/Abstract] AND biocontrol[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C009",
+      "term": "Streptomyces[Title/Abstract] AND rhizosphere[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C010",
+      "term": "biocontrol[Title/Abstract] AND soilborne pathogens[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C011",
+      "term": "microbial natural products[Title/Abstract] AND secondary metabolites[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C012",
+      "term": "bacterial secondary metabolites[Title/Abstract] AND bioactivity[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C013",
+      "term": "actinobacteria[Title/Abstract] AND natural products[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C014",
+      "term": "microbial metabolites[Title/Abstract] AND plant defense[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C015",
+      "term": "rhizosphere metabolites[Title/Abstract] AND plant microbe[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C016",
+      "term": "microbial secondary metabolites[Title/Abstract] AND root colonization[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C017",
+      "term": "siderophore[Title/Abstract] AND rhizosphere[Title/Abstract] AND plant[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C018",
+      "term": "biosynthetic gene cluster[Title/Abstract] AND rhizosphere[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C019",
+      "term": "Streptomyces[Title/Abstract] AND secondary metabolite[Title/Abstract] AND plant[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C020",
+      "term": "plant growth promoting rhizobacteria[Title/Abstract] AND metabolite[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C021",
+      "term": "rhizosphere[Title/Abstract] AND lipopeptide[Title/Abstract] OR surfactin[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C022",
+      "term": "root microbiome[Title/Abstract] AND indole acetic acid[Title/Abstract] OR auxin[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C023",
+      "term": "Pseudomonas[Title/Abstract] AND rhizosphere[Title/Abstract] AND biocontrol[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C024",
+      "term": "Bacillus[Title/Abstract] AND rhizosphere[Title/Abstract] AND secondary metabolite[Title/Abstract]",
+      "retmax": 25
+    },
+    {
+      "query_id": "C025",
+      "term": "plant microbe signaling[Title/Abstract] AND quorum sensing[Title/Abstract]",
+      "retmax": 25
+    }
+  ]
+}

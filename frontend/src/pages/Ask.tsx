@@ -10,10 +10,10 @@ import { ProvenanceBlock } from '../components/ProvenanceBlock'
 import { isDebugMode } from '../utils/debug'
 
 const EXAMPLE_QUESTIONS = [
+  'Streptomyces sp. SANK 62799 是否有 A-503083 F 生产记录？',
   '检测到 Streptomyces 是否说明样本中存在天然产物生产证据？',
-  '根际 Streptomyces 与 polyketide 相关的文献证据有哪些？',
-  '属级 16S 信号能否支持菌株水平产物生产结论？',
-  'plant–microbe rhizosphere natural product biosynthesis evidence',
+  '根损伤样本中的 Streptomyces 与 Feature_M123 有哪些候选线索？',
+  'Bacillus 是否有天然产物生产证据？',
 ]
 
 const RETRIEVAL_MODES = ['bm25', 'dense', 'hybrid', 'hybrid_rerank']
@@ -34,7 +34,8 @@ function statusLabel(status: string): string {
 }
 
 function writerModeLabel(mode: string): string {
-  if (mode === 'deepseek_applied') return 'LLM 证据写作'
+  if (mode === 'deepseek_applied') return 'LLM 通用知识+证据上下文'
+  if (mode === 'deepseek_general_knowledge') return 'LLM 通用知识回答'
   if (mode === 'fallback_after_citation_failure') return '引用校验保护模式'
   if (mode === 'fallback_after_constraint_violation') return '科学约束保护模式'
   if (mode === 'fallback_after_schema_failure') return '结构校验保护模式'
@@ -52,7 +53,9 @@ function selectedLimitations(items: string[]): string[] {
     item.includes('fixture') ||
     item.includes('候选证据') ||
     item.includes('证据边界') ||
-    item.includes('RAG')
+    item.includes('RAG') ||
+    item.includes('通用知识') ||
+    item.includes('本地知识库')
   )
   return (preferred.length ? preferred : items).slice(0, 4)
 }
@@ -198,7 +201,7 @@ export function AskPage() {
               <span className="form-label">写作模式</span>
               <label className="checkbox-label" htmlFor="use-llm">
                 <input id="use-llm" type="checkbox" checked={useLlm} onChange={(e) => setUseLlm(e.target.checked)} />
-                启用大模型写作
+                默认尝试大模型回答（无 API Key 时回退规则写作）
               </label>
             </div>
           </div>
@@ -259,7 +262,11 @@ export function AskPage() {
               <Badge label={statusLabel(result.answer.status)} variant={statusVariant(result.answer.status)} />
               <Badge label={writerModeLabel(result.answer.writer_mode)} variant="mode" />
             </div>
-            <p className="answer-lead">{result.answer.answer}</p>
+            <div className="answer-lead">
+              {result.answer.answer.split(/\n+/).map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
 
             {result.answer.claims.length > 0 && (
               <>
@@ -331,7 +338,9 @@ export function AskPage() {
                 title="未召回到文献证据"
                 items={[
                   '当前问题没有命中可召回的 paper_chunks。',
-                  '最终回答会进入证据不足状态，不会编造引用或结论。',
+                  useLlm
+                    ? '已启用大模型写作时，最终回答可提供通用知识补充，但会明确标注本地知识库未命中。'
+                    : '最终回答会进入证据不足状态，不会编造引用或结论。',
                 ]}
               />
             )}

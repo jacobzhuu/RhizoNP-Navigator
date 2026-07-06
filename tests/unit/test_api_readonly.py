@@ -8,11 +8,24 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from rhizonp.api.app import create_app, get_session
+from rhizonp.api.app import create_app, get_literature_retrieval_service, get_session
+from rhizonp.literature.runtime import build_offline_literature_runtime
+from rhizonp.literature.service import LiteratureRetrievalService
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.fixtures import load_phase1_demo_fixture
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.storage.postgres import create_session_factory, session_scope
+
+
+def _attach_literature_service(api) -> None:
+    runtime = build_offline_literature_runtime()
+    api.state.literature_runtime = runtime
+    api.state.literature_retrieval_service = LiteratureRetrievalService(runtime)
+
+    def override_literature_service() -> LiteratureRetrievalService:
+        return api.state.literature_retrieval_service
+
+    api.dependency_overrides[get_literature_retrieval_service] = override_literature_service
 
 
 def _client_with_phase1_fixture() -> TestClient:
@@ -29,6 +42,7 @@ def _client_with_phase1_fixture() -> TestClient:
         load_phase1_demo_fixture(session)
 
     api = create_app()
+    _attach_literature_service(api)
 
     def override_get_session() -> Iterator[Session]:
         session = session_factory()
@@ -55,6 +69,7 @@ def _client_with_phase2_literature_fixture() -> TestClient:
         load_phase2_literature_fixture(session)
 
     api = create_app()
+    _attach_literature_service(api)
 
     def override_get_session() -> Iterator[Session]:
         session = session_factory()

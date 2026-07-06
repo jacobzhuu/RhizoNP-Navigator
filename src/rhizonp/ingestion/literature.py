@@ -72,7 +72,15 @@ def ingest_literature_records(
             )
             chunk_count += 1
 
+    if paper_count > 0 or chunk_count > 0:
+        finalize_literature_ingestion(session)
     return LiteratureIngestionSummary(papers=paper_count, paper_chunks=chunk_count)
+
+
+def finalize_literature_ingestion(session: Session) -> int:
+    from rhizonp.literature.corpus_state import bump_corpus_revision
+
+    return bump_corpus_revision(session)
 
 
 def load_phase2_literature_fixture(

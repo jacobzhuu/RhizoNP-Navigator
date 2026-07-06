@@ -24,7 +24,8 @@ make start
 ```
 
 This bootstraps the Python environment, starts PostgreSQL with Docker, runs migrations and
-fixtures, starts FastAPI and the Vite research workspace, runs API checks, and opens:
+fixtures, builds the literature FAISS index when `LITERATURE_RETRIEVAL_PROFILE=standard_rag`,
+starts FastAPI and the Vite research workspace, runs API checks, and opens:
 
 ```text
 http://127.0.0.1:5173/
@@ -35,6 +36,14 @@ question plan, synonym/query expansion, retrieved evidence snippets, and final g
 answer. The remaining navigation items expose the underlying modules for inspection.
 
 Use `RHIZONP_OPEN_BROWSER=0 make start` if you only want the URL printed.
+
+Rebuild the literature FAISS index manually when the corpus changes:
+
+```bash
+make build-literature-faiss-index
+# or:
+python -m scripts.build_literature_faiss_index --if-stale
+```
 
 Stop background services with:
 

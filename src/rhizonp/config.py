@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     llm_temperature: float = 0.0
 
-    embedding_model: str = "yangjhchs/acge_text_embedding"
+    embedding_model: str = "aspire/acge_text_embedding"
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     vector_db_path: Path = PROJECT_ROOT / "data" / "faiss_all_acge"
 
@@ -39,10 +39,13 @@ class Settings(BaseSettings):
     top_k_embedding_docs: int = 50
     top_k_rerank_docs: int = 10
 
+    literature_retrieval_profile: str = "standard_rag"
+    literature_faiss_index_path: Path = PROJECT_ROOT / "data" / "faiss_literature" / "rhizonp_domain_v1"
     literature_embedding_provider: str = "hashing"
     literature_hashing_dimensions: int = 128
     literature_vector_index_backend: str = "in_memory"
     literature_reranker: str = "lexical"
+    ask_default_use_llm: bool = True
 
     ncbi_tool_name: str = "RhizoNP-Navigator"
     ncbi_email: str = ""

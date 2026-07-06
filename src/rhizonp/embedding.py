@@ -14,8 +14,10 @@ except ImportError:  # pragma: no cover - exercised only in incomplete envs
 
 embedding_model_dict = {
     "bge-large-zh": "BAAI/bge-large-zh-v1.5",
-    "acge-embedding": "yangjhchs/acge_text_embedding",
+    "acge-embedding": "aspire/acge_text_embedding",
     "gte-large-zh": "thenlper/gte-large-zh",
+    # Legacy ModelScope repo id; model is hosted on Hugging Face as aspire/acge_text_embedding.
+    "yangjhchs/acge_text_embedding": "aspire/acge_text_embedding",
 }
 
 EMBEDDING_MODEL = "acge-embedding"

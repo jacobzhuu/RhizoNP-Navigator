@@ -43,6 +43,27 @@ def test_supported_answer_for_tier_a() -> None:
     assert all(ref in answer.evidence_refs for claim in answer.claims for ref in claim.evidence_refs)
 
 
+def test_supported_answer_focuses_on_direct_evidence_when_background_hits_exist() -> None:
+    direct = _evidence(tier="A")
+    background = _evidence(
+        tier="D",
+        predicate="MENTIONS",
+        object_literal="Background review",
+    )
+    request = WriterRequest(
+        question="Does this strain produce rapamycin?",
+        evidence_items=[direct, background],
+    )
+
+    answer = write_grounded_answer(request)
+
+    assert answer.status == AnswerStatus.SUPPORTED
+    assert "当前证据包" in answer.answer
+    assert "\n\n" in answer.answer
+    assert answer.evidence_refs == [direct.evidence_id]
+    assert all(ref == direct.evidence_id for claim in answer.claims for ref in claim.evidence_refs)
+
+
 def test_genus_warning_prevents_strain_claim() -> None:
     request = WriterRequest(
         question="Does Streptomyces produce rapamycin?",

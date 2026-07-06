@@ -294,7 +294,7 @@ class GroundedAnswerRequest(BaseModel):
     evidence_items: list[WriterEvidenceInputRequest] = Field(default_factory=list)
     taxonomy_warnings: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
-    use_llm: bool = False
+    use_llm: bool | None = None
     retrieve_evidence: bool = False
     retrieval_query: str | None = None
     retrieval_mode: str = "bm25"
@@ -314,6 +314,9 @@ class GroundedAnswerResponse(BaseModel):
     provenance: dict[str, Any]
     citation_validation: dict[str, Any] | None = None
     faithfulness_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
+    answer_mode: str | None = None
+    evidence_status: str | None = None
+    llm_status: str | None = None
 
 
 class AskRequest(BaseModel):
@@ -321,7 +324,7 @@ class AskRequest(BaseModel):
     retrieval_mode: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid_rerank"
     top_k: int = Field(default=5, ge=1, le=20)
     max_queries: int = Field(default=3, ge=1, le=5)
-    use_llm: bool = False
+    use_llm: bool | None = None
 
     @field_validator("question")
     @classmethod

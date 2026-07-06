@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy import JSON as SQLAlchemyJSON
 from sqlalchemy import (
+    BigInteger,
     DateTime,
     Float,
     ForeignKey,
@@ -292,6 +293,22 @@ class CandidateLink(TimestampMixin, Base):
     evidence_tier: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(64), nullable=False)
     rationale: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+
+
+class LiteratureCorpusState(Base):
+    __tablename__ = "literature_corpus_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    corpus_revision: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    chunk_count: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    content_checksum: Mapped[str | None] = mapped_column(Text)
+    ordered_chunk_ids_checksum: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
 
 class RetrievalRun(TimestampMixin, Base):

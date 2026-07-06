@@ -31,6 +31,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/log.sh
+source "${ROOT}/scripts/lib/log.sh"
+
 ENV_NAME="${RHIZONP_CONDA_ENV:-rhizonp}"
 HOST="${RHIZONP_HOST:-127.0.0.1}"
 PORT="${RHIZONP_PORT:-8000}"
@@ -43,7 +46,6 @@ BOOTSTRAP_LOG="${ROOT}/.rhizonp-bootstrap.log"
 DEFAULT_DATABASE_URL="postgresql://rhizonp:rhizonp_dev@localhost:5432/rhizonp"
 VERBOSE="${RHIZONP_VERBOSE:-0}"
 OPEN_BROWSER="${RHIZONP_OPEN_BROWSER:-1}"
-STEP=0
 ENV_ENSURED=0
 DB_BOOTSTRAPPED=0
 
@@ -62,24 +64,6 @@ while [[ $# -gt 0 && "${1}" == --* ]]; do
       ;;
   esac
 done
-
-log() {
-  printf '[rhizonp] %s\n' "$*"
-}
-
-step() {
-  STEP=$((STEP + 1))
-  printf '[rhizonp] (%d) %s\n' "${STEP}" "$*"
-}
-
-warn() {
-  printf '[rhizonp][warn] %s\n' "$*" >&2
-}
-
-die() {
-  printf '[rhizonp][error] %s\n' "$*" >&2
-  exit 1
-}
 
 open_browser() {
   local url="$1"
@@ -119,7 +103,7 @@ Path(pid_file).write_text(str(process.pid), encoding="utf-8")
 PY
   local spawned_pid
   spawned_pid="$(cat "${pid_file}")"
-  log "${label} running in background (pid ${spawned_pid})"
+  step_ok "${label} running in background (pid ${spawned_pid})"
 }
 
 run_cmd() {
@@ -152,7 +136,8 @@ ensure_conda_env() {
     return 0
   fi
   if conda env list | awk '{print $1}' | grep -qx "${ENV_NAME}"; then
-    step "conda env '${ENV_NAME}' ready"
+    step "conda env '${ENV_NAME}'"
+    step_ok "environment ready"
   else
     step "creating conda env '${ENV_NAME}'"
     if [[ "${VERBOSE}" -eq 1 ]]; then
@@ -160,6 +145,7 @@ ensure_conda_env() {
     else
       conda env create -f "${ROOT}/environment.yml" >>"${BOOTSTRAP_LOG}" 2>&1
     fi
+    step_ok "environment created"
   fi
   conda activate "${ENV_NAME}"
   ENV_ENSURED=1
@@ -172,7 +158,7 @@ ensure_project_deps() {
   run_cmd "pip install" python -m pip install "${pip_flags[@]}" --upgrade pip
   run_cmd "requirements install" python -m pip install "${pip_flags[@]}" -r "${ROOT}/requirements.txt"
   run_cmd "editable install" python -m pip install "${pip_flags[@]}" -e "${ROOT}[dev]"
-  log "dependencies OK"
+  step_ok "dependencies installed"
 }
 
 ensure_env_file() {
@@ -248,7 +234,7 @@ setup_db() {
   pg_user="${pg_user:-rhizonp}"
   pg_db="${pg_db:-rhizonp}"
 
-  step "starting PostgreSQL (docker compose)"
+  step "PostgreSQL (docker compose)"
   (
     cd "${ROOT}"
     export DATABASE_URL
@@ -259,7 +245,7 @@ setup_db() {
     fi
   )
 
-  step "waiting for PostgreSQL"
+  log_wait "waiting for PostgreSQL"
   local ready=0
   for _ in $(seq 1 30); do
     if docker compose -f "${ROOT}/docker-compose.yml" exec -T postgres pg_isready -U "${pg_user}" -d "${pg_db}" >/dev/null 2>&1; then
@@ -269,6 +255,7 @@ setup_db() {
     sleep 1
   done
   [[ "${ready}" -eq 1 ]] || die "PostgreSQL did not become ready within 30s."
+  step_ok "PostgreSQL ready"
 
   step "migrations and fixtures"
   (
@@ -276,9 +263,16 @@ setup_db() {
     export DATABASE_URL
     run_cmd "alembic upgrade" alembic upgrade head
     run_cmd "demo fixtures" python -m scripts.load_demo_fixtures
-    run_cmd "literature fixtures" python -m scripts.load_literature_fixtures
+    if [[ -f "${ROOT}/data/snapshots/pubmed/rhizonp_domain_v1/corpus.json" ]]; then
+      run_cmd "bounded PubMed corpus" python -m scripts.build_domain_corpus --ingest --remove-fixture-literature
+    else
+      warn "Bounded PubMed snapshot missing; falling back to synthetic literature fixture."
+      run_cmd "literature fixtures" python -m scripts.load_literature_fixtures
+    fi
+    export LITERATURE_RETRIEVAL_PROFILE=standard_rag
+    run_cmd "literature FAISS index" python -m scripts.build_literature_faiss_index --if-stale
   )
-  log "database OK"
+  step_ok "database ready"
   DB_BOOTSTRAPPED=1
 }
 
@@ -291,7 +285,7 @@ stop_process() {
   local pid
   pid="$(cat "${pid_file}")"
   if kill -0 "${pid}" >/dev/null 2>&1; then
-    step "stopping ${label} (pid ${pid})"
+    step "stopping ${label}"
     # spawn_detached uses start_new_session=True, so pid is the process-group leader.
     kill -TERM "-${pid}" 2>/dev/null || kill "${pid}" || true
     for _ in $(seq 1 10); do
@@ -304,6 +298,7 @@ stop_process() {
       kill -KILL "-${pid}" 2>/dev/null || kill -KILL "${pid}" || true
       wait "${pid}" 2>/dev/null || true
     fi
+    step_ok "${label} stopped (pid ${pid})"
   fi
   rm -f "${pid_file}"
 }
@@ -330,8 +325,12 @@ stop_frontend() {
 }
 
 stop_all() {
+  log_init
+  log_banner "RhizoNP Navigator" "Stopping services"
+  log_section "Shutdown"
   stop_frontend
   stop_api
+  log_ok "all services stopped"
 }
 
 start_api_foreground() {
@@ -351,15 +350,16 @@ start_api_background() {
   stop_api
   cd "${ROOT}"
   export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
+  step "API server"
   spawn_detached "API" "${PID_FILE}" "${LOG_FILE}" \
     python -m uvicorn rhizonp.api.app:app --app-dir src --host "${HOST}" --port "${PORT}" --log-level warning
-  log "  docs  → http://${HOST}:${PORT}/docs"
-  log "  logs  → ${LOG_FILE}"
+  log_detail "docs  → http://${HOST}:${PORT}/docs"
+  log_detail "logs  → ${LOG_FILE}"
 }
 
 wait_for_api() {
   local url="http://${HOST}:${PORT}/api/v1/health"
-  step "waiting for API health"
+  log_wait "waiting for API health at ${url}"
   local consecutive=0
   for _ in $(seq 1 30); do
     if [[ -f "${PID_FILE}" ]]; then
@@ -374,7 +374,7 @@ wait_for_api() {
     if curl -fsS "${url}" >/dev/null 2>&1; then
       consecutive=$((consecutive + 1))
       if [[ "${consecutive}" -ge 2 ]]; then
-        log "API healthy"
+        step_ok "API healthy"
         return 0
       fi
     else
@@ -403,19 +403,20 @@ start_frontend_background() {
   ensure_frontend_deps
   stop_frontend
   cd "${ROOT}/frontend"
+  step "frontend dev server"
   spawn_detached "frontend" "${FRONTEND_PID_FILE}" "${FRONTEND_LOG_FILE}" \
     env VITE_API_PROXY_TARGET="http://${HOST}:${PORT}" \
     npm run dev -- --host "${HOST}" --port "${FRONTEND_PORT}"
-  log "  app   → http://${HOST}:${FRONTEND_PORT}/"
-  log "  logs  → ${FRONTEND_LOG_FILE}"
+  log_detail "app   → http://${HOST}:${FRONTEND_PORT}/"
+  log_detail "logs  → ${FRONTEND_LOG_FILE}"
 }
 
 wait_for_frontend() {
   local url="http://${HOST}:${FRONTEND_PORT}/"
-  step "waiting for frontend"
+  log_wait "waiting for frontend at ${url}"
   for _ in $(seq 1 30); do
     if curl -fsS "${url}" >/dev/null 2>&1; then
-      log "frontend ready"
+      step_ok "frontend ready"
       return 0
     fi
     sleep 1
@@ -425,10 +426,13 @@ wait_for_frontend() {
 
 cmd_setup() {
   : >"${BOOTSTRAP_LOG}"
+  log_init
+  log_banner "RhizoNP Navigator" "Environment setup"
+  log_section "Environment"
   ensure_conda_env
   ensure_project_deps
   ensure_env_file
-  log "setup complete — activate with: conda activate ${ENV_NAME}"
+  log_ok "setup complete — activate with: conda activate ${ENV_NAME}"
 }
 
 cmd_all() {
@@ -436,13 +440,21 @@ cmd_all() {
 }
 
 cmd_app() {
+  local subtitle="${1:-Full-stack development}"
   : >"${BOOTSTRAP_LOG}"
-  cmd_setup
+  log_init
+  log_banner "RhizoNP Navigator" "${subtitle}"
+  log_section "Environment"
+  ensure_conda_env
+  ensure_project_deps
+  ensure_env_file
+  log_section "Database"
   setup_db 1
+  log_section "Services"
   start_api_background
   wait_for_api
   if [[ "${RHIZONP_SKIP_API_CHECKS:-0}" != "1" ]]; then
-    step "API integration checks"
+    log_section "API checks"
     if [[ "${DB_BOOTSTRAPPED}" -eq 1 ]]; then
       "${ROOT}/scripts/test_api_integration.sh" --full --base-url "http://${HOST}:${PORT}"
     else
@@ -451,24 +463,25 @@ cmd_app() {
   fi
   start_frontend_background
   wait_for_frontend
-  printf '\n[rhizonp] Full-stack dev ready.\n'
-  log "  workspace → http://${HOST}:${FRONTEND_PORT}/"
-  log "  API docs  → http://${HOST}:${PORT}/docs"
-  log "  stop all  → ./scripts/start.sh stop"
-  log "  API log   → ${LOG_FILE}"
-  log "  web log   → ${FRONTEND_LOG_FILE}"
+  log_summary_box "Ready" \
+    "Workspace" "http://${HOST}:${FRONTEND_PORT}/" \
+    "API docs" "http://${HOST}:${PORT}/docs" \
+    "Stop" "make stop" \
+    "API log" "${LOG_FILE}" \
+    "Web log" "${FRONTEND_LOG_FILE}"
   open_browser "http://${HOST}:${FRONTEND_PORT}/"
 }
 
 cmd_share() {
-  RHIZONP_OPEN_BROWSER=0 RHIZONP_SKIP_API_CHECKS=1 cmd_app
+  RHIZONP_OPEN_BROWSER=0 RHIZONP_SKIP_API_CHECKS=1 cmd_app "Share via Cloudflare Tunnel"
+  export RHIZONP_TUNNEL_AFTER_SHARE=1
   exec "${ROOT}/scripts/tunnel.sh"
 }
 
 cmd_prod() {
   export RHIZONP_RUNTIME_MODE=prod
   export RHIZONP_OPEN_BROWSER=0
-  cmd_app
+  cmd_app "Production runtime"
 }
 
 cmd="${1:-app}"
@@ -495,7 +508,7 @@ case "${cmd}" in
     cd "${ROOT}"
     make eval-end-to-end
     ;;
-  app) cmd_app ;;
+  app) cmd_app "${2:-}" ;;
   prod) cmd_prod ;;
   share) cmd_share ;;
   tunnel) exec "${ROOT}/scripts/tunnel.sh" ;;

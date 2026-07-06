@@ -1,7 +1,7 @@
 PYTHON ?= python
 COMPOSE ?= docker compose
 
-.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-scientific-constraints eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app start stop share tunnel validate-real-pubmed-bridge validate-postgresql-fullstack check-deepseek-config eval-llm-writer-live
+.PHONY: setup lint type test secret-scan check db-up db-down db-migrate bootstrap-db load-demo-fixtures load-literature-fixtures fetch-domain-corpus ingest-domain-corpus fetch-domain-corpus-v2 ingest-domain-corpus-v2 build-literature-faiss-index fetch-npatlas-snapshot fetch-ncbi-taxonomy-cache validate-ncbi-taxonomy-resolver validate-npatlas-bioactivity validate-retrieval-grounded-writer eval-writer-safety eval-scientific-constraints eval-retrieval eval-real-retrieval export-annotation-candidates import-annotation-labels run-leakage-audit eval-end-to-end demo smoke docker-test frontend-dev frontend-build frontend-typecheck app start stop share tunnel validate-real-pubmed-bridge validate-postgresql-fullstack check-deepseek-config eval-llm-writer-live
 
 setup:
 	$(PYTHON) -m pip install --upgrade pip
@@ -15,7 +15,14 @@ type:
 	mypy src
 
 test:
+	LITERATURE_RETRIEVAL_PROFILE=offline \
+	LITERATURE_EMBEDDING_PROVIDER=hashing \
+	LITERATURE_VECTOR_INDEX_BACKEND=in_memory \
+	LITERATURE_RERANKER=lexical \
 	$(PYTHON) -m pytest
+
+build-literature-faiss-index:
+	$(PYTHON) -m scripts.build_literature_faiss_index --if-stale
 
 secret-scan:
 	$(PYTHON) -m scripts.check_no_secrets
@@ -45,6 +52,16 @@ fetch-domain-corpus:
 
 ingest-domain-corpus:
 	$(PYTHON) -m scripts.build_domain_corpus --ingest
+
+fetch-domain-corpus-v2:
+	$(PYTHON) -m scripts.build_domain_corpus --fetch \
+		--queries data/eval/domain_corpus_queries_v2.json \
+		--snapshot-dir data/snapshots/pubmed/rhizonp_domain_v2
+
+ingest-domain-corpus-v2:
+	$(PYTHON) -m scripts.build_domain_corpus --ingest \
+		--queries data/eval/domain_corpus_queries_v2.json \
+		--snapshot-dir data/snapshots/pubmed/rhizonp_domain_v2
 
 fetch-npatlas-snapshot:
 	$(PYTHON) -m scripts.build_npatlas_snapshot
