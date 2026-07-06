@@ -148,7 +148,7 @@ export function AskPage() {
     <>
       <PageHeader
         title="科研问答"
-        subtitle="输入科学问题，系统将规划检索、召回文献证据并生成有边界约束的回答"
+        subtitle="输入你的科研问题，获取带证据来源与边界说明的回答"
       />
 
       <form className="card" onSubmit={handleSubmit}>

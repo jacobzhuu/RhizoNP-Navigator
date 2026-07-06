@@ -8,7 +8,7 @@ export function NotFoundPage() {
       <div className="card">
         <p>请检查 URL，或返回工作区首页继续研究。</p>
         <Link to="/" className="btn">
-          返回科研问答
+          返回首页
         </Link>
       </div>
     </>

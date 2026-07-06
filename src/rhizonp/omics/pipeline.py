@@ -124,11 +124,28 @@ def run_own_data_pipeline(
     options: OwnDataPipelineOptions | None = None,
     literature_retriever: OwnDataLiteratureRetriever | None = None,
 ) -> OwnDataPipelineResult:
-    resolved_options = options or OwnDataPipelineOptions()
     bundle = load_own_data_bundle(data_dir)
+    return run_own_data_bundle(
+        bundle,
+        data_label=str(data_dir),
+        session=session,
+        options=options,
+        literature_retriever=literature_retriever,
+    )
+
+
+def run_own_data_bundle(
+    bundle: OwnDataBundle,
+    *,
+    data_label: str | Path = "constructed_own_data_bundle",
+    session: Session | None = None,
+    options: OwnDataPipelineOptions | None = None,
+    literature_retriever: OwnDataLiteratureRetriever | None = None,
+) -> OwnDataPipelineResult:
+    resolved_options = options or OwnDataPipelineOptions()
     persistence_info: dict[str, Any] | None = None
     if session is not None and resolved_options.persist_to_database:
-        persistence_result = persist_own_data_bundle(session, bundle, data_dir=data_dir)
+        persistence_result = persist_own_data_bundle(session, bundle, data_dir=data_label)
         session.commit()
         persistence_info = persistence_result.to_dict()
 
@@ -227,8 +244,8 @@ def run_own_data_pipeline(
         association_results=results,
         provenance={
             "pipeline": "rhizonp.omics.pipeline",
-            "data_dir": str(data_dir),
-            "fixture": True,
+            "data_dir": str(data_label),
+            "fixture": bool(bundle.provenance.get("fixture")),
             "literature_retrieval_enabled": resolved_options.enable_literature_retrieval,
             "literature_retrieval_mode": resolved_options.retrieval_mode,
             "persist_to_database": resolved_options.persist_to_database,

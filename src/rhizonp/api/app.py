@@ -73,6 +73,9 @@ from .schemas import (
     OwnDataPipelineRequest,
     OwnDataPipelineResponse,
     ReadinessResponse,
+    ResultDemoRequest,
+    ResultInterpretationRequest,
+    ResultsInterpretationResponse,
     SearchRequest,
     SearchResponse,
     SearchResultResponse,
@@ -317,6 +320,7 @@ TAGS_NATURAL_PRODUCTS = "Natural Products"
 TAGS_OWN_DATA = "Own Data"
 TAGS_WRITER = "Grounded Writer"
 TAGS_ASK = "Unified Ask"
+TAGS_RESULTS = "Results Interpretation"
 
 
 def create_app() -> FastAPI:
@@ -339,6 +343,7 @@ def create_app() -> FastAPI:
             {"name": TAGS_OWN_DATA, "description": "Own-data omics CSV pipeline."},
             {"name": TAGS_WRITER, "description": "Evidence-grounded scientific report writer."},
             {"name": TAGS_ASK, "description": "Single-question RAG workflow: plan, expand, retrieve, and answer."},
+            {"name": TAGS_RESULTS, "description": "Task-oriented interpretation of omics findings."},
         ],
     )
 
@@ -593,9 +598,46 @@ def create_app() -> FastAPI:
             ],
         )
 
+    def _open_interpretation_literature_session() -> Session:
+        from rhizonp.domain.models import Base
+        from rhizonp.ingestion.literature import load_phase2_literature_fixture
+        from rhizonp.storage.postgres import create_session_factory
+
+        try:
+            engine = create_runtime_engine(allow_sqlite_fallback=not is_prod_mode())
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        Base.metadata.create_all(engine)
+        session_factory = create_session_factory(engine)
+        session = session_factory()
+        chunk_count = int(session.scalar(select(func.count()).select_from(PaperChunk)) or 0)
+        if not is_prod_mode() and chunk_count == 0:
+            load_phase2_literature_fixture(session)
+            session.commit()
+        return session
+
+    def _interpretation_literature_retriever(
+        session: Session,
+        http_request: Request,
+        *,
+        retrieval_mode: str,
+        top_k: int,
+        max_queries: int,
+    ):
+        from rhizonp.omics.literature_bridge import DbBackedLiteratureRetriever
+
+        return DbBackedLiteratureRetriever(
+            session=session,
+            retrieval_mode=retrieval_mode,
+            top_k=top_k,
+            max_queries=max_queries,
+            runtime=getattr(http_request.app.state, "literature_runtime", None),
+        )
+
     @api.post("/api/v1/own-data/pipeline", response_model=OwnDataPipelineResponse, tags=[TAGS_OWN_DATA])
     def run_own_data_to_literature(
         request: OwnDataPipelineRequest,
+        http_request: Request,
     ) -> OwnDataPipelineResponse:
         from rhizonp.config import PROJECT_ROOT
         from rhizonp.domain.models import Base
@@ -621,14 +663,29 @@ def create_app() -> FastAPI:
             Base.metadata.create_all(engine)
             session_factory = create_session_factory(engine)
             literature_session = session_factory()
-            if not is_prod_mode():
+            chunk_count = int(
+                literature_session.scalar(select(func.count()).select_from(PaperChunk)) or 0
+            )
+            if not is_prod_mode() and chunk_count == 0:
                 load_phase2_literature_fixture(literature_session)
                 literature_session.commit()
 
         try:
+            literature_retriever = (
+                _interpretation_literature_retriever(
+                    literature_session,
+                    http_request,
+                    retrieval_mode=request.retrieval_mode,
+                    top_k=request.top_k,
+                    max_queries=request.max_queries,
+                )
+                if literature_session is not None and request.enable_literature_retrieval
+                else None
+            )
             result = run_own_data_pipeline(
                 data_dir,
                 session=literature_session,
+                literature_retriever=literature_retriever,
                 options=OwnDataPipelineOptions(
                     enable_literature_retrieval=request.enable_literature_retrieval,
                     retrieval_mode=request.retrieval_mode,
@@ -652,6 +709,87 @@ def create_app() -> FastAPI:
                 **payload["pipeline_provenance"],
             },
         )
+
+    @api.post(
+        "/api/v1/results/interpret",
+        response_model=ResultsInterpretationResponse,
+        tags=[TAGS_RESULTS],
+    )
+    def interpret_single_result(
+        request: ResultInterpretationRequest,
+        http_request: Request,
+    ) -> ResultsInterpretationResponse:
+        from rhizonp.config import get_settings
+        from rhizonp.omics.interpretation import ResultFindingInput, interpret_single_finding
+
+        resolved_use_llm = resolve_use_llm(request.use_llm, get_settings())
+        session = _open_interpretation_literature_session()
+        try:
+            literature_retriever = _interpretation_literature_retriever(
+                session,
+                http_request,
+                retrieval_mode=request.retrieval_mode,
+                top_k=request.top_k,
+                max_queries=request.max_queries,
+            )
+            payload = interpret_single_finding(
+                ResultFindingInput(
+                    taxon=request.taxon,
+                    metabolite=request.metabolite,
+                    association_direction=request.association_direction,
+                    effect_size=request.effect_size,
+                    p_value=request.p_value,
+                    observation_method=request.observation_method,
+                    use_llm=resolved_use_llm,
+                    retrieval_mode=request.retrieval_mode,
+                    top_k=request.top_k,
+                    max_queries=request.max_queries,
+                ),
+                session=session,
+                natural_product_source=request.natural_product_source,
+                taxonomy_source=request.taxonomy_source,
+                literature_retriever=literature_retriever,
+            )
+        finally:
+            session.close()
+        return ResultsInterpretationResponse(**payload)
+
+    @api.post(
+        "/api/v1/results/demo",
+        response_model=ResultsInterpretationResponse,
+        tags=[TAGS_RESULTS],
+    )
+    def interpret_demo_results_endpoint(
+        http_request: Request,
+        request: ResultDemoRequest | None = None,
+    ) -> ResultsInterpretationResponse:
+        from rhizonp.config import get_settings
+        from rhizonp.omics.interpretation import interpret_demo_results
+
+        resolved_request = request or ResultDemoRequest()
+        resolved_use_llm = resolve_use_llm(resolved_request.use_llm, get_settings())
+        session = _open_interpretation_literature_session()
+        try:
+            literature_retriever = _interpretation_literature_retriever(
+                session,
+                http_request,
+                retrieval_mode=resolved_request.retrieval_mode,
+                top_k=resolved_request.top_k,
+                max_queries=resolved_request.max_queries,
+            )
+            payload = interpret_demo_results(
+                session=session,
+                use_llm=resolved_use_llm,
+                retrieval_mode=resolved_request.retrieval_mode,
+                top_k=resolved_request.top_k,
+                max_queries=resolved_request.max_queries,
+                natural_product_source=resolved_request.natural_product_source,
+                taxonomy_source=resolved_request.taxonomy_source,
+                literature_retriever=literature_retriever,
+            )
+        finally:
+            session.close()
+        return ResultsInterpretationResponse(**payload)
 
     @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
     def write_answer(

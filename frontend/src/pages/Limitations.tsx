@@ -4,55 +4,61 @@ export function LimitationsPage() {
   return (
     <>
       <header className="page-header">
-        <h1>数据范围与系统边界</h1>
+        <h1>关于 RhizoNP Navigator</h1>
         <p className="subtitle">
-          RhizoNP Navigator 是证据约束型研究平台，以下说明当前版本的能力边界与科学限制。
+          面向微生物–代谢物与天然产物研究的证据约束科研辅助工具
         </p>
       </header>
 
       <section className="card">
-        <h2>当前数据范围</h2>
-        <ul>
-          <li>文献语料为有界索引（含 bounded PubMed 快照与离线 fixture），非 PubMed 全库检索。</li>
-          <li>天然产物关联优先使用 bounded NPAtlas 快照，缺失时回退至本地 fixture 记录。</li>
-          <li>分类学规范化优先使用 bounded NCBI 缓存，缺失时回退至本地别名 fixture。</li>
-          <li>默认稠密检索使用确定性 hashing 嵌入（可配置模型提供者）；reranker 默认为 lexical。</li>
-        </ul>
-      </section>
-
-      <section className="card">
-        <h2>科学边界</h2>
-        <ul>
-          <li>相关或共现不等于因果，不能替代实验验证。</li>
-          <li>属级 16S 观测不能支持菌株级或种级天然产物生产主张。</li>
-          <li>未确认 LC-MS 特征不得提升为已确认化合物身份。</li>
-          <li>证据冲突时返回 <code>CONFLICTING_EVIDENCE</code>，不会强行给出单一答案。</li>
-        </ul>
-      </section>
-
-      <section className="card">
-        <h2>系统能力说明</h2>
-        <ul>
-          <li>非自主 agent，无多工具循环编排。</li>
-          <li>大模型写作为可选能力；未配置 API key 或校验失败时自动回退确定性写作器。</li>
-          <li>引用忠实度未经人工标注验证；仅报告结构校验与启发式诊断。</li>
-          <li>自有数据流程需指定数据目录；当前不支持浏览器端文件上传。</li>
-          <li>Phase 2 真实 PubMed benchmark 人工标注尚未完成，不对外宣称 PubMed 级检索准确率。</li>
-        </ul>
-      </section>
-
-      <section className="card">
-        <h2>评估与指标</h2>
+        <h2>系统定位</h2>
         <p>
-          合成 gold 集与 MVP 回放用例上的完美分数，<strong>不</strong>代表 PubMed 全库或生产语料上的检索质量。
-          详见仓库文档 <code>docs/LIMITATIONS.md</code> 与 <code>docs/BENCHMARK_SCOPE.md</code>。
+          RhizoNP Navigator 将科研问题或组学发现连接到有界文献、天然产物记录、分类学边界和证据约束写作器。
+          它用于形成可追溯的候选解释和验证建议，而不是替代实验判断。
         </p>
       </section>
 
-      <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-        <Link to="/">返回科研问答</Link>
+      <section className="card">
+        <h2>能做什么</h2>
+        <ul>
+          <li>回答天然产物、微生物和根际互作相关科研问题。</li>
+          <li>解释微生物–代谢物关联等组学发现。</li>
+          <li>连接外部文献片段并保留 DOI、PMID、source 等来源信息。</li>
+          <li>关联 bounded NPAtlas 与本地候选天然产物记录。</li>
+          <li>识别分类学外推风险，例如属级 16S 到菌株级生产主张。</li>
+          <li>给出结论边界和下一步验证建议。</li>
+        </ul>
+      </section>
+
+      <section className="card">
+        <h2>不能做什么</h2>
+        <ul>
+          <li>不能证明因果关系。</li>
+          <li>不能替代实验验证。</li>
+          <li>不能把属级 16S 直接解释为菌株级天然产物生产能力。</li>
+          <li>不是 PubMed 全库检索系统。</li>
+          <li>bounded corpus 之外的信息可能缺失。</li>
+        </ul>
+      </section>
+
+      <section className="card">
+        <h2>数据与方法</h2>
+        <ul>
+          <li>文献语料为有界索引，包含 bounded PubMed 快照与离线 fixture，非 PubMed 全库。</li>
+          <li>天然产物关联优先使用 bounded NPAtlas 快照，缺失时回退到本地 fixture 记录。</li>
+          <li>分类学规范化优先使用 bounded NCBI 缓存，缺失时回退到本地别名 fixture。</li>
+          <li>默认稠密检索使用确定性 hashing 嵌入，可按配置切换模型提供者。</li>
+          <li>大模型写作为可选能力；未配置 API key 或校验失败时回退确定性写作器。</li>
+          <li>当前 benchmark 只代表声明范围内的评估结果，不代表开放世界检索准确率。</li>
+        </ul>
+      </section>
+
+      <p className="muted-text">
+        <Link to="/">返回首页</Link>
         {' · '}
-        <Link to="/overview">查看工作流概览</Link>
+        <Link to="/ask">科研问答</Link>
+        {' · '}
+        <Link to="/results">结果解释</Link>
       </p>
     </>
   )

@@ -13,6 +13,7 @@ from rhizonp.omics.literature_bridge import (
 from rhizonp.omics.pipeline import (
     OwnDataPipelineOptions,
     OwnDataPipelineResult,
+    run_own_data_bundle,
     run_own_data_pipeline,
 )
 from rhizonp.omics.query_builder import build_literature_queries, build_query_context
@@ -30,5 +31,6 @@ __all__ = [
     "build_query_context",
     "load_own_data_bundle",
     "retrieve_literature_for_association",
+    "run_own_data_bundle",
     "run_own_data_pipeline",
 ]

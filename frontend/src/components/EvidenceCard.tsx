@@ -16,9 +16,23 @@ function externalLink(url: string, label: string) {
   )
 }
 
+function taxonomyBoundary(hit: AskRetrievalHit) {
+  const payload = hit.taxonomy_grading
+  if (!payload || payload.status !== 'graded') return null
+  const grading = payload.grading as Record<string, unknown> | undefined
+  if (!grading) return null
+  return {
+    literatureTaxon: String(payload.literature_taxon ?? ''),
+    distance: String(grading.taxonomy_distance ?? ''),
+    tier: String(grading.evidence_tier ?? ''),
+    maxSupportedClaim: String(grading.max_supported_claim ?? ''),
+  }
+}
+
 export function EvidenceCard({ hit, index }: EvidenceCardProps) {
   const doiUrl = hit.doi ? (hit.doi.startsWith('http') ? hit.doi : `https://doi.org/${hit.doi}`) : null
   const pmidUrl = hit.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${hit.pmid}/` : null
+  const boundary = taxonomyBoundary(hit)
 
   return (
     <article className="evidence-hit evidence-card">
@@ -40,6 +54,15 @@ export function EvidenceCard({ hit, index }: EvidenceCardProps) {
           {hit.matched_terms.map((term) => (
             <span key={term} className="matched-term">{term}</span>
           ))}
+        </div>
+      )}
+      {boundary && (
+        <div className="taxonomy-boundary">
+          <strong>证据边界</strong>
+          <span>文献分类单元：{boundary.literatureTaxon || '—'}</span>
+          <span>距离：{boundary.distance || '—'}</span>
+          <span>等级：{boundary.tier || '—'}</span>
+          {boundary.maxSupportedClaim && <span>最高主张：{boundary.maxSupportedClaim}</span>}
         </div>
       )}
       {isDebugMode() && <ProvenanceBlock data={hit.provenance} defaultOpen={false} />}

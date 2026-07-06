@@ -12,6 +12,9 @@ import {
   type NaturalProductLinkResponse,
   type OwnDataPipelineRequest,
   type OwnDataPipelineResponse,
+  type ResultDemoRequest,
+  type ResultInterpretationRequest,
+  type ResultsInterpretationResponse,
   type SearchRequest,
   type SearchResponse,
   ApiError,
@@ -84,6 +87,18 @@ export const api = {
 
   runOwnDataPipeline: (body: OwnDataPipelineRequest) =>
     request<OwnDataPipelineResponse>('/api/v1/own-data/pipeline', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  interpretResult: (body: ResultInterpretationRequest) =>
+    request<ResultsInterpretationResponse>('/api/v1/results/interpret', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  runResultsDemo: (body: ResultDemoRequest = {}) =>
+    request<ResultsInterpretationResponse>('/api/v1/results/demo', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

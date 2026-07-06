@@ -9,13 +9,17 @@ import { NaturalProductsPage } from './pages/NaturalProducts'
 import { NotFoundPage } from './pages/NotFound'
 import { OwnDataPage } from './pages/OwnData'
 import { OverviewPage } from './pages/Overview'
+import { ResultsPage } from './pages/Results'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<AskPage />} />
+          <Route index element={<OverviewPage />} />
+          <Route path="ask" element={<AskPage />} />
+          <Route path="results" element={<ResultsPage />} />
+          <Route path="about" element={<LimitationsPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="literature" element={<LiteratureExplorerPage />} />
           <Route path="evidence-grader" element={<EvidenceGraderPage />} />

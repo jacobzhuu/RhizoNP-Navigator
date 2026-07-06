@@ -158,6 +158,13 @@ export interface NaturalProductLinkResponse {
 
 export interface OwnDataPipelineRequest {
   data_dir?: string | null
+  enable_literature_retrieval?: boolean
+  retrieval_mode?: string
+  top_k?: number
+  max_queries?: number
+  natural_product_source?: string
+  taxonomy_source?: string
+  enable_grounded_writer?: boolean
 }
 
 export interface OwnDataPipelineResponse {
@@ -186,6 +193,12 @@ export interface GroundedAnswerRequest {
   taxonomy_warnings?: string[]
   limitations?: string[]
   use_llm?: boolean
+  retrieve_evidence?: boolean
+  retrieval_query?: string | null
+  retrieval_mode?: string
+  top_k?: number
+  query_taxon?: string | null
+  observation_method?: string | null
 }
 
 export interface WriterClaim {
@@ -250,6 +263,7 @@ export interface AskRetrievalHit {
   provenance: Record<string, unknown>
   source_type: string
   is_fixture: boolean
+  taxonomy_grading?: Record<string, unknown> | null
 }
 
 export interface AskResponse {
@@ -260,6 +274,51 @@ export interface AskResponse {
   evidence_items: Record<string, unknown>[]
   citation_validation: Record<string, unknown>
   faithfulness_diagnostics: Record<string, unknown>[]
+  provenance: Record<string, unknown>
+}
+
+export interface ResultInterpretationRequest {
+  taxon: string
+  metabolite: string
+  association_direction: string
+  effect_size: number
+  p_value?: number | null
+  observation_method: string
+  use_llm?: boolean
+  retrieval_mode?: string
+  top_k?: number
+  max_queries?: number
+  natural_product_source?: string
+  taxonomy_source?: string
+}
+
+export interface ResultDemoRequest {
+  use_llm?: boolean
+  retrieval_mode?: string
+  top_k?: number
+  max_queries?: number
+  natural_product_source?: string
+  taxonomy_source?: string
+}
+
+export interface ResultInterpretation {
+  association_id: string
+  finding: Record<string, unknown>
+  status: string
+  status_label: string
+  supported_interpretation: string
+  unsupported_interpretation: string
+  reasoning: string[]
+  literature_evidence: Record<string, unknown>
+  natural_product_records: Record<string, unknown>
+  next_steps: string[]
+  grounded_answer: GroundedAnswerResponse
+  detailed_evidence: Record<string, unknown>
+}
+
+export interface ResultsInterpretationResponse {
+  finding_count: number
+  interpretations: ResultInterpretation[]
   provenance: Record<string, unknown>
 }
 

@@ -394,3 +394,74 @@ def test_api_own_data_pipeline_literature_enabled_without_database_url() -> None
     assert literature["status"] in {"RETRIEVED", "FIXTURE_TEST_ONLY"}
     assert literature["hits"]
     assert literature["hits"][0]["doi"] == "10.0000/rhizonp.fixture.lit.001"
+
+
+def test_results_interpret_single_finding_integrates_internal_modules() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/results/interpret",
+        json={
+            "taxon": "Streptomyces",
+            "metabolite": "M1023",
+            "association_direction": "positive",
+            "effect_size": 0.72,
+            "p_value": 0.003,
+            "observation_method": "16S genus-level",
+            "use_llm": False,
+            "retrieval_mode": "bm25",
+            "top_k": 3,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["finding_count"] == 1
+    interpretation = payload["interpretations"][0]
+    assert interpretation["finding"]["taxon"] == "Streptomyces"
+    assert interpretation["status"] in {
+        "SUPPORTED",
+        "PARTIALLY_SUPPORTED",
+        "INSUFFICIENT_EVIDENCE",
+        "CONFLICTING_EVIDENCE",
+    }
+    assert interpretation["supported_interpretation"]
+    assert interpretation["unsupported_interpretation"]
+    assert interpretation["reasoning"]
+    detailed = interpretation["detailed_evidence"]
+    assert detailed["taxonomy_grading"] is not None
+    assert detailed["candidate_links"]["rows"]
+    assert detailed["literature_retrieval"]["status"] in {"RETRIEVED", "FIXTURE_TEST_ONLY", "NO_RESULTS"}
+    assert detailed["pipeline_grounded_writer"] is not None
+    assert detailed["combined_evidence_count"] >= detailed["candidate_evidence_count"] >= 1
+    assert interpretation["grounded_answer"]["answer"]
+    assert payload["provenance"]["forced_literature_retrieval"] is True
+    assert payload["provenance"]["forced_grounded_writer"] is True
+
+
+def test_results_demo_interpretation_uses_fixture_without_exposing_path() -> None:
+    client = TestClient(create_app())
+
+    response = client.post(
+        "/api/v1/results/demo",
+        json={"use_llm": False, "retrieval_mode": "bm25", "top_k": 2},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["finding_count"] >= 1
+    interpretation = payload["interpretations"][0]
+    assert interpretation["finding"]["taxon"]
+    assert interpretation["literature_evidence"]["count"] >= 0
+    assert interpretation["natural_product_records"]
+    assert interpretation["grounded_answer"]["writer_mode"] in {
+        "fallback",
+        "deterministic_offline",
+        "fallback_after_citation_failure",
+        "fallback_after_constraint_violation",
+        "fallback_after_schema_failure",
+        "fallback_after_provider_error",
+        "deepseek_applied",
+        "deepseek_general_knowledge",
+    }
+    assert "data/fixtures" not in str(payload["interpretations"][0]["finding"])

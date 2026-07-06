@@ -269,6 +269,36 @@ class OwnDataPipelineResponse(BaseModel):
     provenance: dict[str, Any]
 
 
+class ResultInterpretationRequest(BaseModel):
+    taxon: str = Field(min_length=1, max_length=300)
+    metabolite: str = Field(min_length=1, max_length=300)
+    association_direction: str = "positive"
+    effect_size: float
+    p_value: float | None = None
+    observation_method: str = "16S genus-level"
+    use_llm: bool | None = None
+    retrieval_mode: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid_rerank"
+    top_k: int = Field(default=5, ge=1, le=20)
+    max_queries: int = Field(default=3, ge=1, le=5)
+    natural_product_source: str = "auto"
+    taxonomy_source: str = "auto"
+
+
+class ResultDemoRequest(BaseModel):
+    use_llm: bool | None = None
+    retrieval_mode: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid_rerank"
+    top_k: int = Field(default=5, ge=1, le=20)
+    max_queries: int = Field(default=3, ge=1, le=5)
+    natural_product_source: str = "auto"
+    taxonomy_source: str = "auto"
+
+
+class ResultsInterpretationResponse(BaseModel):
+    finding_count: int
+    interpretations: list[dict[str, Any]]
+    provenance: dict[str, Any]
+
+
 class WriterEvidenceInputRequest(BaseModel):
     evidence_id: uuid.UUID
     claim_type: str
@@ -370,6 +400,7 @@ class AskRetrievalHitResponse(BaseModel):
     provenance: dict[str, Any]
     source_type: str
     is_fixture: bool
+    taxonomy_grading: dict[str, Any] | None = None
 
 
 class AskResponse(BaseModel):

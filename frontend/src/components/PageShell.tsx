@@ -3,11 +3,12 @@ import type { ReactNode } from 'react'
 interface PageHeaderProps {
   title: string
   subtitle?: string
+  className?: string
 }
 
-export function PageHeader({ title, subtitle }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, className }: PageHeaderProps) {
   return (
-    <header className="page-header">
+    <header className={['page-header', className].filter(Boolean).join(' ')}>
       <h1>{title}</h1>
       {subtitle && <p className="subtitle">{subtitle}</p>}
     </header>

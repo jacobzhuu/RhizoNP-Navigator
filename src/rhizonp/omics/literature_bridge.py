@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from rhizonp.domain.models import Paper, PaperChunk
 from rhizonp.literature.retrieval import HybridWeights, SearchResult, search_paper_chunks
+from rhizonp.literature.runtime import LiteratureRetrievalRuntime
 from rhizonp.omics.corpus_provenance import CorpusType, classify_paper
 from rhizonp.omics.query_builder import (
     GeneratedQuery,
@@ -236,6 +237,7 @@ class DbBackedLiteratureRetriever:
     corpus_label: str = "db_backed"
     corpus_id: str | None = None
     corpus_type: str | None = None
+    runtime: LiteratureRetrievalRuntime | None = None
 
     def retrieve_for_association(
         self,
@@ -289,6 +291,7 @@ class DbBackedLiteratureRetriever:
             results = search_paper_chunks(
                 self.session,
                 generated_query.query_text,
+                runtime=self.runtime,
                 top_k=self.top_k,
                 retrieval_mode=self.retrieval_mode,
                 hybrid_weights=HybridWeights(

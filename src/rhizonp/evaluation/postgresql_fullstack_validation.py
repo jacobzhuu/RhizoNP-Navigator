@@ -342,8 +342,10 @@ def run_api_checks(database_url: str) -> dict[str, Any]:
 
     from fastapi.testclient import TestClient
 
-    from rhizonp.api.app import create_app, get_session
+    from rhizonp.api.app import create_app, get_literature_retrieval_service, get_session
     from rhizonp.config import get_settings
+    from rhizonp.literature.runtime import build_literature_retrieval_runtime
+    from rhizonp.literature.service import LiteratureRetrievalService
 
     previous_url = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = database_url
@@ -352,6 +354,9 @@ def run_api_checks(database_url: str) -> dict[str, Any]:
     engine = create_engine(database_url, future=True)
     session_factory = create_session_factory(engine)
     api = create_app()
+    runtime = build_literature_retrieval_runtime(strict=False)
+    api.state.literature_runtime = runtime
+    api.state.literature_retrieval_service = LiteratureRetrievalService(runtime)
 
     def override_get_session() -> Iterator[Session]:
         session = session_factory()
@@ -360,7 +365,11 @@ def run_api_checks(database_url: str) -> dict[str, Any]:
         finally:
             session.close()
 
+    def override_literature_service() -> LiteratureRetrievalService:
+        return api.state.literature_retrieval_service
+
     api.dependency_overrides[get_session] = override_get_session
+    api.dependency_overrides[get_literature_retrieval_service] = override_literature_service
     client = TestClient(api)
 
     try:
