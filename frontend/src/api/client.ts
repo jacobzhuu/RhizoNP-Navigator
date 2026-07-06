@@ -7,6 +7,9 @@ import {
   type GroundedAnswerRequest,
   type GroundedAnswerResponse,
   type HealthResponse,
+  type HistoryDetailResponse,
+  type HistoryKind,
+  type HistoryListResponse,
   type ReadinessResponse,
   type NaturalProductLinkRequest,
   type NaturalProductLinkResponse,
@@ -108,4 +111,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  listHistory: (params: { kind?: HistoryKind; limit?: number; offset?: number } = {}) => {
+    const search = new URLSearchParams()
+    if (params.kind) search.set('kind', params.kind)
+    if (params.limit != null) search.set('limit', String(params.limit))
+    if (params.offset != null) search.set('offset', String(params.offset))
+    const query = search.toString()
+    return request<HistoryListResponse>(`/api/v1/history${query ? `?${query}` : ''}`)
+  },
+
+  getHistory: (historyId: string) =>
+    request<HistoryDetailResponse>(`/api/v1/history/${historyId}`),
 }

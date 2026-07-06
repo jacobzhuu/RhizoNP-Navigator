@@ -1,6 +1,6 @@
 interface BadgeProps {
   label: string
-  variant?: 'tier-a' | 'tier-b' | 'tier-c' | 'tier-d' | 'same-genus' | 'supported' | 'partial' | 'insufficient' | 'fixture' | 'mode'
+  variant?: 'tier-a' | 'tier-b' | 'tier-c' | 'tier-d' | 'same-genus' | 'supported' | 'partial' | 'insufficient' | 'unsupported' | 'fixture' | 'mode' | 'kind'
 }
 
 export function Badge({ label, variant = 'mode' }: BadgeProps) {

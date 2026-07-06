@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from collections import Counter
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
@@ -65,6 +66,9 @@ from .schemas import (
     GroundedAnswerRequest,
     GroundedAnswerResponse,
     HealthResponse,
+    HistoryDetailResponse,
+    HistoryListItemResponse,
+    HistoryListResponse,
     NaturalProductLinkRequest,
     NaturalProductLinkResponse,
     NaturalProductLinkRowResponse,
@@ -321,6 +325,7 @@ TAGS_OWN_DATA = "Own Data"
 TAGS_WRITER = "Grounded Writer"
 TAGS_ASK = "Unified Ask"
 TAGS_RESULTS = "Results Interpretation"
+TAGS_HISTORY = "History"
 
 
 def create_app() -> FastAPI:
@@ -414,7 +419,7 @@ def create_app() -> FastAPI:
             citation_validation=payload["citation_validation"],
             faithfulness_diagnostics=payload["faithfulness_diagnostics"],
         )
-        return AskResponse(
+        ask_response = AskResponse(
             question_plan=payload["question_plan"],
             retrieval_mode=payload["retrieval_mode"],
             retrieval_hits=payload["retrieval_hits"],
@@ -424,6 +429,11 @@ def create_app() -> FastAPI:
             faithfulness_diagnostics=payload["faithfulness_diagnostics"],
             provenance=payload["provenance"],
         )
+        from rhizonp.history.persistence import persist_ask_history
+
+        history_id = persist_ask_history(session, request, ask_response)
+        session.commit()
+        return ask_response.model_copy(update={"history_id": history_id})
 
     @api.get("/api/v1/corpus/summary", response_model=CorpusSummaryResponse, tags=[TAGS_LITERATURE])
     def corpus_summary(session: Session = SESSION_DEPENDENCY) -> CorpusSummaryResponse:
@@ -718,6 +728,7 @@ def create_app() -> FastAPI:
     def interpret_single_result(
         request: ResultInterpretationRequest,
         http_request: Request,
+        history_session: Session | None = OPTIONAL_SESSION_DEPENDENCY,
     ) -> ResultsInterpretationResponse:
         from rhizonp.config import get_settings
         from rhizonp.omics.interpretation import ResultFindingInput, interpret_single_finding
@@ -752,7 +763,14 @@ def create_app() -> FastAPI:
             )
         finally:
             session.close()
-        return ResultsInterpretationResponse(**payload)
+        response = ResultsInterpretationResponse(**payload)
+        history_id = None
+        if history_session is not None:
+            from rhizonp.history.persistence import persist_results_history
+
+            history_id = persist_results_history(history_session, request, response)
+            history_session.commit()
+        return response.model_copy(update={"history_id": history_id})
 
     @api.post(
         "/api/v1/results/demo",
@@ -790,6 +808,51 @@ def create_app() -> FastAPI:
         finally:
             session.close()
         return ResultsInterpretationResponse(**payload)
+
+    @api.get("/api/v1/history", response_model=HistoryListResponse, tags=[TAGS_HISTORY])
+    def list_history(
+        session: Session = SESSION_DEPENDENCY,
+        kind: str | None = Query(default=None, pattern="^(ask|results)$"),
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+    ) -> HistoryListResponse:
+        from rhizonp.history.persistence import list_interaction_history
+
+        items, total = list_interaction_history(session, kind=kind, limit=limit, offset=offset)
+        return HistoryListResponse(
+            items=[
+                HistoryListItemResponse(
+                    history_id=item.history_id,
+                    kind=item.kind,  # type: ignore[arg-type]
+                    title=item.title,
+                    status=item.status,
+                    summary=item.summary,
+                    created_at=item.created_at.isoformat(),
+                )
+                for item in items
+            ],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+
+    @api.get("/api/v1/history/{history_id}", response_model=HistoryDetailResponse, tags=[TAGS_HISTORY])
+    def get_history(
+        history_id: uuid.UUID,
+        session: Session = SESSION_DEPENDENCY,
+    ) -> HistoryDetailResponse:
+        from rhizonp.history.persistence import get_interaction_history
+
+        record = get_interaction_history(session, history_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="History record not found")
+        return HistoryDetailResponse(
+            history_id=record.history_id,
+            kind=record.kind,  # type: ignore[arg-type]
+            created_at=record.created_at.isoformat(),
+            request=record.request_payload,
+            response=record.response_payload,
+        )
 
     @api.post("/api/v1/writer/answer", response_model=GroundedAnswerResponse, tags=[TAGS_WRITER])
     def write_answer(

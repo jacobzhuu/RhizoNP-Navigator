@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from rhizonp.api.app import create_app, get_literature_retrieval_service, get_session
+from rhizonp.api.app import create_app, get_literature_retrieval_service, get_optional_session, get_session
 from rhizonp.literature.runtime import build_offline_literature_runtime
 from rhizonp.literature.service import LiteratureRetrievalService
 from rhizonp.domain.models import Base
@@ -28,6 +28,18 @@ def _attach_literature_service(api) -> None:
     api.dependency_overrides[get_literature_retrieval_service] = override_literature_service
 
 
+def _override_session_dependencies(api, session_factory) -> None:
+    def override_get_session() -> Iterator[Session]:
+        session = session_factory()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    api.dependency_overrides[get_session] = override_get_session
+    api.dependency_overrides[get_optional_session] = override_get_session
+
+
 def _client_with_phase1_fixture() -> TestClient:
     engine = create_engine(
         "sqlite+pysqlite://",
@@ -43,15 +55,7 @@ def _client_with_phase1_fixture() -> TestClient:
 
     api = create_app()
     _attach_literature_service(api)
-
-    def override_get_session() -> Iterator[Session]:
-        session = session_factory()
-        try:
-            yield session
-        finally:
-            session.close()
-
-    api.dependency_overrides[get_session] = override_get_session
+    _override_session_dependencies(api, session_factory)
     return TestClient(api)
 
 
@@ -70,15 +74,7 @@ def _client_with_phase2_literature_fixture() -> TestClient:
 
     api = create_app()
     _attach_literature_service(api)
-
-    def override_get_session() -> Iterator[Session]:
-        session = session_factory()
-        try:
-            yield session
-        finally:
-            session.close()
-
-    api.dependency_overrides[get_session] = override_get_session
+    _override_session_dependencies(api, session_factory)
     return TestClient(api)
 
 

@@ -275,6 +275,7 @@ export interface AskResponse {
   citation_validation: Record<string, unknown>
   faithfulness_diagnostics: Record<string, unknown>[]
   provenance: Record<string, unknown>
+  history_id?: string | null
 }
 
 export interface ResultInterpretationRequest {
@@ -320,6 +321,33 @@ export interface ResultsInterpretationResponse {
   finding_count: number
   interpretations: ResultInterpretation[]
   provenance: Record<string, unknown>
+  history_id?: string | null
+}
+
+export type HistoryKind = 'ask' | 'results'
+
+export interface HistoryListItem {
+  history_id: string
+  kind: HistoryKind
+  title: string
+  status: string
+  summary?: string | null
+  created_at: string
+}
+
+export interface HistoryListResponse {
+  items: HistoryListItem[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface HistoryDetailResponse {
+  history_id: string
+  kind: HistoryKind
+  created_at: string
+  request: Record<string, unknown>
+  response: Record<string, unknown>
 }
 
 export class ApiError extends Error {

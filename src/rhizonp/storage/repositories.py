@@ -10,6 +10,7 @@ from rhizonp.domain.models import (
     Compound,
     Dataset,
     EvidenceItem,
+    InteractionHistory,
     NaturalProductRecord,
     OmicsAssociation,
     Paper,
@@ -195,3 +196,29 @@ class RetrievalResultRepository(Repository[RetrievalResult, object]):
                 .order_by(RetrievalResult.rank)
             )
         )
+
+
+class InteractionHistoryRepository(Repository[InteractionHistory, object]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, InteractionHistory)
+
+    def get_by_id(self, history_id: object) -> InteractionHistory | None:
+        return self.session.get(InteractionHistory, history_id)
+
+    def list_by_kind(
+        self,
+        *,
+        kind: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[InteractionHistory]:
+        query = select(InteractionHistory).order_by(InteractionHistory.created_at.desc())
+        if kind is not None:
+            query = query.where(InteractionHistory.kind == kind)
+        return list(self.session.scalars(query.limit(limit).offset(offset)))
+
+    def count_by_kind(self, *, kind: str | None = None) -> int:
+        query = select(func.count()).select_from(InteractionHistory)
+        if kind is not None:
+            query = query.where(InteractionHistory.kind == kind)
+        return int(self.session.scalar(query) or 0)

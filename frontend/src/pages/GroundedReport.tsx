@@ -7,6 +7,7 @@ import {
   type GroundedAnswerResponse,
 } from '../api/types'
 import { Badge, tierBadgeVariant } from '../components/Badge'
+import { AnswerText } from '../components/AnswerText'
 import { ErrorPanel, InfoPanel, LimitationsPanel, WarningPanel } from '../components/Panels'
 import { PageHeader } from '../components/PageShell'
 import { ProvenanceBlock } from '../components/ProvenanceBlock'
@@ -157,7 +158,7 @@ export function GroundedReportPage() {
           </div>
 
           <h3>回答</h3>
-          <p>{result.answer}</p>
+          <AnswerText text={result.answer} className="answer-lead" />
 
           {result.claims.length > 0 && (
             <>

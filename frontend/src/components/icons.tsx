@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from 'react'
 
-type IconProps = SVGProps<SVGSVGElement> & { size?: number }
+export type IconProps = SVGProps<SVGSVGElement> & { size?: number }
 
 function Icon({ size = 20, children, ...props }: IconProps & { children: ReactNode }) {
   return (
@@ -53,6 +53,15 @@ export function IconInfo(props: IconProps) {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 10v6" />
       <path d="M12 7h.01" />
+    </Icon>
+  )
+}
+
+export function IconClock(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
     </Icon>
   )
 }
@@ -116,6 +125,15 @@ export function IconShield(props: IconProps) {
   )
 }
 
+export function IconShieldCheck(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z" />
+      <path d="m9 12 2 2 4-4" />
+    </Icon>
+  )
+}
+
 export function IconSend(props: IconProps) {
   return (
     <Icon {...props}>
@@ -142,6 +160,16 @@ export function IconChart(props: IconProps) {
       <path d="M7 16V8" />
       <path d="M12 16V5" />
       <path d="M17 16v-4" />
+    </Icon>
+  )
+}
+
+export function IconLayers(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 2 2 7l10 5 10-5-10-5z" />
+      <path d="M2 12l10 5 10-5" />
+      <path d="M2 17l10 5 10-5" />
     </Icon>
   )
 }
@@ -177,6 +205,50 @@ export function IconArrowRight(props: IconProps) {
     <Icon {...props}>
       <path d="M5 12h14" />
       <path d="m13 6 6 6-6 6" />
+    </Icon>
+  )
+}
+
+export function IconChevronRight(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </Icon>
+  )
+}
+
+export function IconSparkles(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3 13.5 8.5 19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z" />
+      <path d="M5 3.5 5.75 5.75 8 6.5 5.75 7.25 5 9.5 4.25 7.25 2 6.5l2.25-.75z" />
+      <path d="M19 14.5 19.5 15.75 20.75 16.25 19.5 16.75 19 18 18.5 16.75 17.25 16.25l1.25-.5z" />
+    </Icon>
+  )
+}
+
+export function IconSettings(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </Icon>
+  )
+}
+
+export function IconCheck(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m5 12 4 4 10-10" />
+    </Icon>
+  )
+}
+
+export function IconX(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m6 6 12 12" />
+      <path d="m18 6-12 12" />
     </Icon>
   )
 }

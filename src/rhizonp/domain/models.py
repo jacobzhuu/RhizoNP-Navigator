@@ -353,6 +353,22 @@ class RetrievalResult(Base):
     chunk: Mapped[PaperChunk] = relationship(back_populates="retrieval_results")
 
 
+class InteractionHistory(TimestampMixin, Base):
+    __tablename__ = "interaction_history"
+
+    history_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(64), nullable=False)
+    summary: Mapped[str | None] = mapped_column(Text)
+    request_payload: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    response_payload: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+
+
 Index("idx_taxa_canonical_name_lower", func.lower(Taxon.canonical_name))
 Index("idx_compounds_canonical_name_lower", func.lower(Compound.canonical_name))
 Index("idx_compounds_inchikey", Compound.inchikey)
@@ -365,3 +381,4 @@ Index("idx_candidate_links_source", CandidateLink.source_entity_type, CandidateL
 Index("idx_candidate_links_status", CandidateLink.status)
 Index("idx_retrieval_results_run_rank", RetrievalResult.run_id, RetrievalResult.rank)
 Index("idx_retrieval_results_chunk", RetrievalResult.chunk_id)
+Index("idx_interaction_history_kind_created", InteractionHistory.kind, InteractionHistory.created_at.desc())

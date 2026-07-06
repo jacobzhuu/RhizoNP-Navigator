@@ -297,6 +297,7 @@ class ResultsInterpretationResponse(BaseModel):
     finding_count: int
     interpretations: list[dict[str, Any]]
     provenance: dict[str, Any]
+    history_id: uuid.UUID | None = None
 
 
 class WriterEvidenceInputRequest(BaseModel):
@@ -412,3 +413,28 @@ class AskResponse(BaseModel):
     citation_validation: dict[str, Any]
     faithfulness_diagnostics: list[dict[str, Any]]
     provenance: dict[str, Any]
+    history_id: uuid.UUID | None = None
+
+
+class HistoryListItemResponse(BaseModel):
+    history_id: uuid.UUID
+    kind: Literal["ask", "results"]
+    title: str
+    status: str
+    summary: str | None = None
+    created_at: str
+
+
+class HistoryListResponse(BaseModel):
+    items: list[HistoryListItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class HistoryDetailResponse(BaseModel):
+    history_id: uuid.UUID
+    kind: Literal["ask", "results"]
+    created_at: str
+    request: dict[str, Any]
+    response: dict[str, Any]

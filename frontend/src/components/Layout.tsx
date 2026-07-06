@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BrandMark, IconCrown, IconChevronDown, IconFlask, IconHome, IconInfo, IconMessage } from './icons'
+import { BackgroundTaskBanner } from './BackgroundTaskBanner'
+import { BrandMark, IconCrown, IconClock, IconFlask, IconHome, IconInfo, IconMessage } from './icons'
 import { StatusPill } from './StatusPill'
 
 const navItems = [
   { to: '/', label: '首页', end: true, icon: IconHome },
   { to: '/ask', label: '科研问答', icon: IconMessage },
   { to: '/results', label: '结果解释', icon: IconFlask },
+  { to: '/history', label: '历史记录', icon: IconClock },
   { to: '/about', label: '关于', icon: IconInfo },
 ]
 
@@ -41,16 +43,20 @@ export function Layout() {
             <IconCrown size={15} />
             <span>服务等级</span>
             <StatusPill />
-            <IconChevronDown size={14} className="service-level-chevron" />
           </div>
         </div>
       </header>
-      <main className={`app-main${isHome ? ' app-main--home' : ''}`}>
-        <Outlet />
+      <BackgroundTaskBanner />
+      <main className="app-main">
+        <div className="page-container">
+          <Outlet />
+        </div>
       </main>
       <footer className="app-footer">
-        <p>RhizoNP Navigator · 证据约束型根际微生物天然产物研究平台</p>
-        <p className="app-footer-copy">© 2024 All rights reserved.</p>
+        <div className="page-container app-footer-inner">
+          <p>RhizoNP Navigator · 证据约束型根际微生物天然产物研究平台</p>
+          <p className="app-footer-copy">© 2024 All rights reserved.</p>
+        </div>
       </footer>
     </div>
   )

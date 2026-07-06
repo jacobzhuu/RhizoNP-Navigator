@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { HomeDecorations } from '../components/HomeDecorations'
 import {
   IconArrowRight,
   IconChart,
@@ -54,61 +55,11 @@ const FEATURES = [
   { icon: IconLock, title: '安全合规', desc: '数据隐私与合规保障' },
 ]
 
-function HeroDecorations() {
-  return (
-    <div className="home-decorations" aria-hidden="true">
-      <svg className="home-deco home-deco--dna" viewBox="0 0 120 200" fill="none">
-        <path
-          d="M30 10 C70 30, 50 70, 90 90 S50 150, 70 190"
-          stroke="currentColor"
-          strokeWidth="2"
-          opacity="0.35"
-        />
-        <path
-          d="M90 10 C50 30, 70 70, 30 90 S70 150, 50 190"
-          stroke="currentColor"
-          strokeWidth="2"
-          opacity="0.35"
-        />
-        {Array.from({ length: 8 }).map((_, i) => (
-          <line
-            key={i}
-            x1={30 + (i % 2) * 60}
-            y1={20 + i * 22}
-            x2={90 - (i % 2) * 60}
-            y2={20 + i * 22}
-            stroke="currentColor"
-            strokeWidth="1.5"
-            opacity="0.25"
-          />
-        ))}
-      </svg>
-      <svg className="home-deco home-deco--molecule" viewBox="0 0 80 80" fill="none">
-        <circle cx="40" cy="40" r="6" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="20" cy="25" r="4" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="60" cy="25" r="4" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="20" cy="58" r="4" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="40" y1="40" x2="20" y2="25" stroke="currentColor" strokeWidth="1.25" />
-        <line x1="40" y1="40" x2="60" y2="25" stroke="currentColor" strokeWidth="1.25" />
-        <line x1="40" y1="40" x2="20" y2="58" stroke="currentColor" strokeWidth="1.25" />
-      </svg>
-      <svg className="home-deco home-deco--plant" viewBox="0 0 64 80" fill="none">
-        <ellipse cx="32" cy="72" rx="22" ry="6" fill="#8B6914" opacity="0.35" />
-        <path d="M32 72 V38" stroke="#2d8a4e" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M32 52 C18 48, 14 34, 22 28" stroke="#3cb371" strokeWidth="2" fill="none" />
-        <path d="M32 44 C46 40, 50 26, 42 20" stroke="#3cb371" strokeWidth="2" fill="none" />
-        <ellipse cx="20" cy="28" rx="8" ry="5" fill="#4caf6e" opacity="0.7" transform="rotate(-30 20 28)" />
-        <ellipse cx="44" cy="20" rx="8" ry="5" fill="#4caf6e" opacity="0.7" transform="rotate(30 44 20)" />
-      </svg>
-    </div>
-  )
-}
-
 export function OverviewPage() {
   return (
     <div className="home-page">
+      <HomeDecorations />
       <section className="home-hero">
-        <HeroDecorations />
         <h1 className="home-title">
           <span className="home-title-rhizonp">RhizoNP</span>{' '}
           <span className="home-title-navigator">Navigator</span>
