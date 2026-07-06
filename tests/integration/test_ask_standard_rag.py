@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Iterator
 
 import pytest
@@ -13,8 +12,8 @@ from rhizonp.api.app import create_app, get_literature_retrieval_service, get_se
 from rhizonp.domain.models import Base, LiteratureCorpusState
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
 from rhizonp.literature.embeddings import HashingEmbeddingProvider
-from rhizonp.literature.runtime import LiteratureRetrievalRuntime, build_offline_literature_runtime
 from rhizonp.literature.reranker import LexicalOverlapReranker
+from rhizonp.literature.runtime import LiteratureRetrievalRuntime, build_offline_literature_runtime
 from rhizonp.literature.service import LiteratureRetrievalService
 from rhizonp.storage.postgres import create_session_factory, session_scope
 

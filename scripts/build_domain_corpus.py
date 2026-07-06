@@ -62,6 +62,7 @@ def _resolve_corpus_path(args: argparse.Namespace) -> Path:
 
 def main() -> None:
     from rhizonp.config import get_settings
+    from rhizonp.domain.models import Paper, RetrievalResult
     from rhizonp.ingestion.corpus import (
         corpus_snapshot_from_records,
         fetch_domain_corpus,
@@ -74,7 +75,6 @@ def main() -> None:
     )
     from rhizonp.ingestion.literature import ingest_literature_records
     from rhizonp.literature.pubmed_adapter import PubMedEutilitiesAdapter
-    from rhizonp.domain.models import Paper, RetrievalResult
     from rhizonp.storage.postgres import (
         create_engine_from_settings,
         create_session_factory,

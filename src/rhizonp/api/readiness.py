@@ -7,7 +7,10 @@ from rhizonp.config import get_settings
 from rhizonp.domain.models import Paper, PaperChunk
 from rhizonp.literature.corpus_state import CorpusStateNotInitializedError, get_corpus_revision
 from rhizonp.literature.index_store import is_index_stale, read_current_build_id
-from rhizonp.literature.retrieval_settings import PROFILE_OFFLINE, resolve_literature_retrieval_settings
+from rhizonp.literature.retrieval_settings import (
+    PROFILE_OFFLINE,
+    resolve_literature_retrieval_settings,
+)
 from rhizonp.writer.llm_writer import check_llm_configuration
 
 

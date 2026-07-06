@@ -146,21 +146,21 @@ def _grounded_answer_response(
     grounded = GroundedAnswer.model_validate(answer_payload)
     contract = enrich_grounded_answer_metadata(grounded, llm_requested=llm_requested)
     return GroundedAnswerResponse(
-        status=str(answer_payload["status"]),
-        answer=str(answer_payload["answer"]),
+        status=grounded.status,
+        answer=grounded.answer,
         claims=[
             WriterClaimResponse(
-                text=claim["text"],
-                evidence_refs=claim["evidence_refs"],
-                claim_level=claim["claim_level"],
+                text=claim.text,
+                evidence_refs=claim.evidence_refs,
+                claim_level=claim.claim_level,
             )
-            for claim in answer_payload.get("claims", [])
+            for claim in grounded.claims
         ],
-        evidence_refs=answer_payload.get("evidence_refs", []),
-        limitations=list(answer_payload.get("limitations", [])),
-        suggested_validations=list(answer_payload.get("suggested_validations", [])),
-        writer_mode=str(answer_payload.get("writer_mode", "fallback")),
-        provenance=dict(answer_payload.get("provenance", {})),
+        evidence_refs=grounded.evidence_refs,
+        limitations=grounded.limitations,
+        suggested_validations=grounded.suggested_validations,
+        writer_mode=grounded.writer_mode,
+        provenance=grounded.provenance,
         citation_validation=citation_validation,
         faithfulness_diagnostics=list(faithfulness_diagnostics or []),
         answer_mode=contract["answer_mode"],
@@ -387,7 +387,7 @@ def create_app() -> FastAPI:
     @api.get("/api/v1/readiness", response_model=ReadinessResponse, tags=[TAGS_HEALTH])
     def readiness(session: Session | None = OPTIONAL_SESSION_DEPENDENCY) -> ReadinessResponse:
         payload = evaluate_readiness(session)
-        return ReadinessResponse(**payload)
+        return ReadinessResponse.model_validate(payload)
 
     @api.post("/api/v1/ask", response_model=AskResponse, tags=[TAGS_ASK])
     def ask_question(

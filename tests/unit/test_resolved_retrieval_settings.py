@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from rhizonp.config import Settings
 from rhizonp.literature.retrieval_settings import (
     PROFILE_CUSTOM,

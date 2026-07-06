@@ -8,12 +8,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from rhizonp.api.app import create_app, get_literature_retrieval_service, get_optional_session, get_session
-from rhizonp.literature.runtime import build_offline_literature_runtime
-from rhizonp.literature.service import LiteratureRetrievalService
+from rhizonp.api.app import (
+    create_app,
+    get_literature_retrieval_service,
+    get_optional_session,
+    get_session,
+)
 from rhizonp.domain.models import Base
 from rhizonp.ingestion.fixtures import load_phase1_demo_fixture
 from rhizonp.ingestion.literature import load_phase2_literature_fixture
+from rhizonp.literature.runtime import build_offline_literature_runtime
+from rhizonp.literature.service import LiteratureRetrievalService
 from rhizonp.storage.postgres import create_session_factory, session_scope
 
 
