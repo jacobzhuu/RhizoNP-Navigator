@@ -1,14 +1,34 @@
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import os
+import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
+
+if sys.platform == "win32":
+    import msvcrt
+
+    def _lock_file_exclusive(lock_file: TextIO) -> None:
+        lock_file.seek(0)
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+
+    def _unlock_file(lock_file: TextIO) -> None:
+        lock_file.seek(0)
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+
+else:
+    import fcntl
+
+    def _lock_file_exclusive(lock_file: TextIO) -> None:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+    def _unlock_file(lock_file: TextIO) -> None:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -180,11 +200,11 @@ def index_build_lock(index_root_path: Path):
     index_root_path.mkdir(parents=True, exist_ok=True)
     lock_path = _lock_path(index_root_path)
     with lock_path.open("a+", encoding="utf-8") as lock_file:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        _lock_file_exclusive(lock_file)
         try:
             yield
         finally:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            _unlock_file(lock_file)
 
 
 def _write_id_map(build_dir: Path, chunk_ids: list[str]) -> None:
